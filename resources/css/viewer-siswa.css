@@ -1,0 +1,1781 @@
+/* ============================================================
+   BBCASHVIA — VIEWER DATA SISWA
+   Style mengikuti Dashboard Viewer
+============================================================ */
+
+:root {
+    --sidebar-w: 264px;
+    --topbar-h: 64px;
+
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --surface-soft: #f1f5f9;
+
+    --text: #0f172a;
+    --text-soft: #64748b;
+    --text-muted: #94a3b8;
+
+    --border: #e2e8f0;
+
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-soft: #eff6ff;
+
+    --success: #16a34a;
+    --success-soft: #f0fdf4;
+
+    --danger: #dc2626;
+    --danger-soft: #fef2f2;
+
+    --warning: #d97706;
+    --warning-soft: #fffbeb;
+
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #475569;
+    --sidebar-active: #eff6ff;
+    --sidebar-active-text: #2563eb;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+}
+
+
+/* ============================================================
+   RESET
+============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    background: var(--bg);
+    color: var(--text);
+
+    font-family: "Inter", sans-serif;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    border: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+
+.sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: var(--sidebar-w);
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+
+    z-index: 100;
+
+    transition: transform 0.25s ease;
+}
+
+
+.sidebar-brand {
+    height: var(--topbar-h);
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    padding: 0 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.brand-icon {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 10px;
+
+    background: var(--primary);
+    color: white;
+}
+
+
+.brand-icon .material-symbols-outlined {
+    font-size: 20px;
+}
+
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+
+.brand-text strong {
+    font-family: "Plus Jakarta Sans", sans-serif;
+
+    font-size: 15px;
+    line-height: 20px;
+
+    font-weight: 800;
+}
+
+
+.brand-text span {
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 14px;
+
+    font-weight: 600;
+
+    letter-spacing: 0.03em;
+}
+
+
+/* ============================================================
+   SIDEBAR NAV
+============================================================ */
+
+.sidebar-nav {
+    flex: 1;
+
+    padding: 20px 12px;
+
+    overflow-y: auto;
+}
+
+
+.nav-section {
+    margin-bottom: 24px;
+}
+
+
+.nav-section-title {
+    padding: 0 12px;
+    margin-bottom: 8px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 16px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+
+.nav-link {
+    min-height: 42px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 0 12px;
+
+    margin-bottom: 3px;
+
+    border-radius: var(--radius-sm);
+
+    color: var(--sidebar-text);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+
+.nav-link .material-symbols-outlined {
+    font-size: 20px;
+}
+
+
+.nav-link:hover {
+    background: var(--surface-soft);
+    color: var(--text);
+}
+
+
+.nav-link.active {
+    background: var(--sidebar-active);
+    color: var(--sidebar-active-text);
+}
+
+
+.nav-link.active .material-symbols-outlined {
+    font-variation-settings:
+        "FILL" 1,
+        "wght" 500,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+
+/* ============================================================
+   SIDEBAR FOOTER
+============================================================ */
+
+.sidebar-footer {
+    padding: 14px 12px 16px;
+
+    border-top: 1px solid var(--border);
+}
+
+
+.sidebar-user {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 8px 12px;
+}
+
+
+.user-avatar {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+.user-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+
+.user-info strong {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 12px;
+    line-height: 18px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+.user-info span {
+    color: var(--text-muted);
+
+    font-size: 11px;
+    line-height: 16px;
+}
+
+
+.logout-button {
+    width: 100%;
+    min-height: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 0 10px;
+
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+    color: var(--text-soft);
+
+    cursor: pointer;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition:
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+
+.logout-button:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+
+.logout-button .material-symbols-outlined {
+    font-size: 19px;
+}
+
+
+/* ============================================================
+   SIDEBAR BACKDROP
+============================================================ */
+
+.sidebar-backdrop {
+    position: fixed;
+
+    inset: 0;
+
+    background: rgba(15, 23, 42, 0.35);
+
+    opacity: 0;
+    visibility: hidden;
+
+    z-index: 90;
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease;
+}
+
+
+.sidebar-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* ============================================================
+   MAIN AREA
+============================================================ */
+
+.main-area {
+    min-height: 100vh;
+
+    margin-left: var(--sidebar-w);
+}
+
+
+/* ============================================================
+   TOPBAR
+============================================================ */
+
+.topbar {
+    height: var(--topbar-h);
+
+    position: sticky;
+    top: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 28px;
+
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid var(--border);
+
+    z-index: 50;
+}
+
+
+.topbar-left,
+.topbar-right {
+    display: flex;
+    align-items: center;
+}
+
+
+.topbar-left {
+    gap: 14px;
+}
+
+
+.page-heading {
+    display: flex;
+    flex-direction: column;
+}
+
+
+.page-heading span {
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 14px;
+
+    font-weight: 600;
+}
+
+
+.page-heading strong {
+    font-family: "Plus Jakarta Sans", sans-serif;
+
+    font-size: 15px;
+    line-height: 21px;
+
+    font-weight: 800;
+}
+
+
+.menu-toggle {
+    width: 38px;
+    height: 38px;
+
+    display: none;
+    place-items: center;
+
+    border-radius: var(--radius-sm);
+
+    background: var(--surface-soft);
+    color: var(--text);
+
+    cursor: pointer;
+}
+
+
+.menu-toggle .material-symbols-outlined {
+    font-size: 22px;
+}
+
+
+/* ============================================================
+   ACADEMIC CHIP
+============================================================ */
+
+.topbar-right {
+    gap: 18px;
+}
+
+
+.academic-chip {
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 0 11px;
+
+    border: 1px solid var(--border);
+    border-radius: 999px;
+
+    background: var(--surface);
+
+    color: var(--text-soft);
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.academic-chip .material-symbols-outlined {
+    color: var(--primary);
+
+    font-size: 17px;
+}
+
+
+/* ============================================================
+   PROFILE
+============================================================ */
+
+.profile-wrapper {
+    position: relative;
+}
+
+
+.profile-button {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 4px;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+
+.profile-avatar {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-size: 10px;
+    font-weight: 800;
+}
+
+
+.profile-avatar.large {
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    font-size: 11px;
+}
+
+
+.profile-text {
+    display: flex;
+    flex-direction: column;
+
+    text-align: left;
+}
+
+
+.profile-text strong {
+    font-size: 11px;
+    line-height: 15px;
+}
+
+
+.profile-text span {
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 14px;
+}
+
+
+.profile-arrow {
+    color: var(--text-muted);
+
+    font-size: 19px;
+
+    transition: transform 0.2s ease;
+}
+
+
+.profile-wrapper.open .profile-arrow {
+    transform: rotate(180deg);
+}
+
+
+/* ============================================================
+   PROFILE DROPDOWN
+============================================================ */
+
+.profile-dropdown {
+    position: absolute;
+
+    top: calc(100% + 10px);
+    right: 0;
+
+    width: 240px;
+
+    padding: 10px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    background: var(--surface);
+
+    box-shadow: var(--shadow-md);
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(-6px);
+
+    transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.profile-wrapper.open .profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+
+.profile-dropdown-head {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px;
+}
+
+
+.profile-dropdown-head > div:last-child {
+    display: flex;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+
+.profile-dropdown-head strong {
+    font-size: 12px;
+    line-height: 17px;
+}
+
+
+.profile-dropdown-head span {
+    overflow: hidden;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 15px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+.profile-dropdown-divider {
+    height: 1px;
+
+    margin: 4px 0;
+
+    background: var(--border);
+}
+
+
+.dropdown-logout {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px;
+
+    border-radius: var(--radius-sm);
+
+    background: transparent;
+    color: var(--danger);
+
+    cursor: pointer;
+
+    text-align: left;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+.dropdown-logout:hover {
+    background: var(--danger-soft);
+}
+
+
+.dropdown-logout .material-symbols-outlined {
+    font-size: 18px;
+}
+
+
+/* ============================================================
+   CONTENT
+============================================================ */
+
+.content {
+    max-width: 1500px;
+
+    margin: 0 auto;
+
+    padding: 28px;
+}
+
+
+/* ============================================================
+   PAGE INTRO
+============================================================ */
+
+.page-intro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    margin-bottom: 22px;
+}
+
+
+.page-eyebrow,
+.panel-eyebrow {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: var(--primary);
+
+    font-size: 10px;
+    line-height: 15px;
+
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+}
+
+
+.page-intro h1 {
+    margin: 0 0 6px;
+
+    font-family: "Plus Jakarta Sans", sans-serif;
+
+    font-size: 24px;
+    line-height: 32px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.025em;
+}
+
+
+.page-intro p {
+    max-width: 650px;
+
+    margin: 0;
+
+    color: var(--text-soft);
+
+    font-size: 12px;
+    line-height: 19px;
+}
+
+
+/* ============================================================
+   PANEL
+============================================================ */
+
+.panel {
+    overflow: hidden;
+
+    margin-bottom: 20px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    background: var(--surface);
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.panel-header {
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 17px 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+
+.panel-header h2 {
+    margin: 0;
+
+    font-family: "Plus Jakarta Sans", sans-serif;
+
+    font-size: 15px;
+    line-height: 22px;
+
+    font-weight: 800;
+}
+
+
+.panel-count {
+    padding: 7px 10px;
+
+    border-radius: 999px;
+
+    background: var(--surface-soft);
+
+    color: var(--text-soft);
+
+    font-size: 10px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   PROFIL SAYA
+============================================================ */
+
+.student-profile {
+    display: grid;
+
+    grid-template-columns: 48px minmax(180px, 0.7fr) minmax(420px, 1.3fr);
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 22px 20px;
+}
+
+
+.student-profile > .profile-avatar {
+    width: 48px;
+    height: 48px;
+
+    font-size: 13px;
+}
+
+
+.student-profile-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.student-profile-info h3 {
+    margin: 0;
+
+    color: var(--text);
+
+    font-family: "Plus Jakarta Sans", sans-serif;
+
+    font-size: 15px;
+    line-height: 21px;
+
+    font-weight: 800;
+}
+
+
+.student-profile-info > span {
+    display: inline-flex;
+    align-items: center;
+
+    width: fit-content;
+
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    background: var(--success-soft);
+    color: var(--success);
+
+    font-size: 9px;
+    line-height: 13px;
+
+    font-weight: 700;
+}
+
+
+.student-profile-details {
+    display: grid;
+
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    gap: 12px;
+
+    min-width: 0;
+}
+
+
+.profile-detail-item {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+    padding-left: 14px;
+
+    border-left: 1px solid var(--border);
+}
+
+
+.profile-detail-label {
+    color: var(--text-muted);
+
+    font-size: 9px;
+    line-height: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+}
+
+
+.profile-detail-item strong {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 11px;
+    line-height: 17px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+.profile-detail-item:first-child strong {
+    font-family: "JetBrains Mono", monospace;
+
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   RINGKASAN KELAS / STATS
+============================================================ */
+
+.stats-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 14px;
+
+    margin-bottom: 20px;
+}
+
+
+.stat-card {
+    min-height: 138px;
+
+    padding: 17px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+
+    background: var(--surface);
+
+    box-shadow: var(--shadow-sm);
+}
+
+
+.stat-card-top {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 13px;
+}
+
+
+.stat-icon {
+    width: 36px;
+    height: 36px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 10px;
+}
+
+
+.stat-icon .material-symbols-outlined {
+    font-size: 20px;
+}
+
+
+.stat-icon.blue {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+
+.stat-icon.green {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+
+.stat-icon.orange {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+
+.stat-icon.purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+
+.stat-label {
+    color: var(--text-soft);
+
+    font-size: 11px;
+    line-height: 17px;
+
+    font-weight: 600;
+}
+
+
+.stat-value {
+    margin-top: 2px;
+
+    color: var(--text);
+
+    font-family: "JetBrains Mono", monospace;
+
+    font-size: 21px;
+    line-height: 29px;
+
+    font-weight: 600;
+}
+
+
+.stat-meta {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 15px;
+}
+
+
+/* ============================================================
+   KELAS SAYA
+============================================================ */
+
+.class-info-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 12px;
+
+    padding: 18px 20px 20px;
+}
+
+
+.class-info-item {
+    min-height: 82px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 13px 14px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+
+    background: #fcfdff;
+}
+
+
+.class-info-item > .material-symbols-outlined {
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-size: 18px;
+}
+
+
+.class-info-item > div {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+}
+
+
+.class-info-item > div > span {
+    color: var(--text-muted);
+
+    font-size: 9px;
+    line-height: 13px;
+
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+}
+
+
+.class-info-item strong {
+    overflow: hidden;
+
+    color: var(--text);
+
+    font-size: 11px;
+    line-height: 17px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   FILTER
+============================================================ */
+
+.filter-area {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 14px 20px;
+
+    border-bottom: 1px solid var(--border);
+
+    background: #fcfdff;
+}
+
+
+.search-box {
+    flex: 1;
+    max-width: 400px;
+
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 0 11px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    background: var(--surface);
+}
+
+
+.search-box:focus-within {
+    border-color: #93c5fd;
+
+    box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+
+.search-box .material-symbols-outlined {
+    color: var(--text-muted);
+
+    font-size: 19px;
+}
+
+
+.search-box input {
+    width: 100%;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--text);
+
+    font-size: 11px;
+}
+
+
+.search-box input::placeholder {
+    color: var(--text-muted);
+}
+
+
+.filter-control {
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 0 10px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    background: var(--surface);
+}
+
+
+.filter-control .material-symbols-outlined {
+    color: var(--text-muted);
+
+    font-size: 18px;
+}
+
+
+.filter-control select {
+    min-width: 135px;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--text-soft);
+
+    cursor: pointer;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   TABLE
+============================================================ */
+
+.table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+
+.data-table {
+    width: 100%;
+
+    border-collapse: collapse;
+
+    white-space: nowrap;
+}
+
+
+.data-table th {
+    height: 43px;
+
+    padding: 0 20px;
+
+    border-bottom: 1px solid var(--border);
+
+    background: #fcfdff;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    line-height: 15px;
+
+    font-weight: 700;
+
+    text-align: left;
+
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+}
+
+
+.data-table td {
+    height: 55px;
+
+    padding: 0 20px;
+
+    border-bottom: 1px solid var(--border);
+
+    color: var(--text-soft);
+
+    font-size: 11px;
+    line-height: 17px;
+}
+
+
+.data-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+
+.data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+
+.data-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+
+.student-name {
+    color: var(--text);
+
+    font-weight: 600;
+}
+
+
+.student-nis {
+    color: var(--text-muted);
+
+    font-family: "JetBrains Mono", monospace;
+
+    font-size: 10px;
+}
+
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 24px;
+
+    padding: 0 8px;
+
+    border-radius: 999px;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+
+.status-badge.active {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+
+.status-badge.inactive {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+
+/* ============================================================
+   EMPTY STATE
+============================================================ */
+
+.empty-state {
+    display: none;
+
+    align-items: center;
+    flex-direction: column;
+
+    padding: 48px 20px;
+
+    text-align: center;
+}
+
+
+.empty-state.show {
+    display: flex;
+}
+
+
+.empty-icon {
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 10px;
+
+    border-radius: 12px;
+
+    background: var(--surface-soft);
+    color: var(--text-muted);
+}
+
+
+.empty-icon .material-symbols-outlined {
+    font-size: 22px;
+}
+
+
+.empty-state strong {
+    margin-bottom: 3px;
+
+    color: var(--text);
+
+    font-size: 12px;
+}
+
+
+.empty-state span {
+    color: var(--text-muted);
+
+    font-size: 10px;
+}
+
+
+/* ============================================================
+   FOOTER
+============================================================ */
+
+.page-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 4px 0 20px;
+
+    color: var(--text-muted);
+
+    font-size: 9px;
+    font-weight: 600;
+}
+
+
+/* ============================================================
+   MOBILE
+============================================================ */
+
+@media (max-width: 1100px) {
+
+    .student-profile {
+        grid-template-columns: 48px minmax(160px, 0.6fr) minmax(350px, 1.4fr);
+
+        gap: 14px;
+    }
+
+
+    .student-profile-details {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+
+    .profile-detail-item {
+        padding-left: 10px;
+    }
+
+
+    .class-info-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 900px) {
+
+    :root {
+        --sidebar-w: 264px;
+    }
+
+
+    .sidebar {
+        transform: translateX(-100%);
+    }
+
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+
+    .main-area {
+        margin-left: 0;
+    }
+
+
+    .menu-toggle {
+        display: grid;
+    }
+
+
+    .topbar {
+        padding: 0 18px;
+    }
+
+
+    .profile-text {
+        display: none;
+    }
+
+
+    .academic-chip {
+        display: none;
+    }
+
+
+    .content {
+        padding: 22px 18px;
+    }
+
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+
+    .student-profile {
+        grid-template-columns: 48px 1fr;
+    }
+
+
+    .student-profile-details {
+        grid-column: 1 / -1;
+
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+
+        padding-top: 4px;
+    }
+
+
+    .profile-detail-item:first-child {
+        padding-left: 0;
+
+        border-left: 0;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .topbar {
+        padding: 0 14px;
+    }
+
+
+    .content {
+        padding: 18px 14px;
+    }
+
+
+    .page-intro {
+        margin-bottom: 18px;
+    }
+
+
+    .page-intro h1 {
+        font-size: 21px;
+        line-height: 28px;
+    }
+
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+    }
+
+
+    .stat-card {
+        min-height: 125px;
+
+        padding: 14px;
+    }
+
+
+    .stat-value {
+        font-size: 18px;
+    }
+
+
+    .panel {
+        margin-bottom: 14px;
+    }
+
+
+    .panel-header {
+        align-items: flex-start;
+
+        gap: 10px;
+
+        padding: 15px;
+    }
+
+
+    .student-profile {
+        grid-template-columns: 42px 1fr;
+
+        gap: 12px;
+
+        padding: 17px 15px;
+    }
+
+
+    .student-profile > .profile-avatar {
+        width: 42px;
+        height: 42px;
+
+        font-size: 11px;
+    }
+
+
+    .student-profile-info h3 {
+        font-size: 13px;
+        line-height: 19px;
+    }
+
+
+    .student-profile-details {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 12px;
+
+        padding-top: 6px;
+    }
+
+
+    .profile-detail-item {
+        padding-left: 0;
+
+        border-left: 0;
+    }
+
+
+    .class-info-grid {
+        grid-template-columns: 1fr 1fr;
+
+        gap: 10px;
+
+        padding: 15px;
+    }
+
+
+    .class-info-item {
+        min-height: 72px;
+
+        padding: 10px;
+    }
+
+
+    .class-info-item > .material-symbols-outlined {
+        width: 30px;
+        height: 30px;
+
+        font-size: 16px;
+    }
+
+
+    .filter-area {
+        flex-direction: column;
+        align-items: stretch;
+
+        padding: 12px 15px;
+    }
+
+
+    .search-box {
+        max-width: none;
+    }
+
+
+    .filter-control {
+        width: 100%;
+    }
+
+
+    .filter-control select {
+        width: 100%;
+    }
+
+
+    .data-table th,
+    .data-table td {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+}
+
+
+@media (max-width: 420px) {
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .page-heading strong {
+        font-size: 13px;
+    }
+
+
+    .profile-arrow {
+        display: none;
+    }
+
+
+    .student-profile-details {
+        grid-template-columns: 1fr;
+    }
+
+
+    .class-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* ============================================================
+   MOBILE BODY LOCK
+============================================================ */
+
+body.nav-open {
+    overflow: hidden;
+}

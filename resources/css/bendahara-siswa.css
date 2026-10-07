@@ -1,0 +1,1071 @@
+@import "./bendahara-dashboard.css";
+
+
+/* ============================================================
+   BBCASHVIA — BENDAHARA DATA SISWA
+   BASE:
+   bendahara-dashboard.css
+   ============================================================ */
+
+
+/* ============================================================
+   CLASS INFO
+   ============================================================ */
+
+.class-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    margin-bottom: 20px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.class-info__icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.class-info__icon .material-symbols-outlined {
+    font-size: 21px;
+}
+
+.class-info__text {
+    min-width: 0;
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.class-info__eyebrow {
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+.class-info__text strong {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.class-info__text > span:last-child {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.class-info__count {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.class-info__count strong {
+    color: var(--primary);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.class-info__count span {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+
+/* ============================================================
+   STUDENT PANEL
+   ============================================================ */
+
+.student-panel {
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+
+.student-tools {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 14px 20px;
+
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+
+    background: #ffffff;
+}
+
+.student-search {
+    position: relative;
+    width: min(420px, 100%);
+}
+
+.student-search .material-symbols-outlined {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    color: var(--text-muted);
+    font-size: 18px;
+
+    pointer-events: none;
+}
+
+.student-search input {
+    width: 100%;
+    height: 38px;
+
+    padding: 0 12px 0 36px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: var(--text);
+
+    font-family: "Inter", sans-serif;
+    font-size: 10px;
+
+    outline: none;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.student-search input::placeholder {
+    color: var(--text-muted);
+}
+
+.student-search input:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+
+.student-filter {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.student-filter .material-symbols-outlined {
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.student-filter select {
+    height: 38px;
+    min-width: 145px;
+
+    padding: 0 10px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: var(--text);
+
+    font-family: "Inter", sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+
+    outline: none;
+    cursor: pointer;
+}
+
+.student-filter select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.student-table {
+    min-width: 920px;
+}
+
+.student-table th {
+    white-space: nowrap;
+}
+
+.student-table td {
+    vertical-align: middle;
+}
+
+.student-name {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 180px;
+}
+
+.student-avatar {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.student-name__text {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.student-name__text strong {
+    overflow: hidden;
+
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.student-name__text span {
+    color: var(--text-muted);
+    font-size: 8px;
+}
+
+.student-nis {
+    color: var(--text-soft);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+}
+
+.money {
+    color: var(--text-soft);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.money.paid {
+    color: var(--success);
+}
+
+.money.remaining {
+    color: var(--warning);
+}
+
+
+/* ============================================================
+   STATUS
+   ============================================================ */
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 24px;
+    padding: 4px 8px;
+
+    border-radius: 999px;
+
+    font-size: 8px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.status-badge.lunas {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.status-badge.belum {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+
+/* ============================================================
+   ACTION
+   ============================================================ */
+
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border);
+    border-radius: 7px;
+
+    background: #ffffff;
+    color: var(--text-soft);
+
+    cursor: pointer;
+
+    transition:
+        color .2s ease,
+        background .2s ease,
+        border-color .2s ease;
+}
+
+.action-btn:hover {
+    color: var(--primary);
+    background: var(--primary-soft);
+    border-color: #bfdbfe;
+}
+
+.action-btn--danger:hover {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: #fecaca;
+}
+
+.action-btn .material-symbols-outlined {
+    font-size: 17px;
+}
+
+
+/* ============================================================
+   EMPTY
+   ============================================================ */
+
+.table-empty {
+    display: none;
+
+    min-height: 300px;
+
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    gap: 5px;
+
+    padding: 40px 20px;
+
+    text-align: center;
+}
+
+.table-empty.show {
+    display: flex;
+}
+
+.table-empty__icon {
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 5px;
+
+    border-radius: 50%;
+
+    background: var(--surface-soft);
+    color: var(--text-muted);
+}
+
+.table-empty__icon .material-symbols-outlined {
+    font-size: 23px;
+}
+
+.table-empty h3 {
+    margin: 0;
+
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.table-empty p {
+    margin: 0;
+
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+
+.student-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+
+    min-height: 58px;
+
+    padding: 12px 20px;
+
+    border-top: 1px solid var(--border);
+
+    background: #ffffff;
+}
+
+.pagination-info {
+    color: var(--text-muted);
+
+    font-family: "Inter", sans-serif;
+    font-size: 9px;
+    font-weight: 500;
+
+    white-space: nowrap;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    flex-shrink: 0;
+}
+
+.pagination__numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+
+/* ============================================================
+   PAGINATION BUTTON
+   ============================================================ */
+
+.page-btn {
+    min-width: 29px;
+    height: 29px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 7px;
+
+    border: 1px solid transparent;
+    border-radius: 7px;
+
+    background: transparent;
+    color: var(--text-soft);
+
+    font-family: "Inter", sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        color .2s ease,
+        background .2s ease,
+        border-color .2s ease,
+        opacity .2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.page-btn.active {
+    border-color: #bfdbfe;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.page-btn:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   PAGINATION ARROW
+   ============================================================ */
+
+.page-btn--arrow {
+    border-color: var(--border);
+    background: #ffffff;
+}
+
+.page-btn--arrow:hover:not(:disabled) {
+    border-color: #bfdbfe;
+    background: var(--primary-soft);
+    color: var(--primary);
+}
+
+.page-btn--arrow .material-symbols-outlined {
+    font-size: 17px;
+    line-height: 1;
+}
+
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2000;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(3px);
+}
+
+.modal-backdrop.show {
+    display: flex;
+}
+
+.modal {
+    width: min(620px, 100%);
+    max-height: calc(100vh - 40px);
+
+    overflow-y: auto;
+
+    background: #ffffff;
+
+    border: 1px solid var(--border);
+    border-radius: 16px;
+
+    box-shadow:
+        0 20px 50px rgba(15, 23, 42, .18);
+}
+
+.modal--detail {
+    width: min(540px, 100%);
+}
+
+.modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 20px 22px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.modal__eyebrow {
+    color: var(--primary);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+.modal__header h2 {
+    margin: 4px 0 0;
+
+    color: var(--text);
+
+    font-family: "Plus Jakarta Sans", sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.modal__header p {
+    margin: 5px 0 0;
+
+    color: var(--text-muted);
+    font-size: 9px;
+    line-height: 1.5;
+}
+
+.modal__close {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px;
+
+    color: var(--text-muted);
+
+    cursor: pointer;
+}
+
+.modal__close:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.modal__close .material-symbols-outlined {
+    font-size: 19px;
+}
+
+
+/* ============================================================
+   FORM
+   ============================================================ */
+
+#studentForm {
+    padding: 20px 22px 0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group label {
+    color: var(--text);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.form-group label span {
+    color: var(--danger);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    height: 40px;
+
+    padding: 0 11px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: #ffffff;
+    color: var(--text);
+
+    font-family: "Inter", sans-serif;
+    font-size: 10px;
+
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
+
+.form-group input[readonly] {
+    background: var(--surface-soft);
+    color: var(--text-soft);
+}
+
+.form-error {
+    min-height: 11px;
+
+    color: var(--danger);
+    font-size: 8px;
+}
+
+.form-hint {
+    color: var(--text-muted);
+    font-size: 8px;
+}
+
+
+/* ============================================================
+   MODAL FOOTER
+   ============================================================ */
+
+.modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 20px;
+    padding: 14px 22px;
+
+    border-top: 1px solid var(--border);
+    background: #fafafa;
+}
+
+
+/* ============================================================
+   DETAIL
+   ============================================================ */
+
+.detail-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    margin: 20px 22px 14px;
+    padding: 13px;
+
+    border-radius: 11px;
+    background: var(--surface-soft);
+}
+
+.detail-avatar {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: var(--primary-soft);
+    color: var(--primary);
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.detail-profile__info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.detail-profile__info strong {
+    color: var(--text);
+    font-size: 12px;
+}
+
+.detail-profile__info span {
+    color: var(--text-muted);
+    font-size: 9px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+
+    padding: 0 22px;
+}
+
+.detail-item {
+    padding: 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 9px;
+
+    background: #ffffff;
+}
+
+.detail-item--wide {
+    grid-column: 1 / -1;
+}
+
+.detail-item span {
+    display: block;
+
+    color: var(--text-muted);
+    font-size: 8px;
+}
+
+.detail-item strong {
+    display: block;
+
+    margin-top: 5px;
+
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+}
+
+.detail-item strong.success {
+    color: var(--success);
+}
+
+.detail-item strong.warning {
+    color: var(--warning);
+}
+
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+.toast {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+
+    z-index: 3000;
+
+    display: none;
+    align-items: center;
+    gap: 10px;
+
+    width: min(350px, calc(100vw - 32px));
+
+    padding: 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 12px 30px rgba(15, 23, 42, .14);
+}
+
+.toast.show {
+    display: flex;
+}
+
+.toast__icon {
+    color: var(--success);
+}
+
+.toast strong {
+    display: block;
+
+    color: var(--text);
+    font-size: 10px;
+}
+
+.toast span:not(.toast__icon) {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--text-muted);
+    font-size: 8px;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    .class-info {
+        align-items: flex-start;
+    }
+
+    .class-info__count {
+        margin-left: auto;
+    }
+
+    .student-tools {
+        align-items: stretch;
+        flex-direction: column;
+        padding: 13px 15px;
+    }
+
+    .student-search {
+        width: 100%;
+    }
+
+    .student-filter {
+        width: 100%;
+    }
+
+    .student-filter select {
+        flex: 1;
+    }
+
+    .student-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 15px;
+    }
+
+    .pagination {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .pagination-info {
+        white-space: normal;
+    }
+
+    .modal-backdrop {
+        padding: 12px;
+    }
+
+    .modal {
+        max-height: calc(100vh - 24px);
+    }
+
+    .modal__header {
+        padding: 17px;
+    }
+
+    #studentForm {
+        padding: 17px 17px 0;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-profile {
+        margin-left: 17px;
+        margin-right: 17px;
+    }
+
+    .detail-grid {
+        grid-template-columns: 1fr;
+        padding-left: 17px;
+        padding-right: 17px;
+    }
+
+    .detail-item--wide {
+        grid-column: auto;
+    }
+
+    .modal__footer {
+        padding-left: 17px;
+        padding-right: 17px;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .class-info {
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .class-info__text > span:last-child {
+        display: none;
+    }
+
+    .class-info__count strong {
+        font-size: 17px;
+    }
+
+    .student-table {
+        min-width: 850px;
+    }
+
+    .student-pagination {
+        gap: 10px;
+    }
+
+    .pagination {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .pagination__numbers {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .modal__header h2 {
+        font-size: 15px;
+    }
+
+    .modal__footer {
+        flex-direction: column-reverse;
+    }
+
+    .modal__footer .btn {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   SISWA TABLE — RENDER FIX
+   ========================================================= */
+
+/* Pastikan body tabel selalu terlihat */
+.student-table tbody {
+    display: table-row-group;
+}
+
+/* Pastikan baris hasil render JS tampil normal */
+.student-table tbody tr {
+    display: table-row;
+}
+
+/* Pastikan cell hasil render JS tampil normal */
+.student-table tbody td {
+    display: table-cell;
+}
+
+/* Empty state hanya muncul ketika JS menambahkan class .show */
+#emptyState:not(.show) {
+    display: none !important;
+}
+
+/* Saat ada data, empty state tetap tersembunyi */
+.student-table-wrap #emptyState:not(.show),
+.table-wrap #emptyState:not(.show) {
+    display: none !important;
+}
+
+/* Tabel tidak boleh dipaksa hilang */
+.student-table {
+    display: table;
+    width: 100%;
+    min-width: 920px;
+}
+
+/* Wrapper tetap bisa scroll horizontal */
+.student-panel .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
