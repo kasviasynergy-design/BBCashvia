@@ -62,6 +62,10 @@ Route::get('/admin/riwayat-transaksi', function () {
     return view('admin-riwayat-transaksi');
 });
 
+Route::get('/admin/manajemen-pengguna', function () {
+    return view('admin-manajemen-pengguna');
+});
+
 
 /*
 |--------------------------------------------------------------------------
@@ -110,8 +114,25 @@ Route::get('/bendahara/riwayat-transaksi', function () {
 Route::get('/dashboard/viewer', function () {
     return view('viewer-dashboard');
 });
+
 Route::get('/viewer/siswa', function () {
     return view('viewer-siswa');
+});
+
+Route::get('/viewer/iuran', function () {
+    return view('viewer-iuran');
+});
+
+Route::get('/viewer/transaksi', function () {
+    return view('viewer-transaksi');
+});
+
+Route::get('/viewer/riwayat-transaksi', function () {
+    return view('viewer-riwayat-transaksi');
+});
+
+Route::get('/viewer/laporan-kas', function () {
+    return view('viewer-laporan-kas');
 });
 
 

@@ -4,13 +4,13 @@
    ============================================================ */
 
 :root {
-    --bg: #f7f8ff;
+    --bg: #f8fafc;
     --surface: #ffffff;
     --surface-soft: #f8faff;
 
-    --primary: #5989af;
-    --primary-dark: #3e6c8f;
-    --primary-soft: #90b3cd;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-soft: #93c5fd;
 
     --text: #1f2937;
     --text-soft: #64748b;
@@ -34,7 +34,7 @@
     --shadow:
         0 8px 30px rgba(31, 41, 55, 0.06);
 
-    --sidebar-width: 258px;
+    --sidebar-width: 264px;
 
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -468,9 +468,9 @@ body.nav-open .sidebar-backdrop {
     position: sticky;
     top: 0;
 
-    height: 76px;
+    height: 64px;
 
-    padding: 0 30px;
+    padding: 0 28px;
 
     background: rgba(255, 255, 255, 0.94);
 
@@ -1909,7 +1909,7 @@ body.modal-open {
 @media (max-width: 1200px) {
 
     :root {
-        --sidebar-width: 235px;
+        --sidebar-width: 264px;
     }
 
     .content {
@@ -1982,7 +1982,7 @@ body.modal-open {
 @media (max-width: 760px) {
 
     .topbar {
-        height: 68px;
+        height: 64px;
 
         padding: 0 16px;
     }
@@ -2227,4 +2227,59 @@ a:focus-visible {
         animation-iteration-count: 1 !important;
     }
 
+}
+
+
+/* ============================================================
+   BENDahara DASHBOARD STYLE COMPATIBILITY
+   Menyamakan visual Riwayat dengan Dashboard Bendahara
+   tanpa mengubah struktur HTML/JS.
+   ============================================================ */
+
+.side-link.is-active {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.side-link.is-active .material-symbols-outlined {
+    color: #1d4ed8;
+}
+
+.side-link:hover {
+    background: #f1f5f9;
+    color: #1d4ed8;
+}
+
+.side-link:hover .material-symbols-outlined {
+    color: #2563eb;
+}
+
+.stat-card,
+.panel {
+    background: #ffffff;
+    border-color: #e5e7eb;
+}
+
+.filterbar__search:focus-within,
+.field select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
+}
+
+.icon-btn:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.btn--ghost:hover {
+    background: #f8fafc;
+    border-color: #dbe3ec;
+    color: #1d4ed8;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 264px;
+    }
 }

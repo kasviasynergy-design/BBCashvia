@@ -44,6 +44,21 @@ export default defineConfig({
                 'resources/js/bendahara-laporan-kas.js',
                 'resources/css/bendahara-riwayat-transaksi.css',
                 'resources/js/bendahara-riwayat-transaksi.js',
+
+                // Halaman viewer BBCashvia
+                'resources/css/viewer-dashboard.css',
+                'resources/js/viewer-dashboard.js',
+                'resources/css/viewer-siswa.css',
+                'resources/js/viewer-siswa.js',
+                'resources/css/viewer-iuran.css',
+                'resources/js/viewer-iuran.js',
+                'resources/css/viewer-transaksi.css',
+                'resources/js/viewer-transaksi.js',
+                'resources/css/viewer-riwayat-transaksi.css',
+                'resources/js/viewer-riwayat-transaksi.js',
+                'resources/css/viewer-laporan-kas.css',
+                'resources/js/viewer-laporan-kas.js'
+
             ],
             refresh: true,
         }),
