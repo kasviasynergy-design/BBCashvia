@@ -1,3 +1,4 @@
+```php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -12,8 +13,32 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('iuran', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+            $table->id('id_iuran');
+
+            $table->string('nama_iuran', 100);
+
+            $table->text('keterangan')
+                ->nullable();
+
+            $table->date('jatuh_tempo')
+                ->nullable();
+
+            $table->enum('frekuensi', [
+                'Harian',
+                'Mingguan',
+                'Bulanan',
+                'Tahunan',
+                'Insidental'
+            ]);
+
+            $table->decimal('nominal', 10, 2);
+
+            $table->enum('status', [
+                'Aktif',
+                'Selesai',
+                'Dibatalkan'
+            ]);
+
         });
     }
 
