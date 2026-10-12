@@ -38,32 +38,25 @@
         aria-hidden="true">
     </div>
 
-
     {{-- =========================================================
          SIDEBAR
     ========================================================== --}}
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar__brand">
-
             <div class="sidebar__logo">
-                <span class="material-symbols-outlined">
-                    account_balance_wallet
-                </span>
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="sidebar__logo-img"
+                >
             </div>
 
             <div class="sidebar__brandtext">
-                <span class="sidebar__brandname">
-                    BBCashvia
-                </span>
-
-                <span class="sidebar__brandsub">
-                    Kas Kelas Digital
-                </span>
+                <span class="sidebar__brandname">BBCashvia</span>
+                <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
-
         </div>
-
 
         <nav class="sidebar__nav">
 
@@ -82,14 +75,11 @@
                         dashboard
                     </span>
 
-                    <span>
-                        Dashboard
-                    </span>
+                    <span>Dashboard</span>
 
                 </a>
 
             </div>
-
 
             {{-- DATA & IURAN --}}
             <div class="sidebar__section">
@@ -106,9 +96,7 @@
                         groups
                     </span>
 
-                    <span>
-                        Siswa
-                    </span>
+                    <span>Siswa</span>
 
                 </a>
 
@@ -120,14 +108,11 @@
                         receipt_long
                     </span>
 
-                    <span>
-                        Iuran
-                    </span>
+                    <span>Iuran</span>
 
                 </a>
 
             </div>
-
 
             {{-- TRANSAKSI --}}
             <div class="sidebar__section">
@@ -144,14 +129,11 @@
                         payments
                     </span>
 
-                    <span>
-                        Transaksi
-                    </span>
+                    <span>Transaksi</span>
 
                 </a>
 
             </div>
-
 
             {{-- LAPORAN --}}
             <div class="sidebar__section">
@@ -168,9 +150,7 @@
                         account_balance
                     </span>
 
-                    <span>
-                        Laporan Kas
-                    </span>
+                    <span>Laporan Kas</span>
 
                 </a>
 
@@ -182,16 +162,13 @@
                         history
                     </span>
 
-                    <span>
-                        Riwayat Transaksi
-                    </span>
+                    <span>Riwayat Transaksi</span>
 
                 </a>
 
             </div>
 
         </nav>
-
 
         {{-- SIDEBAR FOOT --}}
         <div class="sidebar__foot">
@@ -225,9 +202,7 @@
                     logout
                 </span>
 
-                <span>
-                    Keluar
-                </span>
+                <span>Keluar</span>
 
             </button>
 
@@ -235,15 +210,12 @@
 
     </aside>
 
-
     {{-- =========================================================
          MAIN SHELL
     ========================================================== --}}
     <div class="shell">
 
-        {{-- =====================================================
-             TOPBAR
-        ====================================================== --}}
+        {{-- TOPBAR --}}
         <header class="topbar">
 
             <div class="topbar__left">
@@ -261,12 +233,9 @@
 
                 </button>
 
-
                 <div class="topbar__title">
 
-                    <h1>
-                        Iuran
-                    </h1>
+                    <h1>Iuran</h1>
 
                     <p id="currentDate">
                         Memuat tanggal...
@@ -276,7 +245,6 @@
 
             </div>
 
-
             <div class="topbar__right">
 
                 <div class="topbar__chip">
@@ -285,12 +253,9 @@
                         calendar_month
                     </span>
 
-                    <span>
-                        TA 2026/2027 • Ganjil
-                    </span>
+                    <span>TA 2026/2027 • Ganjil</span>
 
                 </div>
-
 
                 <div class="topbar__profilewrap">
 
@@ -321,7 +286,6 @@
                         </span>
 
                     </button>
-
 
                     <div
                         class="dropdown"
@@ -364,10 +328,7 @@
 
         </header>
 
-
-        {{-- =====================================================
-             CONTENT
-        ====================================================== --}}
+        {{-- CONTENT --}}
         <main class="content">
 
             {{-- PAGE HEADER --}}
@@ -379,9 +340,7 @@
                         DATA &amp; IURAN
                     </span>
 
-                    <h2>
-                        Iuran Kelas
-                    </h2>
+                    <h2>Iuran Kelas</h2>
 
                     <p>
                         Kelola iuran kelas XI RPL 1 dan pantau pembayaran siswa.
@@ -408,10 +367,7 @@
 
             </section>
 
-
-            {{-- =================================================
-                 SUMMARY
-            ================================================== --}}
+            {{-- SUMMARY --}}
             <section class="summary-grid">
 
                 <article class="summary-card">
@@ -444,7 +400,6 @@
 
                 </article>
 
-
                 <article class="summary-card">
 
                     <div class="summary-card__icon summary-card__icon--orange">
@@ -474,7 +429,6 @@
                     </div>
 
                 </article>
-
 
                 <article class="summary-card">
 
@@ -508,10 +462,7 @@
 
             </section>
 
-
-            {{-- =================================================
-                 MAIN PANEL
-            ================================================== --}}
+            {{-- MAIN PANEL --}}
             <section class="panel">
 
                 <div class="panel__head">
@@ -534,7 +485,6 @@
 
                 </div>
 
-
                 {{-- FILTER --}}
                 <div class="filter-bar">
 
@@ -552,52 +502,24 @@
 
                     </div>
 
-
                     <select id="filterFrekuensi">
 
-                        <option value="semua">
-                            Semua frekuensi
-                        </option>
-
-                        <option value="harian">
-                            Harian
-                        </option>
-
-                        <option value="mingguan">
-                            Mingguan
-                        </option>
-
-                        <option value="bulanan">
-                            Bulanan
-                        </option>
-
-                        <option value="tahunan">
-                            Tahunan
-                        </option>
-
-                        <option value="insidental">
-                            Insidental
-                        </option>
+                        <option value="semua">Semua frekuensi</option>
+                        <option value="harian">Harian</option>
+                        <option value="mingguan">Mingguan</option>
+                        <option value="bulanan">Bulanan</option>
+                        <option value="tahunan">Tahunan</option>
+                        <option value="insidental">Insidental</option>
 
                     </select>
-
 
                     <select id="filterStatusIuran">
 
-                        <option value="semua">
-                            Semua status
-                        </option>
-
-                        <option value="aktif">
-                            Aktif
-                        </option>
-
-                        <option value="nonaktif">
-                            Nonaktif
-                        </option>
+                        <option value="semua">Semua status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
 
                     </select>
-
 
                     <button
                         type="button"
@@ -614,57 +536,27 @@
 
                 </div>
 
-
                 {{-- TABLE --}}
                 <div class="table-wrap">
 
                     <table class="data-table">
 
                         <thead>
-
                             <tr>
-
-                                <th>
-                                    Nama Iuran
-                                </th>
-
-                                <th>
-                                    Frekuensi
-                                </th>
-
-                                <th>
-                                    Jatuh Tempo
-                                </th>
-
-                                <th>
-                                    Nominal
-                                </th>
-
-                                <th>
-                                    Terkumpul
-                                </th>
-
-                                <th>
-                                    Progres
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
-
-                                <th class="text-right">
-                                    Aksi
-                                </th>
-
+                                <th>Nama Iuran</th>
+                                <th>Frekuensi</th>
+                                <th>Jatuh Tempo</th>
+                                <th>Nominal</th>
+                                <th>Terkumpul</th>
+                                <th>Progres</th>
+                                <th>Status</th>
+                                <th class="text-right">Aksi</th>
                             </tr>
-
                         </thead>
 
-                        <tbody id="isiTabelIuran">
-                        </tbody>
+                        <tbody id="isiTabelIuran"></tbody>
 
                     </table>
-
 
                     <div
                         class="empty-state"
@@ -679,9 +571,7 @@
 
                         </div>
 
-                        <strong>
-                            Iuran tidak ditemukan
-                        </strong>
+                        <strong>Iuran tidak ditemukan</strong>
 
                         <p>
                             Coba ubah kata kunci atau filter pencarian.
@@ -691,16 +581,13 @@
 
                 </div>
 
-
                 <div class="panel__foot">
 
                     <span id="jumlahIuranFoot">
                         0 iuran
                     </span>
 
-                    <span>
-                        Kelas XI RPL 1
-                    </span>
+                    <span>Kelas XI RPL 1</span>
 
                 </div>
 
@@ -711,7 +598,6 @@
     </div>
 
 </div>
-
 
 {{-- =============================================================
      MODAL TAMBAH / EDIT IURAN
@@ -760,18 +646,13 @@
 
         </div>
 
-
-        <form
-            id="formIuran"
-            class="modal__body">
+        <form id="formIuran" class="modal__body">
 
             <div class="form-grid">
 
                 <div class="form-field form-field--full">
 
-                    <label for="inputNamaIuran">
-                        Nama Iuran
-                    </label>
+                    <label for="inputNamaIuran">Nama Iuran</label>
 
                     <input
                         type="text"
@@ -781,47 +662,23 @@
 
                 </div>
 
-
                 <div class="form-field">
 
-                    <label for="inputFrekuensi">
-                        Frekuensi
-                    </label>
+                    <label for="inputFrekuensi">Frekuensi</label>
 
-                    <select
-                        id="inputFrekuensi"
-                        required>
-
-                        <option value="harian">
-                            Harian
-                        </option>
-
-                        <option value="mingguan">
-                            Mingguan
-                        </option>
-
-                        <option value="bulanan">
-                            Bulanan
-                        </option>
-
-                        <option value="tahunan">
-                            Tahunan
-                        </option>
-
-                        <option value="insidental">
-                            Insidental
-                        </option>
-
+                    <select id="inputFrekuensi" required>
+                        <option value="harian">Harian</option>
+                        <option value="mingguan">Mingguan</option>
+                        <option value="bulanan">Bulanan</option>
+                        <option value="tahunan">Tahunan</option>
+                        <option value="insidental">Insidental</option>
                     </select>
 
                 </div>
 
-
                 <div class="form-field">
 
-                    <label for="inputJatuhTempo">
-                        Jatuh Tempo
-                    </label>
+                    <label for="inputJatuhTempo">Jatuh Tempo</label>
 
                     <input
                         type="date"
@@ -830,18 +687,13 @@
 
                 </div>
 
-
                 <div class="form-field">
 
-                    <label for="inputNominalIuran">
-                        Nominal
-                    </label>
+                    <label for="inputNominalIuran">Nominal</label>
 
                     <div class="money-input">
 
-                        <span>
-                            Rp
-                        </span>
+                        <span>Rp</span>
 
                         <input
                             type="number"
@@ -855,27 +707,16 @@
 
                 </div>
 
-
                 <div class="form-field">
 
-                    <label for="inputStatusIuran">
-                        Status
-                    </label>
+                    <label for="inputStatusIuran">Status</label>
 
                     <select id="inputStatusIuran">
-
-                        <option value="aktif">
-                            Aktif
-                        </option>
-
-                        <option value="nonaktif">
-                            Nonaktif
-                        </option>
-
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
                     </select>
 
                 </div>
-
 
                 <div class="form-field form-field--full">
 
@@ -892,13 +733,11 @@
 
             </div>
 
-
             <div
                 class="form-error"
                 id="formErrorIuran"
                 hidden>
             </div>
-
 
             <div class="modal__footer">
 
@@ -929,7 +768,6 @@
 
 </div>
 
-
 {{-- =============================================================
      MODAL DETAIL IURAN
 ============================================================= --}}
@@ -953,13 +791,9 @@
                     DETAIL IURAN
                 </span>
 
-                <h3 id="detailIuranTitle">
-                    -
-                </h3>
+                <h3 id="detailIuranTitle">-</h3>
 
-                <p id="detailIuranSub">
-                    -
-                </p>
+                <p id="detailIuranSub">-</p>
 
             </div>
 
@@ -976,61 +810,31 @@
 
         </div>
 
-
         <div class="modal__body">
 
             <div class="detail-summary">
 
                 <div class="detail-summary__item">
-
-                    <span>
-                        Frekuensi
-                    </span>
-
-                    <strong id="detailFrekuensi">
-                        -
-                    </strong>
-
+                    <span>Frekuensi</span>
+                    <strong id="detailFrekuensi">-</strong>
                 </div>
 
                 <div class="detail-summary__item">
-
-                    <span>
-                        Jatuh Tempo
-                    </span>
-
-                    <strong id="detailJatuhTempo">
-                        -
-                    </strong>
-
+                    <span>Jatuh Tempo</span>
+                    <strong id="detailJatuhTempo">-</strong>
                 </div>
 
                 <div class="detail-summary__item">
-
-                    <span>
-                        Nominal
-                    </span>
-
-                    <strong id="detailNominal">
-                        -
-                    </strong>
-
+                    <span>Nominal</span>
+                    <strong id="detailNominal">-</strong>
                 </div>
 
                 <div class="detail-summary__item">
-
-                    <span>
-                        Terkumpul
-                    </span>
-
-                    <strong id="detailTerkumpul">
-                        -
-                    </strong>
-
+                    <span>Terkumpul</span>
+                    <strong id="detailTerkumpul">-</strong>
                 </div>
 
             </div>
-
 
             <div class="detail-toolbar">
 
@@ -1048,71 +852,33 @@
 
                 </div>
 
-
                 <select id="filterDetailStatus">
-
-                    <option value="semua">
-                        Semua status
-                    </option>
-
-                    <option value="lunas">
-                        Lunas
-                    </option>
-
-                    <option value="belum">
-                        Belum Lunas
-                    </option>
-
+                    <option value="semua">Semua status</option>
+                    <option value="lunas">Lunas</option>
+                    <option value="belum">Belum Lunas</option>
                 </select>
 
             </div>
-
 
             <div class="table-wrap">
 
                 <table class="data-table detail-table">
 
                     <thead>
-
                         <tr>
-
-                            <th>
-                                No
-                            </th>
-
-                            <th>
-                                Siswa
-                            </th>
-
-                            <th>
-                                NISN
-                            </th>
-
-                            <th>
-                                Kelas
-                            </th>
-
-                            <th>
-                                Nominal
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th class="text-right">
-                                Aksi
-                            </th>
-
+                            <th>No</th>
+                            <th>Siswa</th>
+                            <th>NISN</th>
+                            <th>Kelas</th>
+                            <th>Nominal</th>
+                            <th>Status</th>
+                            <th class="text-right">Aksi</th>
                         </tr>
-
                     </thead>
 
-                    <tbody id="isiTabelDetail">
-                    </tbody>
+                    <tbody id="isiTabelDetail"></tbody>
 
                 </table>
-
 
                 <div
                     class="empty-state"
@@ -1127,9 +893,7 @@
 
                     </div>
 
-                    <strong>
-                        Data siswa tidak ditemukan
-                    </strong>
+                    <strong>Data siswa tidak ditemukan</strong>
 
                     <p>
                         Coba ubah pencarian atau filter.
@@ -1144,7 +908,6 @@
     </div>
 
 </div>
-
 
 {{-- =============================================================
      MODAL PEMBAYARAN
@@ -1169,9 +932,7 @@
                     CATAT PEMBAYARAN
                 </span>
 
-                <h3>
-                    Pembayaran Iuran
-                </h3>
+                <h3>Pembayaran Iuran</h3>
 
                 <p>
                     Catat pembayaran siswa dan uang yang diterima bendahara.
@@ -1192,72 +953,44 @@
 
         </div>
 
-
-        <form
-            id="formPembayaran"
-            class="modal__body">
+        <form id="formPembayaran" class="modal__body">
 
             <div class="payment-student">
 
-                <div class="payment-student__avatar" id="paymentAvatar">
+                <div
+                    class="payment-student__avatar"
+                    id="paymentAvatar">
                     SN
                 </div>
 
                 <div>
 
-                    <strong id="paymentStudentName">
-                        -
-                    </strong>
+                    <strong id="paymentStudentName">-</strong>
 
-                    <span id="paymentStudentMeta">
-                        -
-                    </span>
+                    <span id="paymentStudentMeta">-</span>
 
                 </div>
 
             </div>
-
 
             <div class="payment-box">
 
                 <div class="payment-box__row">
-
-                    <span>
-                        Iuran
-                    </span>
-
-                    <strong id="paymentIuranName">
-                        -
-                    </strong>
-
+                    <span>Iuran</span>
+                    <strong id="paymentIuranName">-</strong>
                 </div>
 
                 <div class="payment-box__row">
-
-                    <span>
-                        Tagihan
-                    </span>
-
-                    <strong id="pembayaranTagihan">
-                        Rp0
-                    </strong>
-
+                    <span>Tagihan</span>
+                    <strong id="pembayaranTagihan">Rp0</strong>
                 </div>
 
                 <div class="payment-box__row payment-box__row--remaining">
-
-                    <span>
-                        Sisa Tagihan
-                    </span>
-
-                    <strong id="paymentSisa">
-                        Rp0
-                    </strong>
-
+                    <span>Sisa Tagihan</span>
+                    <strong id="paymentSisa">Rp0</strong>
                 </div>
 
             </div>
-
 
             <div class="form-field">
 
@@ -1267,9 +1000,7 @@
 
                 <div class="money-input money-input--large">
 
-                    <span>
-                        Rp
-                    </span>
+                    <span>Rp</span>
 
                     <input
                         type="number"
@@ -1287,42 +1018,25 @@
 
             </div>
 
-
             <div class="payment-result">
 
                 <div class="payment-result__item">
-
-                    <span>
-                        Kembalian
-                    </span>
-
-                    <strong id="hasilKembalian">
-                        Rp0
-                    </strong>
-
+                    <span>Kembalian</span>
+                    <strong id="hasilKembalian">Rp0</strong>
                 </div>
 
                 <div class="payment-result__item payment-result__item--success">
-
-                    <span>
-                        Uang Masuk Kas
-                    </span>
-
-                    <strong id="hasilMasukKas">
-                        Rp0
-                    </strong>
-
+                    <span>Uang Masuk Kas</span>
+                    <strong id="hasilMasukKas">Rp0</strong>
                 </div>
 
             </div>
-
 
             <div
                 class="form-error"
                 id="formErrorPembayaran"
                 hidden>
             </div>
-
 
             <div class="modal__footer">
 
@@ -1354,7 +1068,6 @@
 
 </div>
 
-
 {{-- =============================================================
      TOAST
 ============================================================= --}}
@@ -1374,9 +1087,7 @@
 
     <div class="toast__content">
 
-        <strong id="toastTitle">
-            Berhasil
-        </strong>
+        <strong id="toastTitle">Berhasil</strong>
 
         <span id="toastMessage">
             Data berhasil disimpan.

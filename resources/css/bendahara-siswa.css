@@ -1,677 +1,900 @@
-@import "./bendahara-dashboard.css";
+@import url("./bendahara-dashboard.css");
 
-
-/* ============================================================
+/* =========================================================
    BBCASHVIA — BENDAHARA DATA SISWA
-   BASE:
-   bendahara-dashboard.css
-   ============================================================ */
+   Style mengikuti Bendahara Dashboard
+   Isi khusus: informasi kelas, statistik, dan tabel siswa
+========================================================= */
 
+:root {
+    --siswa-primary: var(--primary);
+    --siswa-primary-dark: var(--primary-dark);
+    --siswa-primary-soft: var(--primary-soft);
+    --siswa-success: var(--success);
+    --siswa-success-soft: var(--success-soft);
+    --siswa-danger: var(--danger);
+    --siswa-danger-soft: var(--danger-soft);
+    --siswa-warning: var(--warning);
+    --siswa-warning-soft: var(--warning-soft);
+}
 
-/* ============================================================
-   CLASS INFO
-   ============================================================ */
+/* =========================================================
+   DASAR HALAMAN
+========================================================= */
+
+.content {
+    min-width: 0;
+    color: var(--text);
+    font-family: "Inter", sans-serif;
+}
+
+.content *,
+.modal-backdrop *,
+.toast * {
+    box-sizing: border-box;
+}
+
+.content button,
+.content input,
+.content select,
+.modal-backdrop button,
+.modal-backdrop input,
+.modal-backdrop select {
+    font-family: inherit;
+}
+
+.content button:focus-visible,
+.content input:focus-visible,
+.content select:focus-visible,
+.modal-backdrop button:focus-visible,
+.modal-backdrop input:focus-visible,
+.modal-backdrop select:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .2);
+    outline-offset: 2px;
+}
+
+.content [hidden],
+.modal-backdrop [hidden] {
+    display: none !important;
+}
+
+/* =========================================================
+   HEADER DATA SISWA
+   Mengikuti hero Bendahara Dashboard
+========================================================= */
+
+.hero {
+    min-width: 0;
+}
+
+.hero__text {
+    min-width: 0;
+}
+
+.hero__eyebrow {
+    text-transform: uppercase;
+}
+
+.hero__title {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.hero__sub {
+    overflow-wrap: anywhere;
+}
+
+.hero__actions {
+    flex-shrink: 0;
+}
+
+.hero__actions .btn {
+    white-space: nowrap;
+}
+
+/* =========================================================
+   INFORMASI KELAS
+========================================================= */
 
 .class-info {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 15px 18px;
-    margin-bottom: 20px;
-
-    background: var(--surface);
+    min-width: 0;
+    margin-bottom: 24px;
+    padding: 16px 20px;
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
 .class-info__icon {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
-
     display: flex;
+    flex: 0 0 42px;
     align-items: center;
     justify-content: center;
-
-    border-radius: 11px;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     background: var(--primary-soft);
     color: var(--primary);
 }
 
 .class-info__icon .material-symbols-outlined {
-    font-size: 21px;
+    font-size: 22px;
 }
 
 .class-info__text {
-    min-width: 0;
-    flex: 1;
-
     display: flex;
+    flex: 1;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    min-width: 0;
+    color: var(--text-soft);
+    font-size: 11px;
+    line-height: 1.6;
 }
 
 .class-info__eyebrow {
-    color: var(--text-muted);
+    color: var(--primary);
     font-size: 9px;
     font-weight: 800;
     letter-spacing: .08em;
+    text-transform: uppercase;
 }
 
 .class-info__text strong {
     color: var(--text);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
-}
-
-.class-info__text > span:last-child {
-    color: var(--text-muted);
-    font-size: 9px;
 }
 
 .class-info__count {
     display: flex;
     align-items: baseline;
-    gap: 5px;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .class-info__count strong {
     color: var(--primary);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
 }
 
-.class-info__count span {
+/* =========================================================
+   STATISTIK SISWA
+   Mengikuti stat-card dashboard
+========================================================= */
+
+.stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    min-width: 0;
+    padding: 20px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-card__top {
+    margin-bottom: 15px;
+}
+
+.stat-card__label {
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.stat-card__value {
+    margin-top: 5px;
+    color: var(--text);
+    font-size: 23px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-card__icon--siswa {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.stat-card__icon--in {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.stat-card__icon--warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.stat-card__icon--trx {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.stat-card__foot {
+    min-height: 20px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: 10px;
+    line-height: 1.6;
 }
 
+/* =========================================================
+   PANEL DAFTAR SISWA
+========================================================= */
 
-/* ============================================================
-   STUDENT PANEL
-   ============================================================ */
-
+.panel,
 .student-panel {
+    min-width: 0;
+    margin-bottom: 24px;
     overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
 }
 
-
-/* ============================================================
-   TOOLBAR
-   ============================================================ */
-
-.student-tools {
+.panel__head {
+    min-height: 72px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
-
-    padding: 14px 20px;
-
-    border-top: 1px solid var(--border);
+    gap: 15px;
+    padding: 18px 20px;
     border-bottom: 1px solid var(--border);
-
-    background: #ffffff;
 }
 
-.student-search {
-    position: relative;
-    width: min(420px, 100%);
+.panel__head > div {
+    min-width: 0;
 }
 
-.student-search .material-symbols-outlined {
-    position: absolute;
-    left: 11px;
-    top: 50%;
-    transform: translateY(-50%);
+.panel__eyebrow {
+    color: var(--primary);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
 
+.panel__title {
+    margin-top: 3px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.panel__sub {
+    margin-top: 4px;
     color: var(--text-muted);
-    font-size: 18px;
-
-    pointer-events: none;
+    font-size: 10px;
+    line-height: 1.6;
 }
 
-.student-search input {
-    width: 100%;
-    height: 38px;
+/* =========================================================
+   TOMBOL
+========================================================= */
 
-    padding: 0 12px 0 36px;
+.btn {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 13px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background .2s ease, color .2s ease,
+        border-color .2s ease, transform .2s ease;
+}
 
+.btn .material-symbols-outlined {
+    font-size: 17px;
+}
+
+.btn--primary {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.btn--primary:hover {
+    border-color: var(--primary-dark);
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn--ghost {
+    border-color: #dbeafe;
+    background: #fff;
+    color: var(--primary);
+}
+
+.btn--ghost:hover {
+    background: var(--primary-soft);
+}
+
+/* =========================================================
+   PENCARIAN DAN FILTER
+========================================================= */
+
+.student-tools {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+}
+
+.student-search,
+.student-filter {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
     border: 1px solid var(--border);
     border-radius: 8px;
+    background: #fff;
+    color: var(--text-muted);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
 
-    background: #ffffff;
-    color: var(--text);
+.student-search:focus-within,
+.student-filter:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+}
 
-    font-family: "Inter", sans-serif;
-    font-size: 10px;
+.student-search > .material-symbols-outlined,
+.student-filter > .material-symbols-outlined {
+    flex-shrink: 0;
+    font-size: 19px;
+}
 
+.student-search input,
+.student-filter select {
+    width: 100%;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
     outline: none;
-
-    transition:
-        border-color .2s ease,
-        box-shadow .2s ease;
+    background: transparent;
+    color: var(--text);
+    font-size: 11px;
 }
 
 .student-search input::placeholder {
     color: var(--text-muted);
 }
 
-.student-search input:focus {
-    border-color: #93c5fd;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
-}
-
-
-.student-filter {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.student-filter .material-symbols-outlined {
-    color: var(--text-muted);
-    font-size: 18px;
+.student-search input:focus-visible,
+.student-filter select:focus-visible {
+    outline: none;
 }
 
 .student-filter select {
-    height: 38px;
-    min-width: 145px;
-
-    padding: 0 10px;
-
-    border: 1px solid var(--border);
-    border-radius: 8px;
-
-    background: #ffffff;
-    color: var(--text);
-
-    font-family: "Inter", sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-
-    outline: none;
     cursor: pointer;
 }
 
-.student-filter select:focus {
-    border-color: #93c5fd;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+/* =========================================================
+   TABEL SISWA
+========================================================= */
+
+.table-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: visible;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f8fafc;
 }
 
-
-/* ============================================================
-   TABLE
-   ============================================================ */
-
-.student-table {
-    min-width: 920px;
+.table-wrap::-webkit-scrollbar {
+    height: 7px;
 }
 
-.student-table th {
+.table-wrap::-webkit-scrollbar-track {
+    background: #f8fafc;
+}
+
+.table-wrap::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: #cbd5e1;
+}
+
+.student-table,
+.table.student-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+    border-spacing: 0;
+    text-align: left;
+}
+
+.student-table thead th {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #fafafa;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .045em;
     white-space: nowrap;
 }
 
-.student-table td {
+.student-table tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #fff;
+    color: var(--text-soft);
+    font-size: 10px;
+    line-height: 1.6;
     vertical-align: middle;
+    white-space: nowrap;
 }
+
+.student-table tbody tr:hover td {
+    background: #fafcff;
+}
+
+.student-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.student-table th:first-child,
+.student-table td:first-child {
+    width: 52px;
+    text-align: center;
+}
+
+.student-table th:nth-child(2),
+.student-table td:nth-child(2) {
+    min-width: 190px;
+}
+
+.student-table th:last-child,
+.student-table td:last-child {
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Identitas siswa */
 
 .student-name {
     display: flex;
     align-items: center;
-    gap: 9px;
-    min-width: 180px;
-}
-
-.student-avatar {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: var(--primary-soft);
-    color: var(--primary);
-
-    font-size: 9px;
-    font-weight: 800;
+    gap: 10px;
+    min-width: 0;
 }
 
 .student-name__text {
     min-width: 0;
-
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
 }
 
 .student-name__text strong {
-    overflow: hidden;
-
+    display: block;
     color: var(--text);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
-.student-name__text span {
+.student-number {
     color: var(--text-muted);
-    font-size: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.student-avatar,
+.student-name__avatar,
+.student-name .avatar {
+    display: inline-flex;
+    flex: 0 0 35px;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 800;
 }
 
 .student-nis {
+    display: inline-flex;
+    padding: 4px 7px;
+    border-radius: 6px;
+    background: var(--surface-soft);
     color: var(--text-soft);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 700;
 }
 
-.money {
-    color: var(--text-soft);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 9px;
-    font-weight: 600;
-    white-space: nowrap;
+.student-table .money {
+    color: var(--text);
+    font-size: 10px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
 }
 
-.money.paid {
-    color: var(--success);
-}
+/* =========================================================
+   STATUS IURAN
+========================================================= */
 
-.money.remaining {
-    color: var(--warning);
-}
-
-
-/* ============================================================
-   STATUS
-   ============================================================ */
-
-.status-badge {
+.student-table .status-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    min-height: 24px;
+    width: fit-content;
+    max-width: 100%;
     padding: 4px 8px;
-
+    border: 0;
     border-radius: 999px;
-
-    font-size: 8px;
-    font-weight: 800;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1.5;
     white-space: nowrap;
 }
 
-.status-badge.lunas {
+.student-table .status-badge--success,
+.student-table .badge--ok {
     background: var(--success-soft);
     color: var(--success);
 }
 
-.status-badge.belum {
+.student-table .status-badge--warning,
+.student-table .badge--partial {
     background: var(--warning-soft);
     color: var(--warning);
 }
 
+.student-table .badge--none {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
 
-/* ============================================================
-   ACTION
-   ============================================================ */
+/* =========================================================
+   AKSI SISWA
+========================================================= */
 
 .action-buttons {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
 }
 
 .action-btn {
-    width: 30px;
-    height: 30px;
-
     display: inline-flex;
+    flex: 0 0 30px;
     align-items: center;
     justify-content: center;
-
-    border: 1px solid var(--border);
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid transparent;
     border-radius: 7px;
-
-    background: #ffffff;
+    background: transparent;
     color: var(--text-soft);
-
     cursor: pointer;
-
-    transition:
-        color .2s ease,
-        background .2s ease,
-        border-color .2s ease;
-}
-
-.action-btn:hover {
-    color: var(--primary);
-    background: var(--primary-soft);
-    border-color: #bfdbfe;
-}
-
-.action-btn--danger:hover {
-    color: var(--danger);
-    background: var(--danger-soft);
-    border-color: #fecaca;
+    transition: background .18s ease, color .18s ease;
 }
 
 .action-btn .material-symbols-outlined {
     font-size: 17px;
 }
 
+.action-btn--view {
+    background: var(--primary-soft);
+    color: var(--primary);
+}
 
-/* ============================================================
-   EMPTY
-   ============================================================ */
+.action-btn--view:hover {
+    background: #dbeafe;
+}
+
+.action-btn--edit {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.action-btn--edit:hover {
+    background: #fef3c7;
+}
+
+.action-btn--delete {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.action-btn--delete:hover {
+    background: #fee2e2;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
 
 .table-empty {
     display: none;
-
-    min-height: 300px;
-
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-direction: column;
-
-    gap: 5px;
-
-    padding: 40px 20px;
-
+    gap: 9px;
+    min-height: 210px;
+    padding: 28px 18px;
     text-align: center;
 }
 
+.table-empty.is-visible,
 .table-empty.show {
     display: flex;
 }
 
 .table-empty__icon {
-    width: 46px;
-    height: 46px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 5px;
-
-    border-radius: 50%;
-
-    background: var(--surface-soft);
-    color: var(--text-muted);
+    display: grid;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--primary-soft);
+    color: var(--primary);
 }
 
 .table-empty__icon .material-symbols-outlined {
-    font-size: 23px;
+    font-size: 27px;
 }
 
 .table-empty h3 {
     margin: 0;
-
     color: var(--text);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
 }
 
 .table-empty p {
+    max-width: 380px;
     margin: 0;
-
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: 11px;
+    line-height: 1.8;
 }
 
-
-/* ============================================================
+/* =========================================================
    PAGINATION
-   ============================================================ */
+========================================================= */
 
 .student-pagination {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 14px;
-
-    min-height: 58px;
-
-    padding: 12px 20px;
-
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
     border-top: 1px solid var(--border);
-
-    background: #ffffff;
+    background: #fff;
 }
 
 .pagination-info {
     color: var(--text-muted);
-
-    font-family: "Inter", sans-serif;
-    font-size: 9px;
-    font-weight: 500;
-
-    white-space: nowrap;
+    font-size: 10px;
+    line-height: 1.7;
 }
 
 .pagination {
     display: flex;
     align-items: center;
-    gap: 4px;
-
-    flex-shrink: 0;
+    gap: 5px;
 }
 
 .pagination__numbers {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
 }
 
-
-/* ============================================================
-   PAGINATION BUTTON
-   ============================================================ */
-
 .page-btn {
-    min-width: 29px;
-    height: 29px;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    padding: 0 7px;
-
-    border: 1px solid transparent;
+    min-width: 31px;
+    height: 31px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
     border-radius: 7px;
-
-    background: transparent;
+    background: #fff;
     color: var(--text-soft);
-
-    font-family: "Inter", sans-serif;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 700;
-
     cursor: pointer;
-
-    transition:
-        color .2s ease,
-        background .2s ease,
-        border-color .2s ease,
-        opacity .2s ease;
 }
 
 .page-btn:hover:not(:disabled) {
+    border-color: #bfdbfe;
     background: var(--primary-soft);
     color: var(--primary);
 }
 
-.page-btn.active {
-    border-color: #bfdbfe;
-    background: var(--primary-soft);
-    color: var(--primary);
+.page-btn.active,
+.page-btn.is-active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
 }
 
 .page-btn:disabled {
-    opacity: .4;
     cursor: not-allowed;
+    opacity: .4;
 }
 
-
-/* ============================================================
-   PAGINATION ARROW
-   ============================================================ */
-
-.page-btn--arrow {
-    border-color: var(--border);
-    background: #ffffff;
-}
-
-.page-btn--arrow:hover:not(:disabled) {
-    border-color: #bfdbfe;
-    background: var(--primary-soft);
-    color: var(--primary);
-}
-
-.page-btn--arrow .material-symbols-outlined {
-    font-size: 17px;
-    line-height: 1;
-}
-
-
-/* ============================================================
+/* =========================================================
    MODAL
-   ============================================================ */
+========================================================= */
 
 .modal-backdrop {
     position: fixed;
-    inset: 0;
-
     z-index: 2000;
-
+    inset: 0;
     display: none;
     align-items: center;
     justify-content: center;
-
     padding: 20px;
-
-    background: rgba(15, 23, 42, .48);
+    overflow-y: auto;
+    background: rgba(15, 23, 42, .55);
     backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 }
 
+.modal-backdrop.is-open,
+.modal-backdrop.open,
+.modal-backdrop.active,
 .modal-backdrop.show {
     display: flex;
 }
 
 .modal {
-    width: min(620px, 100%);
+    position: relative;
+    width: 100%;
+    max-width: 660px;
     max-height: calc(100vh - 40px);
-
-    overflow-y: auto;
-
-    background: #ffffff;
-
+    overflow: auto;
+    overscroll-behavior: contain;
     border: 1px solid var(--border);
-    border-radius: 16px;
-
-    box-shadow:
-        0 20px 50px rgba(15, 23, 42, .18);
+    border-radius: var(--radius-md);
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(15, 23, 42, .18);
 }
 
 .modal--detail {
-    width: min(540px, 100%);
+    max-width: 600px;
 }
 
-.modal__header {
+.modal__header,
+.modal__head {
+    position: sticky;
+    z-index: 2;
+    top: 0;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 20px;
-
-    padding: 20px 22px;
-
+    gap: 15px;
+    padding: 18px 21px;
     border-bottom: 1px solid var(--border);
+    background: #fff;
 }
 
 .modal__eyebrow {
+    margin-bottom: 6px;
     color: var(--primary);
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 800;
     letter-spacing: .08em;
 }
 
-.modal__header h2 {
-    margin: 4px 0 0;
-
+.modal__header h2,
+.modal__title {
+    margin: 0;
     color: var(--text);
-
-    font-family: "Plus Jakarta Sans", sans-serif;
     font-size: 17px;
     font-weight: 800;
+    line-height: 1.5;
 }
 
 .modal__header p {
     margin: 5px 0 0;
-
     color: var(--text-muted);
-    font-size: 9px;
-    line-height: 1.5;
+    font-size: 11px;
+    line-height: 1.7;
 }
 
 .modal__close {
+    display: grid;
+    flex: 0 0 34px;
     width: 34px;
     height: 34px;
-    flex: 0 0 34px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
+    place-items: center;
+    border: 1px solid var(--border);
     border-radius: 8px;
-
-    color: var(--text-muted);
-
+    background: #fff;
+    color: var(--text-soft);
     cursor: pointer;
 }
 
 .modal__close:hover {
-    background: var(--danger-soft);
+    background: var(--surface-soft);
     color: var(--danger);
 }
 
-.modal__close .material-symbols-outlined {
-    font-size: 19px;
+.modal__body {
+    padding: 20px;
 }
 
+.modal__footer,
+.modal__foot {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 9px;
+    padding: 14px 21px;
+    border-top: 1px solid var(--border);
+    background: #fff;
+}
 
-/* ============================================================
-   FORM
-   ============================================================ */
+/* =========================================================
+   FORM SISWA
+========================================================= */
 
 #studentForm {
-    padding: 20px 22px 0;
+    padding: 20px 21px 0;
 }
 
 .form-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 15px;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 7px;
+    min-width: 0;
 }
 
 .form-group label {
-    color: var(--text);
-    font-size: 9px;
+    color: var(--text-soft);
+    font-size: 11px;
     font-weight: 700;
 }
 
@@ -682,246 +905,297 @@
 .form-group input,
 .form-group select {
     width: 100%;
-    height: 40px;
-
+    min-width: 0;
+    height: 41px;
     padding: 0 11px;
-
-    border: 1px solid var(--border);
+    border: 1px solid #dbe2ea;
     border-radius: 8px;
-
-    background: #ffffff;
-    color: var(--text);
-
-    font-family: "Inter", sans-serif;
-    font-size: 10px;
-
     outline: none;
+    background: #fff;
+    color: var(--text);
+    font-size: 11px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
-    border-color: #93c5fd;
+    border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
 }
 
 .form-group input[readonly] {
-    background: var(--surface-soft);
+    background: var(--bg);
     color: var(--text-soft);
-}
-
-.form-error {
-    min-height: 11px;
-
-    color: var(--danger);
-    font-size: 8px;
 }
 
 .form-hint {
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: 10px;
+    line-height: 1.6;
 }
 
-
-/* ============================================================
-   MODAL FOOTER
-   ============================================================ */
-
-.modal__footer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-
-    margin-top: 20px;
-    padding: 14px 22px;
-
-    border-top: 1px solid var(--border);
-    background: #fafafa;
+.form-error {
+    display: none;
+    color: var(--danger);
+    font-size: 10px;
+    line-height: 1.5;
 }
 
+.form-error.show,
+.form-error.is-visible {
+    display: block;
+}
 
-/* ============================================================
-   DETAIL
-   ============================================================ */
+/* =========================================================
+   DETAIL SISWA
+========================================================= */
 
 .detail-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
-
-    margin: 20px 22px 14px;
-    padding: 13px;
-
-    border-radius: 11px;
-    background: var(--surface-soft);
+    gap: 13px;
+    margin: 18px 21px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
 }
 
 .detail-avatar {
+    display: grid;
+    flex: 0 0 46px;
     width: 46px;
     height: 46px;
-    flex: 0 0 46px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
+    place-items: center;
     border-radius: 50%;
-
     background: var(--primary-soft);
     color: var(--primary);
-
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
 }
 
 .detail-profile__info {
-    min-width: 0;
-
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 5px;
+    min-width: 0;
 }
 
 .detail-profile__info strong {
     color: var(--text);
-    font-size: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
 }
 
 .detail-profile__info span {
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: 11px;
+    overflow-wrap: anywhere;
 }
 
 .detail-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
-
-    padding: 0 22px;
+    gap: 11px;
+    padding: 0 21px 20px;
 }
 
 .detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
     padding: 12px;
-
     border: 1px solid var(--border);
     border-radius: 9px;
+    background: var(--bg);
+}
 
-    background: #ffffff;
+.detail-item > span {
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.detail-item strong {
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 750;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
 }
 
 .detail-item--wide {
     grid-column: 1 / -1;
 }
 
-.detail-item span {
-    display: block;
-
-    color: var(--text-muted);
-    font-size: 8px;
-}
-
-.detail-item strong {
-    display: block;
-
-    margin-top: 5px;
-
-    color: var(--text);
-    font-family: "JetBrains Mono", monospace;
-    font-size: 10px;
-}
-
-.detail-item strong.success {
-    color: var(--success);
-}
-
-.detail-item strong.warning {
-    color: var(--warning);
-}
-
-
-/* ============================================================
+/* =========================================================
    TOAST
-   ============================================================ */
+========================================================= */
 
 .toast {
     position: fixed;
+    z-index: 3000;
     right: 22px;
     bottom: 22px;
-
-    z-index: 3000;
-
-    display: none;
+    display: flex;
     align-items: center;
     gap: 10px;
-
-    width: min(350px, calc(100vw - 32px));
-
-    padding: 12px;
-
-    border: 1px solid var(--border);
-    border-radius: 12px;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 12px 30px rgba(15, 23, 42, .14);
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding: 12px 15px;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    background: var(--success-soft);
+    color: #166534;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+    font-size: 11px;
+    line-height: 1.6;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
 }
 
-.toast.show {
-    display: flex;
+.toast.show,
+.toast.is-show,
+.toast.active,
+.toast.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
-.toast__icon {
+.toast > .material-symbols-outlined {
+    flex: 0 0 auto;
     color: var(--success);
+    font-size: 21px;
+}
+
+.toast > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .toast strong {
-    display: block;
-
-    color: var(--text);
-    font-size: 10px;
+    font-size: 11px;
+    font-weight: 800;
 }
 
-.toast span:not(.toast__icon) {
-    display: block;
+.toast span:not(.material-symbols-outlined) {
+    color: #166534;
+    font-size: 11px;
+}
 
-    margin-top: 2px;
+/* =========================================================
+   FOOTER
+========================================================= */
 
+.content__foot {
+    padding: 20px 0 8px;
     color: var(--text-muted);
-    font-size: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: center;
 }
 
+/* =========================================================
+   RESPONSIVE TABLET
+========================================================= */
 
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .class-info {
+        margin-bottom: 20px;
+    }
+
+    .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+    }
+
+    .student-table thead th,
+    .student-table tbody td {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE HP
+========================================================= */
 
 @media (max-width: 768px) {
-
     .class-info {
         align-items: flex-start;
+        padding: 14px;
+        margin-bottom: 18px;
     }
 
     .class-info__count {
         margin-left: auto;
     }
 
+    .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .stat-card {
+        padding: 15px;
+    }
+
+    .stat-card__top {
+        gap: 8px;
+        margin-bottom: 11px;
+    }
+
+    .stat-card__icon {
+        width: 35px;
+        height: 35px;
+    }
+
+    .stat-card__icon .material-symbols-outlined {
+        font-size: 19px;
+    }
+
+    .stat-card__value {
+        font-size: 17px;
+    }
+
+    .stat-card__label {
+        font-size: 10px;
+    }
+
+    .stat-card__foot {
+        font-size: 9px;
+    }
+
+    .panel,
+    .student-panel {
+        margin-bottom: 18px;
+    }
+
+    .panel__head {
+        min-height: 65px;
+        padding: 15px;
+    }
+
     .student-tools {
-        align-items: stretch;
-        flex-direction: column;
-        padding: 13px 15px;
+        grid-template-columns: minmax(0, 1fr);
+        padding: 12px 15px;
     }
 
-    .student-search {
-        width: 100%;
-    }
-
+    .student-search,
     .student-filter {
         width: 100%;
     }
 
-    .student-filter select {
-        flex: 1;
+    .student-table {
+        min-width: 1000px;
     }
 
     .student-pagination {
@@ -931,141 +1205,137 @@
     }
 
     .pagination {
-        width: 100%;
-        justify-content: flex-end;
-    }
-
-    .pagination-info {
-        white-space: normal;
+        flex-wrap: wrap;
+        max-width: 100%;
     }
 
     .modal-backdrop {
-        padding: 12px;
+        align-items: flex-end;
+        padding: 10px;
     }
 
     .modal {
-        max-height: calc(100vh - 24px);
+        max-height: calc(100dvh - 20px);
+        border-radius: 12px;
     }
 
-    .modal__header {
-        padding: 17px;
+    .modal__header,
+    .modal__head {
+        padding: 15px;
+    }
+
+    .modal__header h2,
+    .modal__title {
+        font-size: 16px;
     }
 
     #studentForm {
-        padding: 17px 17px 0;
+        padding: 15px 15px 0;
     }
 
-    .form-grid {
-        grid-template-columns: 1fr;
+    .modal__body {
+        padding: 15px;
+    }
+
+    .modal__footer,
+    .modal__foot {
+        padding: 13px 15px;
     }
 
     .detail-profile {
-        margin-left: 17px;
-        margin-right: 17px;
+        margin: 15px;
     }
 
     .detail-grid {
-        grid-template-columns: 1fr;
-        padding-left: 17px;
-        padding-right: 17px;
+        padding: 0 15px 15px;
+    }
+
+    .toast {
+        right: 14px;
+        bottom: 14px;
+    }
+}
+
+/* =========================================================
+   HP KECIL
+========================================================= */
+
+@media (max-width: 480px) {
+    .class-info {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .class-info__count {
+        width: 100%;
+        margin-left: 52px;
+    }
+
+    .stat-grid {
+        gap: 8px;
+    }
+
+    .stat-card {
+        padding: 12px;
+    }
+
+    .stat-card__value {
+        font-size: 15px;
+    }
+
+    .hero__actions {
+        width: 100%;
+    }
+
+    .hero__actions .btn {
+        width: 100%;
+    }
+
+    .form-grid,
+    .detail-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .detail-item--wide {
         grid-column: auto;
     }
 
-    .modal__footer {
-        padding-left: 17px;
-        padding-right: 17px;
-    }
-}
-
-
-@media (max-width: 480px) {
-
-    .class-info {
-        gap: 10px;
-        padding: 12px;
-    }
-
-    .class-info__text > span:last-child {
-        display: none;
-    }
-
-    .class-info__count strong {
-        font-size: 17px;
-    }
-
-    .student-table {
-        min-width: 850px;
-    }
-
-    .student-pagination {
-        gap: 10px;
-    }
-
-    .pagination {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .pagination__numbers {
+    .modal__footer .btn,
+    .modal__foot .btn {
         flex: 1;
-        justify-content: center;
     }
 
-    .modal__header h2 {
-        font-size: 15px;
-    }
-
-    .modal__footer {
-        flex-direction: column-reverse;
-    }
-
-    .modal__footer .btn {
-        width: 100%;
+    .toast {
+        right: 12px;
+        bottom: 12px;
+        max-width: calc(100vw - 24px);
     }
 }
 
 /* =========================================================
-   SISWA TABLE — RENDER FIX
-   ========================================================= */
+   HP SANGAT KECIL
+========================================================= */
 
-/* Pastikan body tabel selalu terlihat */
-.student-table tbody {
-    display: table-row-group;
+@media (max-width: 360px) {
+    .stat-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .stat-card__value {
+        font-size: 17px;
+    }
 }
 
-/* Pastikan baris hasil render JS tampil normal */
-.student-table tbody tr {
-    display: table-row;
-}
+/* =========================================================
+   AKSESIBILITAS
+========================================================= */
 
-/* Pastikan cell hasil render JS tampil normal */
-.student-table tbody td {
-    display: table-cell;
-}
-
-/* Empty state hanya muncul ketika JS menambahkan class .show */
-#emptyState:not(.show) {
-    display: none !important;
-}
-
-/* Saat ada data, empty state tetap tersembunyi */
-.student-table-wrap #emptyState:not(.show),
-.table-wrap #emptyState:not(.show) {
-    display: none !important;
-}
-
-/* Tabel tidak boleh dipaksa hilang */
-.student-table {
-    display: table;
-    width: 100%;
-    min-width: 920px;
-}
-
-/* Wrapper tetap bisa scroll horizontal */
-.student-panel .table-wrap {
-    width: 100%;
-    overflow-x: auto;
+@media (prefers-reduced-motion: reduce) {
+    .content *,
+    .modal-backdrop *,
+    .toast {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
 }

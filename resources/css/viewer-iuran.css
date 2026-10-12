@@ -139,6 +139,14 @@ a {
     color: white;
 }
 
+.brand-icon-img {
+    display: block;
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    transform: translate(-6px, -6px);
+}
+
 .brand-icon .material-symbols-outlined {
     font-size: 20px;
 }

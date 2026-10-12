@@ -55,11 +55,13 @@
         {{-- BRAND --}}
         <div class="sidebar-brand">
 
-            <div class="brand-icon">
-                <span class="material-symbols-outlined">
-                    account_balance_wallet
-                </span>
-            </div>
+        <div class="brand-icon">
+            <img
+            src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+            alt="Logo BBCashvia"
+            class="brand-icon-img"
+            >
+        </div>
 
             <div class="brand-text">
                 <strong>BBCashvia</strong>

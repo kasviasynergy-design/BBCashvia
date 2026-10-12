@@ -165,19 +165,29 @@ svg {
 }
 
 .sidebar__logo {
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    flex: 0 0 42px;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    overflow: hidden;
     border-radius: 10px;
-    background: var(--primary);
-    color: #ffffff;
+    background: transparent;
 }
 
-.sidebar__logo .material-symbols-outlined {
-    font-size: 21px;
+.sidebar__logo-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: inherit;
 }
 
 .sidebar__brandtext {

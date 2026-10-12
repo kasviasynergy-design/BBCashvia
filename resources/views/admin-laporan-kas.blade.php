@@ -37,14 +37,19 @@
     <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
 
         <div class="sidebar__brand">
-            <div class="sidebar__logo">
-                <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
-            </div>
-            <div class="sidebar__brandtext">
-                <span class="sidebar__brandname">BBCashvia</span>
-                <span class="sidebar__brandsub">Kas Kelas Digital</span>
-            </div>
-        </div>
+    <div class="sidebar__logo">
+        <img
+            src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+            alt="Logo BBCashvia"
+            class="sidebar__logo-img"
+        >
+    </div>
+
+    <div class="sidebar__brandtext">
+        <span class="sidebar__brandname">BBCashvia</span>
+        <span class="sidebar__brandsub">Kas Kelas Digital</span>
+    </div>
+</div>
 
 
         <nav class="sidebar__nav">

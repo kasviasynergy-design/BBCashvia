@@ -39,9 +39,11 @@
         <div class="site-header__inner">
 
             <div class="brand">
-                <span class="brand__icon material-symbols-outlined" aria-hidden="true">
-                    account_balance
-                </span>
+            <img
+                src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                alt="Logo BBCashvia"
+                class="brand__icon"
+            >
 
                 <span class="brand__text">
                     <strong class="brand__name">BBCashvia</strong>

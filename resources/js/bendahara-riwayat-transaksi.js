@@ -1158,7 +1158,7 @@
         /* LOGOUT */
 
         const logoutSidebar =
-            $("btnSidebarLogout");
+            $("sidebarLogout");
 
         const logoutProfile =
             $("btnProfileLogout");

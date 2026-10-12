@@ -31,11 +31,12 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar-brand">
-            <div class="brand-icon">
+          <div class="brand-icon">
                 <span class="material-symbols-outlined">
                     account_balance_wallet
                 </span>
             </div>
+
 
             <div class="brand-text">
                 <strong>BBCashvia</strong>

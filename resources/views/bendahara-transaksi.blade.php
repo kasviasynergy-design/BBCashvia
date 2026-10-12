@@ -31,16 +31,21 @@
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar__brand">
+
             <div class="sidebar__logo">
-                <span class="material-symbols-outlined">account_balance_wallet</span>
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="sidebar__logo-img"
+                >
             </div>
 
             <div class="sidebar__brandtext">
                 <span class="sidebar__brandname">BBCashvia</span>
-                <span class="sidebar__brandsub">KASVIA Synergy</span>
+                <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
-        </div>
 
+        </div>
 
         <nav class="sidebar__nav">
 
@@ -50,16 +55,12 @@
                     MENU UTAMA
                 </div>
 
-                <a
-                    href="/dashboard/bendahara"
-                    class="side-link"
-                >
+                <a href="/dashboard/bendahara" class="side-link">
                     <span class="material-symbols-outlined">dashboard</span>
                     <span>Dashboard</span>
                 </a>
 
             </div>
-
 
             <div class="sidebar__section">
 
@@ -67,24 +68,17 @@
                     DATA &amp; IURAN
                 </div>
 
-                <a
-                    href="/bendahara/siswa"
-                    class="side-link"
-                >
+                <a href="/bendahara/siswa" class="side-link">
                     <span class="material-symbols-outlined">groups</span>
                     <span>Siswa</span>
                 </a>
 
-                <a
-                    href="/bendahara/iuran"
-                    class="side-link"
-                >
+                <a href="/bendahara/iuran" class="side-link">
                     <span class="material-symbols-outlined">receipt_long</span>
                     <span>Iuran</span>
                 </a>
 
             </div>
-
 
             <div class="sidebar__section">
 
@@ -92,16 +86,12 @@
                     TRANSAKSI
                 </div>
 
-                <a
-                    href="/bendahara/transaksi"
-                    class="side-link is-active"
-                >
+                <a href="/bendahara/transaksi" class="side-link is-active">
                     <span class="material-symbols-outlined">payments</span>
                     <span>Transaksi</span>
                 </a>
 
             </div>
-
 
             <div class="sidebar__section">
 
@@ -109,18 +99,12 @@
                     LAPORAN
                 </div>
 
-                <a
-                    href="/bendahara/laporan-kas"
-                    class="side-link"
-                >
+                <a href="/bendahara/laporan-kas" class="side-link">
                     <span class="material-symbols-outlined">account_balance</span>
                     <span>Laporan Kas</span>
                 </a>
 
-                <a
-                    href="/bendahara/riwayat-transaksi"
-                    class="side-link"
-                >
+                <a href="/bendahara/riwayat-transaksi" class="side-link">
                     <span class="material-symbols-outlined">history</span>
                     <span>Riwayat Transaksi</span>
                 </a>
@@ -128,7 +112,6 @@
             </div>
 
         </nav>
-
 
         <div class="sidebar__foot">
 
@@ -152,16 +135,12 @@
 
             </div>
 
-
             <button
                 type="button"
                 class="sidebar__logout"
                 id="sidebarLogout"
             >
-                <span class="material-symbols-outlined">
-                    logout
-                </span>
-
+                <span class="material-symbols-outlined">logout</span>
                 <span>Keluar</span>
             </button>
 
@@ -169,6 +148,10 @@
 
     </aside>
 
+    <div
+        class="sidebar-backdrop"
+        id="sidebarBackdrop"
+    ></div>
 
     <div
         class="sidebar-backdrop"

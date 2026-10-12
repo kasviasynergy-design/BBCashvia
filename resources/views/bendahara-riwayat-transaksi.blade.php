@@ -36,154 +36,92 @@
     <!-- =====================================================
          SIDEBAR
     ====================================================== -->
+
     <aside class="sidebar" id="sidebar">
 
         <div class="sidebar__brand">
 
             <div class="sidebar__logo">
-                <span class="material-symbols-outlined">
-                    account_balance_wallet
-                </span>
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="sidebar__logo-img"
+                >
             </div>
 
             <div class="sidebar__brandtext">
-
-                <div class="sidebar__brandname">
-                    BBCashvia
-                </div>
-
-                <div class="sidebar__brandsub">
-                    KASVIA Synergy
-                </div>
-
+                <span class="sidebar__brandname">BBCashvia</span>
+                <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
 
         </div>
 
-
         <nav class="sidebar__nav">
 
-            <!-- MENU UTAMA -->
             <div class="sidebar__section">
 
                 <div class="sidebar__section-title">
                     MENU UTAMA
                 </div>
 
-                <a
-                    href="/dashboard/bendahara"
-                    class="side-link"
-                >
-                    <span class="material-symbols-outlined">
-                        dashboard
-                    </span>
-
-                    <span>
-                        Dashboard
-                    </span>
+                <a href="/dashboard/bendahara" class="side-link">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
                 </a>
 
             </div>
 
-
-            <!-- DATA & IURAN -->
             <div class="sidebar__section">
 
                 <div class="sidebar__section-title">
-                    DATA & IURAN
+                    DATA &amp; IURAN
                 </div>
 
-                <a
-                    href="/bendahara/siswa"
-                    class="side-link"
-                >
-                    <span class="material-symbols-outlined">
-                        groups
-                    </span>
-
-                    <span>
-                        Siswa
-                    </span>
+                <a href="/bendahara/siswa" class="side-link">
+                    <span class="material-symbols-outlined">groups</span>
+                    <span>Siswa</span>
                 </a>
 
-                <a
-                    href="/bendahara/iuran"
-                    class="side-link"
-                >
-                    <span class="material-symbols-outlined">
-                        receipt_long
-                    </span>
-
-                    <span>
-                        Iuran
-                    </span>
+                <a href="/bendahara/iuran" class="side-link">
+                    <span class="material-symbols-outlined">receipt_long</span>
+                    <span>Iuran</span>
                 </a>
 
             </div>
 
-
-            <!-- TRANSAKSI -->
             <div class="sidebar__section">
 
                 <div class="sidebar__section-title">
                     TRANSAKSI
                 </div>
 
-                <a
-                    href="/bendahara/transaksi"
-                    class="side-link"
-                >
-                    <span class="material-symbols-outlined">
-                        payments
-                    </span>
-
-                    <span>
-                        Transaksi
-                    </span>
+                <a href="/bendahara/transaksi" class="side-link">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span>Transaksi</span>
                 </a>
 
             </div>
 
-
-            <!-- LAPORAN -->
             <div class="sidebar__section">
 
                 <div class="sidebar__section-title">
                     LAPORAN
                 </div>
 
-                <a
-                    href="/bendahara/laporan-kas"
-                    class="side-link"
-                >
-                    <span class="material-symbols-outlined">
-                        account_balance
-                    </span>
-
-                    <span>
-                        Laporan Kas
-                    </span>
+                <a href="/bendahara/laporan-kas" class="side-link">
+                    <span class="material-symbols-outlined">account_balance</span>
+                    <span>Laporan Kas</span>
                 </a>
 
-                <a
-                    href="/bendahara/riwayat-transaksi"
-                    class="side-link is-active"
-                >
-                    <span class="material-symbols-outlined">
-                        history
-                    </span>
-
-                    <span>
-                        Riwayat Transaksi
-                    </span>
+                <a href="/bendahara/riwayat-transaksi" class="side-link is-active" aria-current="page">
+                    <span class="material-symbols-outlined">history</span>
+                    <span>Riwayat Transaksi</span>
                 </a>
 
             </div>
 
         </nav>
 
-
-        <!-- SIDEBAR FOOT -->
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
@@ -194,44 +132,35 @@
 
                 <div class="sidebar__userinfo">
 
-                    <div class="sidebar__username">
+                    <span class="sidebar__username">
                         Siti Nurhaliza
-                    </div>
+                    </span>
 
-                    <div class="sidebar__userrole">
-                        Bendahara • Kelas XI RPL 1
-                    </div>
+                    <span class="sidebar__userrole">
+                        Bendahara • XI RPL 1
+                    </span>
 
                 </div>
 
             </div>
 
-
             <button
                 type="button"
                 class="sidebar__logout"
-                id="btnSidebarLogout"
+                id="sidebarLogout"
             >
-                <span class="material-symbols-outlined">
-                    logout
-                </span>
-
-                <span>
-                    Keluar
-                </span>
+                <span class="material-symbols-outlined">logout</span>
+                <span>Keluar</span>
             </button>
 
         </div>
 
     </aside>
 
-
-    <!-- BACKDROP -->
     <div
         class="sidebar-backdrop"
         id="sidebarBackdrop"
     ></div>
-
 
     <!-- =====================================================
          MAIN SHELL
@@ -338,20 +267,6 @@
 
                         </div>
 
-
-                        <button
-                            type="button"
-                            class="dropdown__item"
-                            id="btnProfileAccount"
-                        >
-                            <span class="material-symbols-outlined">
-                                person
-                            </span>
-
-                            <span>
-                                Profil
-                            </span>
-                        </button>
 
 
                         <button

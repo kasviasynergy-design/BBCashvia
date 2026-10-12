@@ -149,26 +149,30 @@ a {
 
 
 .sidebar__logo {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    flex: 0 0 42px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    overflow: hidden;
     border-radius: 10px;
-
-    background: var(--primary);
-    color: #fff;
+    background: transparent;
 }
 
+.sidebar__logo-img {
+    display: block;
+    width: 100%;
+    height: 100%;
 
-.sidebar__logo .material-symbols-outlined {
-    font-size: 21px;
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: inherit;
 }
-
-
 .sidebar__brandtext {
     min-width: 0;
 

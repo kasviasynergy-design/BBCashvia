@@ -56,9 +56,11 @@
         <div class="brand">
 
             <div class="brand-icon">
-                <span class="material-symbols-outlined">
-                    account_balance_wallet
-                </span>
+            <img
+            src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+            alt="Logo BBCashvia"
+            class="brand-icon-img"
+            >
             </div>
 
             <div class="brand-text">
