@@ -7,17 +7,11 @@ use Illuminate\Validation\Rule;
 
 class StoreTransaksiRequest extends FormRequest
 {
-    /**
-     * Menentukan apakah request diizinkan.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Aturan validasi transaksi BBCashvia.
-     */
     public function rules(): array
     {
         return [
@@ -31,8 +25,13 @@ class StoreTransaksiRequest extends FormRequest
             'id_user' => [
                 'required',
                 'integer',
-                'min:1',
-                'exists:users,id',
+                'exists:users,id_users',
+            ],
+
+            'id_siswa' => [
+                'nullable',
+                'integer',
+                'exists:siswa,id_siswa',
             ],
 
             'id_iuran' => [
@@ -65,7 +64,7 @@ class StoreTransaksiRequest extends FormRequest
 
             'metode' => [
                 'required',
-                Rule::in(['TF', 'Q', 'TU']),
+                Rule::in(['TF', 'CH']),
             ],
 
             'jenis' => [
@@ -75,8 +74,15 @@ class StoreTransaksiRequest extends FormRequest
 
             'kategori' => [
                 'nullable',
-                'string',
-                'max:50',
+                Rule::in([
+                    'Iuran',
+                    'kas',
+                    'kebutuhan kelas',
+                    'perlengkapan kelas',
+                    'kegiatan kelas',
+                    'pemasukan lainnya',
+                    'pengeluaran lainnya',
+                ]),
             ],
 
             'pic' => [
@@ -97,12 +103,21 @@ class StoreTransaksiRequest extends FormRequest
                 'min:0',
                 'gte:nominal',
             ],
+
+            'Detail' => [
+                'required',
+                'string',
+            ],
+
+            'bukti_file' => [
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,pdf',
+                'max:2048',
+            ],
         ];
     }
 
-    /**
-     * Pesan validasi dalam bahasa Indonesia.
-     */
     public function messages(): array
     {
         return [
@@ -111,11 +126,8 @@ class StoreTransaksiRequest extends FormRequest
             'no_bukti.max' => 'Nomor bukti maksimal 30 karakter.',
 
             'id_user.required' => 'ID pengguna wajib diisi.',
-            'id_user.integer' => 'ID pengguna harus berupa angka.',
-            'id_user.min' => 'ID pengguna tidak valid.',
             'id_user.exists' => 'Data pengguna tidak ditemukan.',
-
-            'id_iuran.integer' => 'ID iuran harus berupa angka.',
+            'id_siswa.exists' => 'Data siswa tidak ditemukan.',
             'id_iuran.exists' => 'Data iuran tidak ditemukan.',
 
             'tanggal.required' => 'Tanggal transaksi wajib diisi.',
@@ -125,22 +137,21 @@ class StoreTransaksiRequest extends FormRequest
             'nominal.numeric' => 'Nominal transaksi harus berupa angka.',
             'nominal.min' => 'Nominal transaksi tidak boleh negatif.',
 
-            'nama_pembayar.max' => 'Nama pembayar maksimal 100 karakter.',
-
             'metode.required' => 'Metode transaksi wajib dipilih.',
-            'metode.in' => 'Metode harus berupa TF, Q, atau TU.',
+            'metode.in' => 'Metode harus berupa TF (Transfer) atau CH (Cash).',
 
             'jenis.required' => 'Jenis transaksi wajib dipilih.',
             'jenis.in' => 'Jenis transaksi harus berupa M atau K.',
-
-            'kategori.max' => 'Kategori maksimal 50 karakter.',
-            'pic.max' => 'PIC maksimal 100 karakter.',
-            'periode.max' => 'Periode maksimal 20 karakter.',
 
             'uang_diterima.required' => 'Uang diterima wajib diisi.',
             'uang_diterima.numeric' => 'Uang diterima harus berupa angka.',
             'uang_diterima.min' => 'Uang diterima tidak boleh negatif.',
             'uang_diterima.gte' => 'Uang diterima tidak boleh kurang dari nominal transaksi.',
+
+            'Detail.required' => 'Detail transaksi wajib diisi.',
+            'bukti_file.file' => 'Bukti transaksi harus berupa file.',
+            'bukti_file.mimes' => 'Bukti harus berupa JPG, JPEG, PNG, atau PDF.',
+            'bukti_file.max' => 'Ukuran bukti maksimal 2 MB.',
         ];
     }
 }

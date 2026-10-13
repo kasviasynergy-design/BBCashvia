@@ -1,4 +1,3 @@
-```php
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -10,14 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transaksi', function (Blueprint $table) {
-            $table->string('bukti_file', 255)->nullable();
+            if (!Schema::hasColumn('transaksi', 'bukti_file')) {
+                $table->string('bukti_file', 255)->nullable();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('transaksi', function (Blueprint $table) {
-            $table->dropColumn('bukti_file');
+            if (Schema::hasColumn('transaksi', 'bukti_file')) {
+                $table->dropColumn('bukti_file');
+            }
         });
     }
 };

@@ -7,13 +7,11 @@ use App\Http\Requests\StoreTransaksiRequest;
 use App\Models\Transaksi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class TransaksiController extends Controller
 {
-    /**
-     * Menampilkan seluruh transaksi dalam format JSON.
-     */
     public function index()
     {
         $transaksi = Transaksi::orderByDesc('id_transaksi')->get();
@@ -25,9 +23,6 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan transaksi baru.
-     */
     public function store(StoreTransaksiRequest $request)
     {
         $validated = $request->validated();
@@ -35,6 +30,11 @@ class TransaksiController extends Controller
         $validated['kembalian'] =
             (float) $validated['uang_diterima']
             - (float) $validated['nominal'];
+
+        if ($request->hasFile('bukti_file')) {
+            $validated['bukti_file'] = $request->file('bukti_file')
+                ->store('bukti-transaksi', 'public');
+        }
 
         $transaksi = DB::transaction(function () use ($validated) {
             return Transaksi::create($validated);
@@ -47,9 +47,6 @@ class TransaksiController extends Controller
         ], 201);
     }
 
-    /**
-     * Menampilkan satu transaksi berdasarkan ID.
-     */
     public function show(string $id)
     {
         $transaksi = Transaksi::find($id);
@@ -68,9 +65,6 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * Memperbarui transaksi.
-     */
     public function update(Request $request, string $id)
     {
         $transaksi = Transaksi::find($id);
@@ -96,8 +90,14 @@ class TransaksiController extends Controller
                 'sometimes',
                 'required',
                 'integer',
-                'min:1',
-                'exists:users,id',
+                'exists:users,id_users',
+            ],
+
+            'id_siswa' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'exists:siswa,id_siswa',
             ],
 
             'id_iuran' => [
@@ -136,7 +136,7 @@ class TransaksiController extends Controller
             'metode' => [
                 'sometimes',
                 'required',
-                Rule::in(['TF', 'Q', 'TU']),
+                Rule::in(['TF', 'CH']),
             ],
 
             'jenis' => [
@@ -148,8 +148,15 @@ class TransaksiController extends Controller
             'kategori' => [
                 'sometimes',
                 'nullable',
-                'string',
-                'max:50',
+                Rule::in([
+                    'Iuran',
+                    'kas',
+                    'kebutuhan kelas',
+                    'perlengkapan kelas',
+                    'kegiatan kelas',
+                    'pemasukan lainnya',
+                    'pengeluaran lainnya',
+                ]),
             ],
 
             'pic' => [
@@ -172,29 +179,23 @@ class TransaksiController extends Controller
                 'numeric',
                 'min:0',
             ],
-        ], [
-            'no_bukti.required' => 'Nomor bukti transaksi wajib diisi.',
-            'no_bukti.unique' => 'Nomor bukti transaksi sudah digunakan.',
-            'id_user.exists' => 'Data pengguna tidak ditemukan.',
-            'id_iuran.exists' => 'Data iuran tidak ditemukan.',
-            'tanggal.required' => 'Tanggal transaksi wajib diisi.',
-            'tanggal.date' => 'Format tanggal transaksi tidak valid.',
-            'nominal.required' => 'Nominal transaksi wajib diisi.',
-            'nominal.numeric' => 'Nominal transaksi harus berupa angka.',
-            'nominal.min' => 'Nominal transaksi tidak boleh negatif.',
-            'metode.required' => 'Metode transaksi wajib dipilih.',
-            'metode.in' => 'Metode harus berupa TF, Q, atau TU.',
-            'jenis.required' => 'Jenis transaksi wajib dipilih.',
-            'jenis.in' => 'Jenis transaksi harus berupa M atau K.',
-            'uang_diterima.required' => 'Uang diterima wajib diisi.',
-            'uang_diterima.numeric' => 'Uang diterima harus berupa angka.',
-            'uang_diterima.min' => 'Uang diterima tidak boleh negatif.',
+
+            'Detail' => [
+                'sometimes',
+                'required',
+                'string',
+            ],
+
+            'bukti_file' => [
+                'sometimes',
+                'nullable',
+                'file',
+                'mimes:jpg,jpeg,png,pdf',
+                'max:2048',
+            ],
         ]);
 
-        $nominal = (float) (
-            $validated['nominal'] ?? $transaksi->nominal
-        );
-
+        $nominal = (float) ($validated['nominal'] ?? $transaksi->nominal);
         $uangDiterima = (float) (
             $validated['uang_diterima'] ?? $transaksi->uang_diterima
         );
@@ -213,6 +214,17 @@ class TransaksiController extends Controller
 
         $validated['kembalian'] = $uangDiterima - $nominal;
 
+        if ($request->hasFile('bukti_file')) {
+            if ($transaksi->bukti_file) {
+                Storage::disk('public')->delete($transaksi->bukti_file);
+            }
+
+            $validated['bukti_file'] = $request->file('bukti_file')
+                ->store('bukti-transaksi', 'public');
+        } else {
+            unset($validated['bukti_file']);
+        }
+
         $transaksi = DB::transaction(function () use ($transaksi, $validated) {
             $transaksi->update($validated);
 
@@ -226,9 +238,6 @@ class TransaksiController extends Controller
         ]);
     }
 
-    /**
-     * Menghapus transaksi berdasarkan ID.
-     */
     public function destroy(string $id)
     {
         $transaksi = Transaksi::find($id);
