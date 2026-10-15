@@ -11,34 +11,30 @@ class RoleMiddleware
 {
     /**
      * Memeriksa autentikasi dan hak akses berdasarkan role.
-     *
-     * Penggunaan:
-     * ->middleware('role:admin')
-     * ->middleware('role:bendahara')
-     * ->middleware('role:viewer')
      */
     public function handle(
         Request $request,
         Closure $next,
         string $role
     ): Response {
-        // 1. Verifikasi apakah pengguna sudah login
+        // Verifikasi apakah pengguna sudah login
         if (!Auth::check()) {
             abort(401, 'Silakan login terlebih dahulu.');
         }
 
-        // 2. Ambil role pengguna yang sedang login
-        $userRole = Auth::user()->role;
+        // Ambil role pengguna yang sedang login
+        $userRole = strtolower(trim((string) Auth::user()->role));
+        $requiredRole = strtolower(trim($role));
 
-        // 3. Verifikasi kesesuaian hak akses
-        if ($userRole !== $role) {
+        // Verifikasi kesesuaian hak akses
+        if ($userRole !== $requiredRole) {
             abort(
                 403,
                 'Akses Ditolak: Anda tidak memiliki wewenang untuk membuka halaman ini.'
             );
         }
 
-        // 4. Jika role sesuai, lanjutkan ke halaman tujuan
+        // Jika role sesuai, lanjutkan ke halaman tujuan
         return $next($request);
     }
 }

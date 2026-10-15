@@ -1,4 +1,4 @@
-console.log("LOGIN JS BBCASHVIA TERLOAD");
+﻿console.log("LOGIN JS BBCASHVIA TERLOAD");
 
 document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
@@ -22,6 +22,497 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const togglePassword = document.getElementById("togglePassword");
     const peekIcon = document.getElementById("peekIcon");
+
+document.addEventListener("DOMContentLoaded", () => {
+    // =========================================================
+    // ELEMENT
+    // =========================================================
+
+    const loginForm = document.getElementById("loginForm");
+    const identityInput = document.getElementById("identity");
+    const passwordInput = document.getElementById("password");
+    const submitBtn = document.getElementById("submitBtn");
+
+    const identityError = document.getElementById("identityError");
+    const passwordError = document.getElementById("passwordError");
+
+    const alertBox = document.getElementById("alertBox");
+    const alertText = document.getElementById("alertText");
+
+    const roleTabs = document.querySelectorAll(".role-tab");
+    const roleNoteIcon = document.getElementById("roleNoteIcon");
+    const roleNoteText = document.getElementById("roleNoteText");
+
+    const togglePassword = document.getElementById("togglePassword");
+    const peekIcon = document.getElementById("peekIcon");
+
+    const forgotLink = document.getElementById("forgotLink");
+    const helpLink = document.getElementById("helpLink");
+    const forgotModal = document.getElementById("forgotModal");
+
+    const successOverlay = document.getElementById("successOverlay");
+    const successText = document.getElementById("successText");
+
+    const pwPolicy = document.getElementById("pwPolicy");
+
+    const csrfToken =
+        document.querySelector('meta[name="csrf-token"]')?.content;
+
+    let isSubmitting = false;
+
+    // =========================================================
+    // ROLE INFORMATION
+    // =========================================================
+
+    const roleInformation = {
+        admin: {
+            icon: "admin_panel_settings",
+            label: "Email Administrator",
+            hint: "Email Pribadi",
+            text: `
+                <strong>Super Administrator:</strong>
+                Konfigurasi sistem global, master siswa &amp; kelas,
+                hak otorisasi rekening, serta riwayat audit transaksi menyeluruh.
+            `
+        },
+
+        bendahara: {
+            icon: "account_balance_wallet",
+            label: "Email Bendahara",
+            hint: "Email Pribadi",
+            text: `
+                <strong>Bendahara Kas:</strong>
+                Mengelola transaksi, iuran, data kas, serta informasi
+                yang sesuai dengan kelas atau tanggung jawab yang diberikan.
+            `
+        },
+
+        viewer: {
+            icon: "visibility",
+            label: "Email Viewer",
+            hint: "Email Pribadi",
+            text: `
+                <strong>Viewer:</strong>
+                Memantau informasi kas dan laporan yang tersedia
+                tanpa melakukan perubahan terhadap data sistem.
+            `
+        }
+    };
+
+    function getSelectedRole() {
+        return document.querySelector(".role-tab.is-active")?.dataset.role
+            || "admin";
+    }
+
+    function updateRoleInformation(role) {
+        const info = roleInformation[role];
+
+        if (!info) return;
+
+        const identityLabel = document.getElementById("identityLabel");
+        const identityHint = document.getElementById("identityHint");
+
+        if (identityLabel) {
+            identityLabel.textContent = info.label;
+        }
+
+        if (identityHint) {
+            identityHint.textContent = info.hint;
+        }
+
+        if (roleNoteIcon) {
+            roleNoteIcon.textContent = info.icon;
+        }
+
+        if (roleNoteText) {
+            roleNoteText.innerHTML = info.text;
+        }
+    }
+
+    roleTabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+            roleTabs.forEach((item) => {
+                item.classList.remove("is-active");
+                item.setAttribute("aria-selected", "false");
+            });
+
+            tab.classList.add("is-active");
+            tab.setAttribute("aria-selected", "true");
+
+            updateRoleInformation(tab.dataset.role);
+            clearErrors();
+        });
+    });
+
+    // =========================================================
+    // SHOW / HIDE PASSWORD
+    // =========================================================
+
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener("click", () => {
+            const isPassword = passwordInput.type === "password";
+
+            passwordInput.type = isPassword ? "text" : "password";
+
+            if (peekIcon) {
+                peekIcon.textContent = isPassword
+                    ? "visibility_off"
+                    : "visibility";
+            }
+
+            togglePassword.setAttribute(
+                "aria-label",
+                isPassword
+                    ? "Sembunyikan kata sandi"
+                    : "Tampilkan kata sandi"
+            );
+
+            togglePassword.setAttribute(
+                "aria-pressed",
+                isPassword ? "true" : "false"
+            );
+        });
+    }
+
+    // =========================================================
+    // PASSWORD POLICY
+    // =========================================================
+
+    const lengthRule = document.querySelector('[data-rule="length"]');
+    const upperRule = document.querySelector('[data-rule="upper"]');
+    const specialRule = document.querySelector('[data-rule="special"]');
+
+    function updateRule(element, valid) {
+        if (!element) return;
+
+        element.classList.toggle("is-ok", valid);
+
+        const icon = element.querySelector(".material-symbols-outlined");
+
+        if (icon) {
+            icon.textContent = valid ? "check_circle" : "circle";
+        }
+    }
+
+    function updatePasswordPolicy(password) {
+        updateRule(lengthRule, password.length >= 8);
+        updateRule(upperRule, /[A-Z]/.test(password));
+        updateRule(specialRule, /[^A-Za-z0-9]/.test(password));
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener("focus", () => {
+            if (pwPolicy) pwPolicy.hidden = false;
+            updatePasswordPolicy(passwordInput.value);
+        });
+
+        passwordInput.addEventListener("input", () => {
+            updatePasswordPolicy(passwordInput.value);
+            clearPasswordError();
+            hideAlert();
+        });
+    }
+
+    // =========================================================
+    // ERROR HANDLING
+    // =========================================================
+
+    function clearIdentityError() {
+        if (identityError) {
+            identityError.textContent = "";
+            identityError.hidden = true;
+        }
+
+        identityInput?.classList.remove("is-invalid");
+    }
+
+    function clearPasswordError() {
+        if (passwordError) {
+            passwordError.textContent = "";
+            passwordError.hidden = true;
+        }
+
+        passwordInput?.classList.remove("is-invalid");
+    }
+
+    function hideAlert() {
+        if (alertBox) alertBox.hidden = true;
+        if (alertText) alertText.textContent = "";
+    }
+
+    function clearErrors() {
+        clearIdentityError();
+        clearPasswordError();
+        hideAlert();
+    }
+
+    function showIdentityError(message) {
+        if (identityError) {
+            identityError.textContent = message;
+            identityError.hidden = false;
+        }
+
+        identityInput?.classList.add("is-invalid");
+    }
+
+    function showPasswordError(message) {
+        if (passwordError) {
+            passwordError.textContent = message;
+            passwordError.hidden = false;
+        }
+
+        passwordInput?.classList.add("is-invalid");
+    }
+
+    function showAlert(message) {
+        if (alertBox) alertBox.hidden = false;
+        if (alertText) alertText.textContent = message;
+    }
+
+    // =========================================================
+    // FORGOT PASSWORD MODAL
+    // =========================================================
+
+    function openForgotModal() {
+        if (!forgotModal) return;
+
+        forgotModal.hidden = false;
+        document.body.style.overflow = "hidden";
+    }
+
+    function closeForgotModal() {
+        if (!forgotModal) return;
+
+        forgotModal.hidden = true;
+        document.body.style.overflow = "";
+    }
+
+    forgotLink?.addEventListener("click", (event) => {
+        event.preventDefault();
+        openForgotModal();
+    });
+
+    helpLink?.addEventListener("click", (event) => {
+        event.preventDefault();
+        openForgotModal();
+    });
+
+    if (forgotModal) {
+        forgotModal.querySelectorAll("[data-close-modal]").forEach((button) => {
+            button.addEventListener("click", closeForgotModal);
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeForgotModal();
+    });
+
+    // =========================================================
+    // BUTTON LOADING
+    // =========================================================
+
+    function setLoading(isLoading) {
+        if (!submitBtn) return;
+
+        submitBtn.classList.toggle("is-loading", isLoading);
+        submitBtn.disabled = isLoading;
+    }
+
+    // =========================================================
+    // SUCCESS LOGIN
+    // =========================================================
+
+    function showSuccess(role, redirectUrl) {
+        const roleNames = {
+            admin: "Admin",
+            bendahara: "Bendahara",
+            viewer: "Viewer"
+        };
+
+        if (!successOverlay) {
+            window.location.href = redirectUrl;
+            return;
+        }
+
+        if (successText) {
+            successText.textContent =
+                `Login berhasil. Mengarahkan ke Dashboard ${roleNames[role] || ""}...`;
+        }
+
+        successOverlay.hidden = false;
+
+        window.setTimeout(() => {
+            window.location.href = redirectUrl;
+        }, 1000);
+    }
+
+    // =========================================================
+    // LOGIN KE BACKEND LARAVEL
+    // =========================================================
+
+    async function handleLogin() {
+        if (isSubmitting) return;
+
+        clearErrors();
+
+        if (!identityInput || !passwordInput || !loginForm) {
+            console.error("Elemen form login tidak ditemukan.");
+            return;
+        }
+
+        const email = identityInput.value.trim();
+        const password = passwordInput.value;
+        const role = getSelectedRole();
+
+        if (!email) {
+            showIdentityError("Email wajib diisi.");
+            identityInput.focus();
+            return;
+        }
+
+        if (!password) {
+            showPasswordError("Kata sandi wajib diisi.");
+            passwordInput.focus();
+            return;
+        }
+
+        if (!csrfToken) {
+            showAlert(
+                "Token keamanan tidak ditemukan. Muat ulang halaman login."
+            );
+            return;
+        }
+
+        isSubmitting = true;
+        setLoading(true);
+
+        try {
+            const response = await fetch(loginForm.action, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    role: role
+                })
+            });
+
+            const result = await response.json().catch(() => ({}));
+
+            if (!response.ok || result.success !== true) {
+                const errors = result.errors || {};
+
+                if (errors.email?.length) {
+                    showIdentityError(errors.email[0]);
+                    identityInput.focus();
+                }
+
+                if (errors.password?.length) {
+                    showPasswordError(errors.password[0]);
+                    passwordInput.focus();
+                }
+
+                if (errors.role?.length) {
+                    showAlert(errors.role[0]);
+                }
+
+                if (
+                    !errors.email?.length &&
+                    !errors.password?.length &&
+                    !errors.role?.length
+                ) {
+                    if (response.status === 419) {
+                        showAlert(
+                            "Sesi halaman berakhir. Muat ulang halaman login lalu coba lagi."
+                        );
+                    } else if (response.status === 429) {
+                        showAlert(
+                            "Terlalu banyak percobaan login. Tunggu sebentar lalu coba lagi."
+                        );
+                    } else {
+                        showAlert(
+                            result.message ||
+                            "Login gagal. Periksa email, kata sandi, dan peran akun Anda."
+                        );
+                    }
+                }
+
+                return;
+            }
+
+            // Simpan status hanya untuk kompatibilitas UI lama.
+            // Validasi akun dan sesi autentikasi tetap dikelola Laravel.
+            sessionStorage.setItem("bbc_user_email", email);
+            sessionStorage.setItem("bbc_user_role", role);
+
+            if (result.must_change_password === true) {
+                window.location.href =
+                    result.redirect || "/change-password";
+                return;
+            }
+
+            const redirectUrl = result.redirect;
+
+            if (!redirectUrl) {
+                showAlert(
+                    "Login berhasil, tetapi alamat dashboard tidak diterima dari server."
+                );
+                return;
+            }
+
+            showSuccess(role, redirectUrl);
+        } catch (error) {
+            console.error("Kesalahan saat menghubungi server login:", error);
+
+            showAlert(
+                "Tidak dapat menghubungi server. Pastikan Laravel berjalan, lalu coba lagi."
+            );
+        } finally {
+            isSubmitting = false;
+            setLoading(false);
+        }
+    }
+
+    // =========================================================
+    // FORM SUBMIT
+    // =========================================================
+
+    if (loginForm) {
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            handleLogin();
+        });
+    }
+
+    // =========================================================
+    // CLEAR ERROR SAAT INPUT
+    // =========================================================
+
+    identityInput?.addEventListener("input", () => {
+        clearIdentityError();
+        hideAlert();
+    });
+
+    // =========================================================
+    // INITIAL STATE
+    // =========================================================
+
+    if (successOverlay) successOverlay.hidden = true;
+    if (forgotModal) forgotModal.hidden = true;
+    if (alertBox) alertBox.hidden = true;
+    if (identityError) identityError.hidden = true;
+    if (passwordError) passwordError.hidden = true;
+
+    updateRoleInformation(getSelectedRole());
+
+    console.log("Login JS BBCashvia berhasil dijalankan.");
+});
 
     const forgotLink = document.getElementById("forgotLink");
     const helpLink = document.getElementById("helpLink");
@@ -515,3 +1006,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     console.log("Login JS BBCashvia berhasil dijalankan.");
 });
+
+

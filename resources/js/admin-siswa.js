@@ -228,10 +228,6 @@
         const filterJk = $("filterJk");
         const filterIuran = $("filterIuran");
 
-        /*
-         * Jenis kelamin dan pembayaran belum memiliki sumber data
-         * yang lengkap pada tabel siswa saat ini.
-         */
         if (filterJk) {
             Array.from(filterJk.options).forEach((opsi) => {
                 opsi.disabled = opsi.value !== "semua";
