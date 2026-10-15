@@ -1,119 +1,32 @@
+
 document.addEventListener("DOMContentLoaded", () => {
+    "use strict";
 
     /* =========================================================
-       DATA DUMMY
-       NANTI DIGANTI DATABASE / BACKEND LARAVEL
+       KONFIGURASI API LARAVEL
        ========================================================= */
 
-    const SISWA = [
-        { id: 1, nama: "Azis Nugraha", nisn: "0061234567", kelas: "XI RPL 1" },
-        { id: 2, nama: "Budi Santoso", nisn: "0061234568", kelas: "XI RPL 1" },
-        { id: 3, nama: "Citra Lestari", nisn: "0061234569", kelas: "XI RPL 1" },
-        { id: 4, nama: "Dimas Pratama", nisn: "0061234570", kelas: "XI RPL 1" },
-        { id: 5, nama: "Eka Putri", nisn: "0061234571", kelas: "XI RPL 1" },
-        { id: 6, nama: "Fajar Ramadhan", nisn: "0061234572", kelas: "XI RPL 1" },
-        { id: 7, nama: "Gilang Maulana", nisn: "0061234573", kelas: "XI RPL 1" },
-        { id: 8, nama: "Hana Salsabila", nisn: "0061234574", kelas: "XI RPL 1" },
-        { id: 9, nama: "Intan Permata", nisn: "0061234575", kelas: "XI RPL 1" },
-        { id: 10, nama: "Joko Saputra", nisn: "0061234576", kelas: "XI RPL 1" }
-    ];
+    const API_IURAN = "/admin/api/iuran";
 
-
-    /*
-     * FREKUENSI MENGIKUTI VERSI YANG KAMU MAU
-     */
-    const FREKUENSI = {
-        harian: "Harian",
-        mingguan: "Mingguan",
-        bulanan: "Bulanan",
-        tahunan: "Tahunan",
-        insidental: "Insidental"
-    };
-
-
-    let iuranData = [
-        {
-            id: 1,
-            nama_iuran: "Kas Kelas",
-            keterangan: "Kas rutin kelas.",
-            jatuh_tempo: "2026-10-10",
-            frekuensi: "mingguan",
-            nominal: 10000,
-            status: "aktif",
-            pembayaran: {
-                1: 10000,
-                2: 10000,
-                3: 0,
-                4: 10000,
-                5: 0,
-                6: 10000,
-                7: 0,
-                8: 10000,
-                9: 0,
-                10: 10000
-            }
-        },
-
-        {
-            id: 2,
-            nama_iuran: "Kas Bulanan",
-            keterangan: "Iuran kas kelas bulanan.",
-            jatuh_tempo: "2026-10-31",
-            frekuensi: "bulanan",
-            nominal: 25000,
-            status: "aktif",
-            pembayaran: {
-                1: 25000,
-                2: 25000,
-                3: 25000,
-                4: 0,
-                5: 25000,
-                6: 0,
-                7: 25000,
-                8: 0,
-                9: 0,
-                10: 25000
-            }
-        },
-
-        {
-            id: 3,
-            nama_iuran: "Class Meeting",
-            keterangan: "Iuran kegiatan class meeting.",
-            jatuh_tempo: "2026-10-20",
-            frekuensi: "insidental",
-            nominal: 50000,
-            status: "aktif",
-            pembayaran: {
-                1: 50000,
-                2: 50000,
-                3: 0,
-                4: 0,
-                5: 50000,
-                6: 0,
-                7: 0,
-                8: 50000,
-                9: 0,
-                10: 0
-            }
-        }
-    ];
-
-
+    let iuranData = [];
     let editingId = null;
     let selectedIuranId = null;
-    let selectedSiswaId = null;
     let deletingId = null;
+    let toastTimer = null;
 
+    const FREKUENSI = {
+        "sekali bayar": "Sekali Bayar",
+        mingguan: "Mingguan",
+        bulanan: "Bulanan",
+        tahunan: "Tahunan"
+    };
 
     /* =========================================================
        ELEMENT
        ========================================================= */
 
-    const sidebar = document.getElementById("sidebar");
     const sidebarToggle = document.getElementById("sidebarToggle");
     const sidebarBackdrop = document.getElementById("sidebarBackdrop");
-
     const profileBtn = document.getElementById("profileBtn");
     const profileMenu = document.getElementById("profileMenu");
 
@@ -122,24 +35,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalPembayaran = document.getElementById("modalPembayaran");
     const modalHapus = document.getElementById("modalHapusIuran");
 
+    const formIuran = document.getElementById("formIuran");
+    const formErrorIuran = document.getElementById("formErrorIuran");
 
     /* =========================================================
-       FORMAT
+       FORMAT DATA
        ========================================================= */
 
     function formatRupiah(value) {
         return new Intl.NumberFormat("id-ID", {
             style: "currency",
             currency: "IDR",
-            minimumFractionDigits: 0
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         }).format(Number(value) || 0);
     }
 
-
     function formatTanggal(value) {
-        if (!value) return "-";
+        if (!value) return "—";
 
-        const date = new Date(`${value}T00:00:00`);
+        const tanggal = String(value).slice(0, 10);
+        const date = new Date(`${tanggal}T00:00:00`);
+
+        if (Number.isNaN(date.getTime())) return "—";
 
         return date.toLocaleDateString("id-ID", {
             day: "2-digit",
@@ -147,7 +65,6 @@ document.addEventListener("DOMContentLoaded", () => {
             year: "numeric"
         });
     }
-
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -158,31 +75,155 @@ document.addEventListener("DOMContentLoaded", () => {
             .replaceAll("'", "&#039;");
     }
 
-
-    function getTotalTerkumpul(iuran) {
-        return Object.values(iuran.pembayaran || {})
-            .reduce((total, value) => total + Number(value || 0), 0);
+    function normalisasiIuran(item) {
+        return {
+            id: Number(item.id_iuran),
+            nama_iuran: item.nama_iuran ?? "",
+            keterangan: item.keterangan ?? "",
+            jatuh_tempo: item.jatuh_tempo
+                ? String(item.jatuh_tempo).slice(0, 10)
+                : "",
+            frekuensi: item.kategori ?? "",
+            nominal: Number(item.nominal) || 0,
+            status: item.status ?? "aktif"
+        };
     }
 
-
-    function getJumlahLunas(iuran) {
-        return SISWA.filter((siswa) => {
-            return Number(iuran.pembayaran?.[siswa.id] || 0) >= iuran.nominal;
-        }).length;
-    }
-
-
-    function getPersentase(iuran) {
-        if (!SISWA.length) return 0;
-
-        return Math.round(
-            (getJumlahLunas(iuran) / SISWA.length) * 100
+    function cariIuran(id) {
+        return iuranData.find(
+            item => Number(item.id) === Number(id)
         );
     }
 
+    /* =========================================================
+       REQUEST KE LARAVEL
+       ========================================================= */
+
+    async function requestAPI(url, method = "GET", payload = null) {
+        const headers = {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+        };
+
+        const options = {
+            method,
+            headers,
+            credentials: "same-origin"
+        };
+
+        if (payload !== null) {
+            headers["Content-Type"] = "application/json";
+
+            const csrfToken = document.querySelector(
+                'meta[name="csrf-token"]'
+            )?.content;
+
+            if (csrfToken) {
+                headers["X-CSRF-TOKEN"] = csrfToken;
+            }
+
+            options.body = JSON.stringify(payload);
+        }
+
+        let response;
+
+        try {
+            response = await fetch(url, options);
+        } catch {
+            throw new Error(
+                "Tidak dapat terhubung ke server. Pastikan Laravel sedang berjalan."
+            );
+        }
+
+        const contentType = response.headers.get("content-type") || "";
+        let result = {};
+
+        if (contentType.includes("application/json")) {
+            result = await response.json();
+        } else if (!response.ok) {
+            if (response.status === 419) {
+                throw new Error(
+                    "Sesi atau token CSRF kedaluwarsa. Muat ulang halaman, lalu coba lagi."
+                );
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                throw new Error(
+                    "Akses ditolak atau sesi login berakhir. Silakan login kembali."
+                );
+            }
+
+            throw new Error(
+                "Server tidak memberikan respons yang sesuai. Periksa route dan controller Laravel."
+            );
+        }
+
+        if (!response.ok) {
+            if (response.status === 422 && result.errors) {
+                const pesanValidasi = Object.values(result.errors)
+                    .flat()
+                    .filter(Boolean);
+
+                throw new Error(
+                    pesanValidasi.join(" ") ||
+                    "Periksa kembali data yang kamu masukkan."
+                );
+            }
+
+            if (response.status === 419) {
+                throw new Error(
+                    "Sesi atau token CSRF kedaluwarsa. Muat ulang halaman, lalu coba lagi."
+                );
+            }
+
+            if (response.status === 401 || response.status === 403) {
+                throw new Error(
+                    "Kamu tidak memiliki akses atau sesi login telah berakhir."
+                );
+            }
+
+            throw new Error(
+                result.message || `Permintaan gagal (${response.status}).`
+            );
+        }
+
+        return result;
+    }
 
     /* =========================================================
-       TOPBAR DATE
+       NOTIFIKASI
+       ========================================================= */
+
+    function showToast(title, message) {
+        const toast = document.getElementById("toast");
+        const toastTitle = document.getElementById("toastTitle");
+        const toastMessage = document.getElementById("toastMessage");
+        const toastIcon = document.getElementById("toastIcon");
+
+        if (!toast || !toastTitle || !toastMessage) return;
+
+        toastTitle.textContent = title;
+        toastMessage.textContent = message;
+
+        if (toastIcon) {
+            toastIcon.textContent =
+                title.toLowerCase().includes("gagal") ||
+                title.toLowerCase().includes("error")
+                    ? "error"
+                    : "check_circle";
+        }
+
+        toast.classList.add("is-muncul");
+
+        clearTimeout(toastTimer);
+
+        toastTimer = setTimeout(() => {
+            toast.classList.remove("is-muncul");
+        }, 3500);
+    }
+
+    /* =========================================================
+       TANGGAL TOPBAR
        ========================================================= */
 
     const topbarDate = document.getElementById("topbarDate");
@@ -196,30 +237,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }).format(new Date());
     }
 
-
     /* =========================================================
        SIDEBAR
        ========================================================= */
-
-    function openSidebar() {
-        document.body.classList.add("nav-open");
-    }
-
 
     function closeSidebar() {
         document.body.classList.remove("nav-open");
     }
 
-
     sidebarToggle?.addEventListener("click", () => {
         document.body.classList.toggle("nav-open");
     });
 
-
     sidebarBackdrop?.addEventListener("click", closeSidebar);
 
-
-    document.querySelectorAll(".side-link").forEach((link) => {
+    document.querySelectorAll(".side-link").forEach(link => {
         link.addEventListener("click", () => {
             if (window.innerWidth <= 1024) {
                 closeSidebar();
@@ -227,51 +259,41 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-
     window.addEventListener("resize", () => {
         if (window.innerWidth > 1024) {
             closeSidebar();
         }
     });
 
-
     /* =========================================================
        PROFILE
        ========================================================= */
 
-    profileBtn?.addEventListener("click", (event) => {
-
+    profileBtn?.addEventListener("click", event => {
         event.stopPropagation();
 
-        const isOpen = profileMenu.classList.toggle("is-open");
+        const isOpen = profileMenu?.classList.toggle("is-open") ?? false;
 
-        profileBtn.setAttribute(
-            "aria-expanded",
-            String(isOpen)
-        );
+        profileBtn.setAttribute("aria-expanded", String(isOpen));
     });
 
-
-    document.addEventListener("click", (event) => {
-
+    document.addEventListener("click", event => {
         if (
             profileMenu &&
+            profileBtn &&
             !profileMenu.contains(event.target) &&
             !profileBtn.contains(event.target)
         ) {
             profileMenu.classList.remove("is-open");
-            profileBtn?.setAttribute("aria-expanded", "false");
+            profileBtn.setAttribute("aria-expanded", "false");
         }
-
     });
-
 
     /* =========================================================
        MODAL
        ========================================================= */
 
     function openModal(modal) {
-
         if (!modal) return;
 
         modal.hidden = false;
@@ -283,210 +305,163 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.add("modal-open");
     }
 
-
     function closeModal(modal) {
-
         if (!modal) return;
 
         modal.classList.remove("is-open");
 
         setTimeout(() => {
             modal.hidden = true;
-        }, 180);
 
-        if (
-            !document.querySelector(
-                ".modal.is-open"
-            )
-        ) {
-            document.body.classList.remove("modal-open");
-        }
+            const modalMasihTerbuka = Array.from(
+                document.querySelectorAll(".modal")
+            ).some(item => !item.hidden && item.classList.contains("is-open"));
+
+            if (!modalMasihTerbuka) {
+                document.body.classList.remove("modal-open");
+            }
+        }, 180);
     }
 
-
-    document.querySelectorAll("[data-close-modal]").forEach((button) => {
-
+    document.querySelectorAll("[data-close-modal]").forEach(button => {
         button.addEventListener("click", () => {
-
-            const modal = button.closest(".modal");
-
-            closeModal(modal);
-
+            closeModal(button.closest(".modal"));
         });
-
     });
 
-
-    document.addEventListener("keydown", (event) => {
-
+    document.addEventListener("keydown", event => {
         if (event.key !== "Escape") return;
 
-        document.querySelectorAll(".modal.is-open").forEach((modal) => {
+        document.querySelectorAll(".modal.is-open").forEach(modal => {
             closeModal(modal);
         });
-
     });
-
 
     /* =========================================================
        SUMMARY
        ========================================================= */
 
     function renderSummary() {
-
         const totalIuran = iuranData.length;
 
-        const totalTagihan = iuranData.reduce((total, iuran) => {
-            return total + (iuran.nominal * SISWA.length);
-        }, 0);
-
-        const totalTerkumpul = iuranData.reduce((total, iuran) => {
-            return total + getTotalTerkumpul(iuran);
-        }, 0);
-
+        // Total nominal yang tercatat pada daftar iuran.
+        // Bukan total tagihan seluruh siswa.
+        const totalNominalIuran = iuranData.reduce(
+            (total, item) => total + item.nominal,
+            0
+        );
 
         document.getElementById("sumTotalIuran").textContent =
             totalIuran;
 
         document.getElementById("sumTagihan").textContent =
-            formatRupiah(totalTagihan);
+            formatRupiah(totalNominalIuran);
 
-        document.getElementById("sumTerkumpul").textContent =
-            formatRupiah(totalTerkumpul);
+        // Pembayaran belum dihitung karena endpoint transaksi
+        // belum dihubungkan ke halaman ini.
+        document.getElementById("sumTerkumpul").textContent = "—";
+
+        document.getElementById("sumTerkumpulNote").textContent =
+            "Menunggu integrasi transaksi";
+
+        document.getElementById("sumTagihanNote").textContent =
+            "Jumlah nominal per iuran";
 
         document.getElementById("jumlahIuranFoot").textContent =
             `${totalIuran} iuran`;
-
     }
 
-
     /* =========================================================
-       RENDER TABLE IURAN
+       RENDER TABEL IURAN DARI DATABASE
        ========================================================= */
 
     function renderIuran() {
-
         const tbody = document.getElementById("isiTabelIuran");
+        const emptyState = document.getElementById("emptyState");
 
-        const search =
-            document.getElementById("cariIuran")
-                .value
-                .trim()
-                .toLowerCase();
+        const search = document.getElementById("cariIuran")
+            .value.trim().toLowerCase();
 
-        const frekuensi =
-            document.getElementById("filterFrekuensi").value;
+        const frekuensi = document.getElementById("filterFrekuensi").value;
+        const status = document.getElementById("filterStatusIuran").value;
 
-        const status =
-            document.getElementById("filterStatusIuran").value;
-
-
-        const filtered = iuranData.filter((iuran) => {
-
+        const filtered = iuranData.filter(item => {
             const matchSearch =
-                !search ||
-                iuran.nama_iuran.toLowerCase().includes(search) ||
-                iuran.keterangan.toLowerCase().includes(search);
+                item.nama_iuran.toLowerCase().includes(search) ||
+                item.keterangan.toLowerCase().includes(search);
 
             const matchFrekuensi =
-                !frekuensi ||
-                iuran.frekuensi === frekuensi;
+                !frekuensi || item.frekuensi === frekuensi;
 
             const matchStatus =
-                !status ||
-                iuran.status === status;
+                !status || item.status === status;
 
-            return matchSearch &&
-                matchFrekuensi &&
-                matchStatus;
+            return matchSearch && matchFrekuensi && matchStatus;
         });
-
 
         tbody.innerHTML = "";
 
+        emptyState.hidden = filtered.length !== 0;
 
-        document.getElementById("emptyState").hidden =
-            filtered.length !== 0;
-
-
-        filtered.forEach((iuran) => {
-
-            const terkumpul =
-                getTotalTerkumpul(iuran);
-
-            const progress =
-                getPersentase(iuran);
-
+        filtered.forEach(item => {
             const tr = document.createElement("tr");
 
+            const namaFrekuensi =
+                FREKUENSI[item.frekuensi] || item.frekuensi || "—";
 
             tr.innerHTML = `
                 <td>
                     <div class="table-primary">
-                        ${escapeHTML(iuran.nama_iuran)}
+                        ${escapeHTML(item.nama_iuran)}
                     </div>
-
                     <div class="table-secondary">
-                        ${escapeHTML(iuran.keterangan || "—")}
+                        ${escapeHTML(item.keterangan || "—")}
                     </div>
                 </td>
 
                 <td>
                     <span class="frequency-badge">
-                        ${FREKUENSI[iuran.frekuensi]}
+                        ${escapeHTML(namaFrekuensi)}
                     </span>
                 </td>
 
-                <td>
-                    ${formatTanggal(iuran.jatuh_tempo)}
-                </td>
+                <td>${escapeHTML(formatTanggal(item.jatuh_tempo))}</td>
 
                 <td>
                     <strong class="money">
-                        ${formatRupiah(iuran.nominal)}
+                        ${formatRupiah(item.nominal)}
                     </strong>
                 </td>
 
                 <td>
-                    <strong class="money">
-                        ${formatRupiah(terkumpul)}
-                    </strong>
+                    <strong class="money">—</strong>
                 </td>
 
                 <td>
                     <div class="progress-cell">
-
                         <div class="progress-track">
-                            <span style="width:${progress}%"></span>
+                            <span style="width:0%"></span>
                         </div>
-
-                        <small>
-                            ${progress}%
-                        </small>
-
+                        <small>—</small>
                     </div>
                 </td>
 
                 <td>
-                    <span class="status-badge status-badge--${iuran.status}">
-                        ${iuran.status === "aktif" ? "Aktif" : "Selesai"}
+                    <span class="status-badge status-badge--${escapeHTML(item.status)}">
+                        ${item.status === "aktif" ? "Aktif" : "Selesai"}
                     </span>
                 </td>
 
                 <td>
-
                     <div class="table-actions">
-
                         <button
                             type="button"
                             class="icon-btn"
                             title="Lihat detail"
                             data-action="detail"
-                            data-id="${iuran.id}"
+                            data-id="${item.id}"
                         >
-                            <span class="material-symbols-outlined">
-                                visibility
-                            </span>
+                            <span class="material-symbols-outlined">visibility</span>
                         </button>
 
                         <button
@@ -494,11 +469,9 @@ document.addEventListener("DOMContentLoaded", () => {
                             class="icon-btn"
                             title="Edit"
                             data-action="edit"
-                            data-id="${iuran.id}"
+                            data-id="${item.id}"
                         >
-                            <span class="material-symbols-outlined">
-                                edit
-                            </span>
+                            <span class="material-symbols-outlined">edit</span>
                         </button>
 
                         <button
@@ -506,35 +479,77 @@ document.addEventListener("DOMContentLoaded", () => {
                             class="icon-btn icon-btn--danger"
                             title="Hapus"
                             data-action="delete"
-                            data-id="${iuran.id}"
+                            data-id="${item.id}"
                         >
-                            <span class="material-symbols-outlined">
-                                delete
-                            </span>
+                            <span class="material-symbols-outlined">delete</span>
                         </button>
-
                     </div>
-
                 </td>
             `;
-
 
             tbody.appendChild(tr);
         });
 
-
         renderSummary();
     }
 
+    /* =========================================================
+       AMBIL IURAN DARI DATABASE
+       ========================================================= */
+
+    async function muatIuran() {
+        const tbody = document.getElementById("isiTabelIuran");
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center;padding:24px">
+                    Memuat data iuran...
+                </td>
+            </tr>
+        `;
+
+        try {
+            const response = await requestAPI(API_IURAN);
+
+            iuranData = Array.isArray(response.data)
+                ? response.data.map(normalisasiIuran)
+                : [];
+
+            renderIuran();
+        } catch (error) {
+            iuranData = [];
+            renderIuran();
+
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align:center;padding:24px">
+                        ${escapeHTML(error.message)}
+                    </td>
+                </tr>
+            `;
+
+            document.getElementById("emptyState").hidden = true;
+
+            showToast("Gagal memuat data", error.message);
+        }
+    }
+
+    /* =========================================================
+       RESET FORM IURAN
+       ========================================================= */
+
+    function resetFormIuran() {
+        formIuran.reset();
+        formErrorIuran.textContent = "";
+        formErrorIuran.hidden = true;
+    }
 
     /* =========================================================
        TAMBAH IURAN
        ========================================================= */
 
-    document
-        .getElementById("btnTambahIuran")
+    document.getElementById("btnTambahIuran")
         ?.addEventListener("click", () => {
-
             editingId = null;
 
             document.getElementById("modalIuranTitle").textContent =
@@ -543,30 +558,19 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("modalIuranSub").textContent =
                 "Masukkan informasi iuran kelas.";
 
-            document.getElementById("formIuran").reset();
-
-            document.getElementById("formErrorIuran").hidden = true;
-
+            resetFormIuran();
             openModal(modalIuran);
-
         });
-
 
     /* =========================================================
        EDIT IURAN
        ========================================================= */
 
     function editIuran(id) {
+        const item = cariIuran(id);
+        if (!item) return;
 
-        const iuran = iuranData.find(
-            (item) => item.id === id
-        );
-
-        if (!iuran) return;
-
-
-        editingId = id;
-
+        editingId = item.id;
 
         document.getElementById("modalIuranTitle").textContent =
             "Edit Iuran";
@@ -574,753 +578,266 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("modalIuranSub").textContent =
             "Perbarui informasi iuran.";
 
-
         document.getElementById("inputNamaIuran").value =
-            iuran.nama_iuran;
+            item.nama_iuran;
 
         document.getElementById("inputFrekuensi").value =
-            iuran.frekuensi;
+            item.frekuensi;
 
         document.getElementById("inputJatuhTempo").value =
-            iuran.jatuh_tempo;
+            item.jatuh_tempo;
 
         document.getElementById("inputNominalIuran").value =
-            iuran.nominal;
+            item.nominal;
 
         document.getElementById("inputStatusIuran").value =
-            iuran.status;
+            item.status;
 
         document.getElementById("inputKeteranganIuran").value =
-            iuran.keterangan || "";
+            item.keterangan;
 
-        document.getElementById("formErrorIuran").hidden =
-            true;
-
+        formErrorIuran.textContent = "";
+        formErrorIuran.hidden = true;
 
         openModal(modalIuran);
     }
 
-
     /* =========================================================
-       SIMPAN IURAN
+       SIMPAN TAMBAH / EDIT KE DATABASE
        ========================================================= */
 
-    document
-        .getElementById("formIuran")
-        ?.addEventListener("submit", (event) => {
+    formIuran?.addEventListener("submit", async event => {
+        event.preventDefault();
 
-            event.preventDefault();
+        const nama = document.getElementById("inputNamaIuran")
+            .value.trim();
 
+        const kategori = document.getElementById("inputFrekuensi").value;
+        const jatuhTempo = document.getElementById("inputJatuhTempo").value;
+        const nominal = Number(
+            document.getElementById("inputNominalIuran").value
+        );
+        const status = document.getElementById("inputStatusIuran").value;
+        const keterangan = document.getElementById("inputKeteranganIuran")
+            .value.trim();
 
-            const nama =
-                document.getElementById("inputNamaIuran")
-                    .value
-                    .trim();
+        if (
+            !nama ||
+            !kategori ||
+            !jatuhTempo ||
+            !Number.isFinite(nominal) ||
+            nominal <= 0
+        ) {
+            formErrorIuran.textContent =
+                "Lengkapi semua data yang wajib diisi dan pastikan nominal lebih dari nol.";
 
-            const frekuensi =
-                document.getElementById("inputFrekuensi")
-                    .value;
+            formErrorIuran.hidden = false;
+            return;
+        }
 
-            const jatuhTempo =
-                document.getElementById("inputJatuhTempo")
-                    .value;
+        const payload = {
+            nama_iuran: nama,
+            kategori,
+            jatuh_tempo: jatuhTempo,
+            nominal,
+            status,
+            keterangan: keterangan || null
+        };
 
-            const nominal =
-                Number(
-                    document.getElementById("inputNominalIuran")
-                        .value
+        const tombolSubmit = formIuran.querySelector(
+            'button[type="submit"]'
+        );
+
+        if (tombolSubmit) tombolSubmit.disabled = true;
+
+        try {
+            if (editingId !== null) {
+                await requestAPI(
+                    `${API_IURAN}/${editingId}`,
+                    "PUT",
+                    payload
                 );
 
-            const status =
-                document.getElementById("inputStatusIuran")
-                    .value;
-
-            const keterangan =
-                document.getElementById("inputKeteranganIuran")
-                    .value
-                    .trim();
-
-
-            const error =
-                document.getElementById("formErrorIuran");
-
-
-            if (
-                !nama ||
-                !frekuensi ||
-                !jatuhTempo ||
-                !nominal ||
-                nominal <= 0
-            ) {
-
-                error.textContent =
-                    "Lengkapi data iuran terlebih dahulu.";
-
-                error.hidden = false;
-
-                return;
-            }
-
-
-            if (editingId) {
-
-                const iuran = iuranData.find(
-                    (item) => item.id === editingId
-                );
-
-                if (iuran) {
-
-                    iuran.nama_iuran = nama;
-                    iuran.frekuensi = frekuensi;
-                    iuran.jatuh_tempo = jatuhTempo;
-                    iuran.nominal = nominal;
-                    iuran.status = status;
-                    iuran.keterangan = keterangan;
-
-                }
-
-
-                showToast(
-                    "Berhasil",
-                    "Iuran berhasil diperbarui."
-                );
-
+                closeModal(modalIuran);
+                showToast("Berhasil", "Iuran berhasil diperbarui.");
             } else {
+                await requestAPI(API_IURAN, "POST", payload);
 
-                iuranData.push({
-
-                    id: Date.now(),
-
-                    nama_iuran: nama,
-
-                    keterangan,
-
-                    jatuh_tempo: jatuhTempo,
-
-                    frekuensi,
-
-                    nominal,
-
-                    status,
-
-                    pembayaran: {}
-
-                });
-
-
-                showToast(
-                    "Berhasil",
-                    "Iuran baru berhasil ditambahkan."
-                );
+                closeModal(modalIuran);
+                showToast("Berhasil", "Iuran berhasil ditambahkan.");
             }
 
-
-            closeModal(modalIuran);
-
-            renderIuran();
-
-        });
-
+            editingId = null;
+            await muatIuran();
+        } catch (error) {
+            formErrorIuran.textContent = error.message;
+            formErrorIuran.hidden = false;
+        } finally {
+            if (tombolSubmit) tombolSubmit.disabled = false;
+        }
+    });
 
     /* =========================================================
        DETAIL IURAN
+       Pembayaran siswa belum dihubungkan ke API transaksi.
        ========================================================= */
 
     function openDetail(id) {
+        const item = cariIuran(id);
+        if (!item) return;
 
-        const iuran = iuranData.find(
-            (item) => item.id === id
-        );
-
-        if (!iuran) return;
-
-
-        selectedIuranId = id;
-
+        selectedIuranId = item.id;
 
         document.getElementById("detailIuranTitle").textContent =
-            iuran.nama_iuran;
+            item.nama_iuran;
 
         document.getElementById("detailIuranSub").textContent =
-            iuran.keterangan || "Tidak ada keterangan.";
+            item.keterangan || "Tidak ada keterangan.";
 
         document.getElementById("detailFrekuensi").textContent =
-            FREKUENSI[iuran.frekuensi];
+            FREKUENSI[item.frekuensi] || item.frekuensi || "—";
 
         document.getElementById("detailJatuhTempo").textContent =
-            formatTanggal(iuran.jatuh_tempo);
+            formatTanggal(item.jatuh_tempo);
 
         document.getElementById("detailNominal").textContent =
-            formatRupiah(iuran.nominal);
+            formatRupiah(item.nominal);
 
         document.getElementById("detailTerkumpul").textContent =
-            formatRupiah(getTotalTerkumpul(iuran));
-
+            "Belum tersedia";
 
         document.getElementById("cariDetailSiswa").value = "";
-
         document.getElementById("filterDetailStatus").value = "";
 
-
         renderDetailSiswa();
-
         openModal(modalDetail);
     }
 
-
     function renderDetailSiswa() {
+        const tbody = document.getElementById("isiTabelDetail");
+        const emptyDetail = document.getElementById("emptyDetail");
 
-        const iuran = iuranData.find(
-            (item) => item.id === selectedIuranId
-        );
-
-        if (!iuran) return;
-
-
-        const search =
-            document.getElementById("cariDetailSiswa")
-                .value
-                .trim()
-                .toLowerCase();
-
-        const statusFilter =
-            document.getElementById("filterDetailStatus")
-                .value;
-
-
-        const filtered = SISWA.filter((siswa) => {
-
-            const dibayar =
-                Number(iuran.pembayaran?.[siswa.id] || 0);
-
-            const status =
-                dibayar >= iuran.nominal
-                    ? "lunas"
-                    : "belum";
-
-
-            const matchSearch =
-                !search ||
-                siswa.nama.toLowerCase().includes(search) ||
-                siswa.nisn.includes(search);
-
-
-            const matchStatus =
-                !statusFilter ||
-                status === statusFilter;
-
-
-            return matchSearch && matchStatus;
-        });
-
-
-        const tbody =
-            document.getElementById("isiTabelDetail");
-
-        tbody.innerHTML = "";
-
-
-        document.getElementById("emptyDetail").hidden =
-            filtered.length !== 0;
-
-
-        filtered.forEach((siswa, index) => {
-
-            const dibayar =
-                Number(iuran.pembayaran?.[siswa.id] || 0);
-
-            const lunas =
-                dibayar >= iuran.nominal;
-
-
-            const tr =
-                document.createElement("tr");
-
-
-            tr.innerHTML = `
-
-                <td>${index + 1}</td>
-
-                <td>
-                    <div class="table-primary">
-                        ${escapeHTML(siswa.nama)}
-                    </div>
+        // Tidak menggunakan data siswa atau pembayaran palsu.
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align:center;padding:24px">
+                    Data siswa dan status pembayaran belum dihubungkan
+                    ke database transaksi.
                 </td>
+            </tr>
+        `;
 
-                <td>
-                    ${escapeHTML(siswa.nisn)}
-                </td>
-
-                <td>
-                    ${escapeHTML(siswa.kelas)}
-                </td>
-
-                <td>
-                    ${formatRupiah(dibayar)}
-                    <div class="table-secondary">
-                        dari ${formatRupiah(iuran.nominal)}
-                    </div>
-                </td>
-
-                <td>
-                    <span class="status-badge ${
-                        lunas
-                            ? "status-badge--lunas"
-                            : "status-badge--belum"
-                    }">
-                        ${lunas ? "Lunas" : "Belum Bayar"}
-                    </span>
-                </td>
-
-                <td>
-
-                    <button
-                        type="button"
-                        class="btn btn--small ${
-                            lunas
-                                ? "btn--ghost"
-                                : "btn--primary"
-                        }"
-                        data-payment="${siswa.id}"
-                    >
-
-                        <span class="material-symbols-outlined">
-                            ${
-                                lunas
-                                    ? "visibility"
-                                    : "payments"
-                            }
-                        </span>
-
-                        ${
-                            lunas
-                                ? "Detail"
-                                : "Bayar"
-                        }
-
-                    </button>
-
-                </td>
-            `;
-
-
-            tbody.appendChild(tr);
-
-        });
-
+        emptyDetail.hidden = true;
     }
 
+    document.getElementById("cariDetailSiswa")
+        ?.addEventListener("input", renderDetailSiswa);
 
-    document
-        .getElementById("cariDetailSiswa")
-        ?.addEventListener(
-            "input",
-            renderDetailSiswa
-        );
-
-
-    document
-        .getElementById("filterDetailStatus")
-        ?.addEventListener(
-            "change",
-            renderDetailSiswa
-        );
-
+    document.getElementById("filterDetailStatus")
+        ?.addEventListener("change", renderDetailSiswa);
 
     /* =========================================================
-       PEMBAYARAN
+       FORM PEMBAYARAN
+       Jangan menyimpan pembayaran ke JavaScript saja.
        ========================================================= */
 
-    function openPembayaran(siswaId) {
-
-        const iuran = iuranData.find(
-            (item) => item.id === selectedIuranId
-        );
-
-        const siswa = SISWA.find(
-            (item) => item.id === siswaId
-        );
-
-        if (!iuran || !siswa) return;
-
-
-        selectedSiswaId = siswaId;
-
-
-        const sudahDibayar =
-            Number(iuran.pembayaran?.[siswaId] || 0);
-
-        const sisa =
-            Math.max(
-                0,
-                iuran.nominal - sudahDibayar
-            );
-
-
-        document.getElementById("inputPembayaranSiswa").value =
-            siswa.nama;
-
-        document.getElementById("pembayaranIuranSub").textContent =
-            `${iuran.nama_iuran} • ${siswa.kelas}`;
-
-        document.getElementById("pembayaranTagihan").textContent =
-            formatRupiah(sisa);
-
-        document.getElementById("inputPembayaranDiterima").value =
-            "";
-
-        document.getElementById("hasilKembalian").textContent =
-            formatRupiah(0);
-
-        document.getElementById("hasilMasukKas").textContent =
-            formatRupiah(0);
-
-        document.getElementById("formErrorPembayaran").hidden =
-            true;
-
-
-        openModal(modalPembayaran);
-    }
-
-
-    document
-        .getElementById("inputPembayaranDiterima")
-        ?.addEventListener("input", () => {
-
-            const iuran = iuranData.find(
-                (item) => item.id === selectedIuranId
-            );
-
-            if (!iuran) return;
-
-
-            const sudahDibayar =
-                Number(
-                    iuran.pembayaran?.[selectedSiswaId] || 0
-                );
-
-            const sisa =
-                Math.max(
-                    0,
-                    iuran.nominal - sudahDibayar
-                );
-
-
-            const diterima =
-                Number(
-                    document.getElementById(
-                        "inputPembayaranDiterima"
-                    ).value
-                ) || 0;
-
-
-            const masukKas =
-                Math.min(
-                    diterima,
-                    sisa
-                );
-
-
-            const kembalian =
-                Math.max(
-                    0,
-                    diterima - sisa
-                );
-
-
-            document.getElementById(
-                "hasilKembalian"
-            ).textContent =
-                formatRupiah(kembalian);
-
-
-            document.getElementById(
-                "hasilMasukKas"
-            ).textContent =
-                formatRupiah(masukKas);
-
-        });
-
-
-    document
-        .getElementById("formPembayaran")
-        ?.addEventListener("submit", (event) => {
-
+    document.getElementById("formPembayaran")
+        ?.addEventListener("submit", event => {
             event.preventDefault();
 
-
-            const iuran = iuranData.find(
-                (item) => item.id === selectedIuranId
+            const error = document.getElementById(
+                "formErrorPembayaran"
             );
 
-            if (!iuran) return;
+            error.textContent =
+                "Pencatatan pembayaran belum dihubungkan ke API transaksi. Pembayaran belum disimpan.";
 
-
-            const sudahDibayar =
-                Number(
-                    iuran.pembayaran?.[selectedSiswaId] || 0
-                );
-
-
-            const sisa =
-                Math.max(
-                    0,
-                    iuran.nominal - sudahDibayar
-                );
-
-
-            const diterima =
-                Number(
-                    document.getElementById(
-                        "inputPembayaranDiterima"
-                    ).value
-                ) || 0;
-
-
-            const error =
-                document.getElementById(
-                    "formErrorPembayaran"
-                );
-
-
-            if (diterima <= 0) {
-
-                error.textContent =
-                    "Masukkan jumlah uang yang diterima.";
-
-                error.hidden = false;
-
-                return;
-            }
-
-
-            if (diterima < sisa) {
-
-                error.textContent =
-                    `Uang yang diterima kurang dari sisa tagihan (${formatRupiah(sisa)}).`;
-
-                error.hidden = false;
-
-                return;
-            }
-
-
-            const masukKas =
-                Math.min(
-                    diterima,
-                    sisa
-                );
-
-
-            if (!iuran.pembayaran) {
-                iuran.pembayaran = {};
-            }
-
-
-            iuran.pembayaran[selectedSiswaId] =
-                sudahDibayar + masukKas;
-
-
-            closeModal(modalPembayaran);
-
-            renderDetailSiswa();
-
-            renderIuran();
-
-
-            showToast(
-                "Pembayaran berhasil",
-                "Pembayaran siswa berhasil dicatat."
-            );
-
+            error.hidden = false;
         });
 
-
     /* =========================================================
-       TABLE ACTION
+       AKSI TABEL IURAN
        ========================================================= */
 
-    document
-        .getElementById("isiTabelIuran")
-        ?.addEventListener("click", (event) => {
-
-            const button =
-                event.target.closest("[data-action]");
-
+    document.getElementById("isiTabelIuran")
+        ?.addEventListener("click", event => {
+            const button = event.target.closest("[data-action]");
             if (!button) return;
 
+            const id = Number(button.dataset.id);
+            const action = button.dataset.action;
 
-            const id =
-                Number(button.dataset.id);
-
-            const action =
-                button.dataset.action;
-
-
-            if (action === "detail") {
-                openDetail(id);
-            }
-
-            if (action === "edit") {
-                editIuran(id);
-            }
-
-            if (action === "delete") {
-                openDelete(id);
-            }
-
+            if (action === "detail") openDetail(id);
+            if (action === "edit") editIuran(id);
+            if (action === "delete") openDelete(id);
         });
-
-
-    document
-        .getElementById("isiTabelDetail")
-        ?.addEventListener("click", (event) => {
-
-            const button =
-                event.target.closest("[data-payment]");
-
-            if (!button) return;
-
-
-            const siswaId =
-                Number(button.dataset.payment);
-
-            openPembayaran(siswaId);
-
-        });
-
 
     /* =========================================================
-       DELETE
+       HAPUS IURAN
        ========================================================= */
 
     function openDelete(id) {
+        const item = cariIuran(id);
+        if (!item) return;
 
-        const iuran =
-            iuranData.find(
-                (item) => item.id === id
-            );
-
-        if (!iuran) return;
-
-
-        deletingId = id;
-
+        deletingId = item.id;
 
         document.getElementById("hapusIuranNama").textContent =
-            iuran.nama_iuran;
-
+            item.nama_iuran;
 
         openModal(modalHapus);
     }
 
+    document.getElementById("btnKonfirmasiHapus")
+        ?.addEventListener("click", async () => {
+            if (deletingId === null) return;
 
-    document
-        .getElementById("btnKonfirmasiHapus")
-        ?.addEventListener("click", () => {
+            const id = deletingId;
+            const tombol = document.getElementById("btnKonfirmasiHapus");
 
-            if (!deletingId) return;
+            tombol.disabled = true;
 
+            try {
+                await requestAPI(`${API_IURAN}/${id}`, "DELETE");
 
-            iuranData =
-                iuranData.filter(
-                    (item) => item.id !== deletingId
-                );
+                deletingId = null;
+                closeModal(modalHapus);
 
+                showToast("Berhasil", "Iuran berhasil dihapus.");
 
-            deletingId = null;
-
-
-            closeModal(modalHapus);
-
-            renderIuran();
-
-
-            showToast(
-                "Berhasil",
-                "Iuran berhasil dihapus."
-            );
-
+                await muatIuran();
+            } catch (error) {
+                showToast("Gagal menghapus", error.message);
+            } finally {
+                tombol.disabled = false;
+            }
         });
 
-
     /* =========================================================
-       FILTER
+       FILTER IURAN
        ========================================================= */
 
-    document
-        .getElementById("cariIuran")
-        ?.addEventListener(
-            "input",
-            renderIuran
-        );
+    document.getElementById("cariIuran")
+        ?.addEventListener("input", renderIuran);
 
+    document.getElementById("filterFrekuensi")
+        ?.addEventListener("change", renderIuran);
 
-    document
-        .getElementById("filterFrekuensi")
-        ?.addEventListener(
-            "change",
-            renderIuran
-        );
+    document.getElementById("filterStatusIuran")
+        ?.addEventListener("change", renderIuran);
 
-
-    document
-        .getElementById("filterStatusIuran")
-        ?.addEventListener(
-            "change",
-            renderIuran
-        );
-
-
-    document
-        .getElementById("btnResetFilter")
+    document.getElementById("btnResetFilter")
         ?.addEventListener("click", () => {
-
             document.getElementById("cariIuran").value = "";
             document.getElementById("filterFrekuensi").value = "";
             document.getElementById("filterStatusIuran").value = "";
 
             renderIuran();
-
         });
-
-
-    /* =========================================================
-       TOAST
-       ========================================================= */
-
-    let toastTimer;
-
-
-    function showToast(title, message) {
-
-        const toast =
-            document.getElementById("toast");
-
-        document.getElementById("toastTitle").textContent =
-            title;
-
-        document.getElementById("toastMessage").textContent =
-            message;
-
-
-        toast.classList.add("is-muncul");
-
-
-        clearTimeout(toastTimer);
-
-
-        toastTimer = setTimeout(() => {
-            toast.classList.remove("is-muncul");
-        }, 3000);
-
-    }
-
 
     /* =========================================================
        INIT
        ========================================================= */
 
-    renderIuran();
-
+    muatIuran();
 });

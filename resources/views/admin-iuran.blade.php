@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Iuran — BBCashvia</title>
 
@@ -297,14 +299,15 @@
                 </div>
 
 
+
                 <select id="filterFrekuensi">
-                    <option value="">Semua Frekuensi</option>
-                    <option value="harian">Harian</option>
-                    <option value="mingguan">Mingguan</option>
-                    <option value="bulanan">Bulanan</option>
-                    <option value="tahunan">Tahunan</option>
-                    <option value="insidental">Insidental</option>
+                <option value="">Semua Frekuensi</option>
+                <option value="sekali bayar">Sekali Bayar</option>
+                <option value="mingguan">Mingguan</option>
+                <option value="bulanan">Bulanan</option>
+                <option value="tahunan">Tahunan</option>
                 </select>
+
 
 
                 <select id="filterStatusIuran">
@@ -449,14 +452,15 @@
                             Frekuensi
                         </label>
 
-                        <select id="inputFrekuensi" required>
-                            <option value="">Pilih frekuensi</option>
-                            <option value="harian">Harian</option>
-                            <option value="mingguan">Mingguan</option>
-                            <option value="bulanan">Bulanan</option>
-                            <option value="tahunan">Tahunan</option>
-                            <option value="insidental">Insidental</option>
-                        </select>
+
+                    <select id="inputFrekuensi" required>
+                        <option value="">Pilih frekuensi</option>
+                        <option value="sekali bayar">Sekali Bayar</option>
+                        <option value="mingguan">Mingguan</option>
+                        <option value="bulanan">Bulanan</option>
+                        <option value="tahunan">Tahunan</option>
+                    </select>
+
 
                     </div>
 

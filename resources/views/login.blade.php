@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>Masuk — BBCashvia | KASVIA Synergy</title>
 
     <meta name="description"
@@ -39,11 +41,11 @@
         <div class="site-header__inner">
 
             <div class="brand">
-            <img
-                src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
-                alt="Logo BBCashvia"
-                class="brand__icon"
-            >
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="brand__icon"
+                >
 
                 <span class="brand__text">
                     <strong class="brand__name">BBCashvia</strong>
@@ -69,7 +71,6 @@
 
         </div>
     </header>
-
 
     <!-- Konten utama -->
     <main class="portal">
@@ -107,12 +108,10 @@
 
             </div>
 
-
             <!-- Kartu login -->
             <section class="card" aria-labelledby="loginTitle">
 
                 <span class="card__glow" aria-hidden="true"></span>
-
 
                 <div class="card__head">
 
@@ -140,7 +139,6 @@
 
                 </div>
 
-
                 <h1 class="card__title" id="loginTitle">
                     Akses Masuk
                 </h1>
@@ -148,7 +146,6 @@
                 <p class="card__lead">
                     Silakan tentukan hak akses peran Anda untuk mengelola atau meninjau pembukuan kas sekolah.
                 </p>
-
 
                 <!-- Pilihan peran -->
                 <div class="role-picker">
@@ -160,7 +157,6 @@
                     <div class="role-tabs"
                         role="tablist"
                         aria-labelledby="roleLabel">
-
 
                         <!-- ADMIN -->
                         <button
@@ -186,7 +182,6 @@
 
                         </button>
 
-
                         <!-- BENDAHARA -->
                         <button
                             type="button"
@@ -210,7 +205,6 @@
                             </small>
 
                         </button>
-
 
                         <!-- VIEWER -->
                         <button
@@ -238,7 +232,6 @@
 
                     </div>
 
-
                     <div
                         class="role-note"
                         id="rolePanel"
@@ -248,33 +241,30 @@
                             class="material-symbols-outlined"
                             id="roleNoteIcon"
                             aria-hidden="true">
-
                             admin_panel_settings
-
                         </span>
 
                         <p id="roleNoteText">
-
                             <strong>Super Administrator:</strong>
-
                             Konfigurasi sistem global, master siswa &amp; kelas,
                             hak otorisasi rekening, serta riwayat audit transaksi menyeluruh.
-
                         </p>
 
                     </div>
 
                 </div>
 
-
                 <!-- Form autentikasi -->
                 <form
                     class="login-form"
                     id="loginForm"
+                    method="POST"
+                    action="{{ url('/login') }}"
                     novalidate>
 
+                    @csrf
 
-                    <!-- EMAIL / USERNAME -->
+                    <!-- EMAIL -->
                     <div class="field">
 
                         <div class="field__head">
@@ -283,21 +273,16 @@
                                 class="field__label"
                                 for="identity"
                                 id="identityLabel">
-
                                 Email Administrator
-
                             </label>
 
                             <span
                                 class="field__hint"
                                 id="identityHint">
-
                                 Email Pribadi
-
                             </span>
 
                         </div>
-
 
                         <div class="field__control">
 
@@ -305,24 +290,21 @@
                                 class="field__icon material-symbols-outlined"
                                 id="identityIcon"
                                 aria-hidden="true">
-
                                 badge
-
                             </span>
-
 
                             <input
                                 class="field__input"
-                                type="text"
+                                type="email"
                                 id="identity"
-                                name="identity"
+                                name="email"
                                 placeholder="contoh: admin.utama@sekolah.sch.id"
                                 autocomplete="username"
+                                value="{{ old('email') }}"
                                 required
                                 aria-describedby="identityError">
 
                         </div>
-
 
                         <p
                             class="field__error"
@@ -333,7 +315,6 @@
 
                     </div>
 
-
                     <!-- PASSWORD -->
                     <div class="field">
 
@@ -342,24 +323,18 @@
                             <label
                                 class="field__label"
                                 for="password">
-
                                 Kata Sandi
-
                             </label>
 
                         </div>
-
 
                         <div class="field__control">
 
                             <span
                                 class="field__icon material-symbols-outlined"
                                 aria-hidden="true">
-
                                 lock
-
                             </span>
-
 
                             <input
                                 class="field__input"
@@ -370,7 +345,6 @@
                                 autocomplete="current-password"
                                 required
                                 aria-describedby="pwPolicy passwordError">
-
 
                             <button
                                 type="button"
@@ -383,15 +357,12 @@
                                     class="material-symbols-outlined"
                                     id="peekIcon"
                                     aria-hidden="true">
-
                                     visibility
-
                                 </span>
 
                             </button>
 
                         </div>
-
 
                         <!-- Password policy -->
                         <div
@@ -403,7 +374,6 @@
                                 Kata sandi Anda harus memenuhi syarat berikut:
                             </p>
 
-
                             <ul class="pw-policy__list">
 
                                 <li
@@ -413,15 +383,12 @@
                                     <span
                                         class="material-symbols-outlined"
                                         aria-hidden="true">
-
                                         circle
-
                                     </span>
 
                                     Minimal 8 karakter
 
                                 </li>
-
 
                                 <li
                                     class="pw-policy__item"
@@ -430,15 +397,12 @@
                                     <span
                                         class="material-symbols-outlined"
                                         aria-hidden="true">
-
                                         circle
-
                                     </span>
 
                                     Memuat minimal 1 huruf kapital (A&ndash;Z)
 
                                 </li>
-
 
                                 <li
                                     class="pw-policy__item"
@@ -447,9 +411,7 @@
                                     <span
                                         class="material-symbols-outlined"
                                         aria-hidden="true">
-
                                         circle
-
                                     </span>
 
                                     Memuat minimal 1 karakter khusus (!@#$%^&amp;*)
@@ -460,7 +422,6 @@
 
                         </div>
 
-
                         <p
                             class="field__error"
                             id="passwordError"
@@ -470,7 +431,6 @@
 
                     </div>
 
-
                     <!-- Pesan error umum -->
                     <div
                         class="alert"
@@ -479,11 +439,10 @@
                         hidden>
 
                         <p id="alertText">
-                            Username/email atau kata sandi salah.
+                            Email atau kata sandi yang Anda masukkan salah.
                         </p>
 
                     </div>
-
 
                     <!-- Lupa password -->
                     <div class="login-form__meta">
@@ -496,9 +455,7 @@
                             <span
                                 class="material-symbols-outlined"
                                 aria-hidden="true">
-
                                 help
-
                             </span>
 
                             Lupa kata sandi?
@@ -506,7 +463,6 @@
                         </button>
 
                     </div>
-
 
                     <!-- Tombol login -->
                     <button
@@ -521,9 +477,7 @@
                         <span
                             class="material-symbols-outlined btn-primary__arrow"
                             aria-hidden="true">
-
                             arrow_forward
-
                         </span>
 
                         <span
@@ -535,8 +489,7 @@
 
                 </form>
 
-
-                                <!-- Bantuan akses -->
+                <!-- Bantuan akses -->
                 <div class="card__assist">
 
                     <p>
@@ -554,9 +507,7 @@
                         <span
                             class="material-symbols-outlined"
                             aria-hidden="true">
-
                             contact_support
-
                         </span>
 
                         Bantuan Akses &amp; Reset Kata Sandi
@@ -566,9 +517,10 @@
                 </div>
 
             </section>
-        </div>
-    </main>
 
+        </div>
+
+    </main>
 
     <!-- Footer -->
     <footer class="site-footer">
@@ -576,19 +528,19 @@
         <div class="site-footer__inner">
 
             <p class="site-footer__copy">
-                <center>BBCashvia
-                <strong>KASVIA Synergy</strong>
+                <center>
+                    BBCashvia
+                    <strong>KASVIA Synergy</strong>
 
-                <span aria-hidden="true">
+                    <span aria-hidden="true">
+                        &bull;
+                    </span>
+
+                    Copyright &copy; 2026 BBCashvia
                     &bull;
-                </span>
-
-                Copyright &copy; 2026 BBCashvia
-                &bull;
-                KASVIA Synergy.
+                    KASVIA Synergy.
                 </center>
             </p>
-
 
         </div>
 
@@ -603,12 +555,10 @@
         aria-labelledby="forgotTitle"
         hidden>
 
-
         <div
             class="modal__backdrop"
             data-close-modal>
         </div>
-
 
         <div class="modal__panel">
 
@@ -617,20 +567,15 @@
                 <span
                     class="modal__icon material-symbols-outlined"
                     aria-hidden="true">
-
                     lock_reset
-
                 </span>
-
 
                 <div>
 
                     <h2
                         class="modal__title"
                         id="forgotTitle">
-
                         Lupa Kata Sandi?
-
                     </h2>
 
                     <p class="modal__sub">
@@ -638,7 +583,6 @@
                     </p>
 
                 </div>
-
 
                 <button
                     type="button"
@@ -649,15 +593,12 @@
                     <span
                         class="material-symbols-outlined"
                         aria-hidden="true">
-
                         close
-
                     </span>
 
                 </button>
 
             </div>
-
 
             <ol class="modal__steps">
 
@@ -675,7 +616,6 @@
 
                 </li>
 
-
                 <li>
 
                     <strong>
@@ -688,7 +628,6 @@
                     </p>
 
                 </li>
-
 
                 <li>
 
@@ -705,15 +644,12 @@
 
             </ol>
 
-
             <div class="modal__note">
 
                 <span
                     class="material-symbols-outlined"
                     aria-hidden="true">
-
                     info
-
                 </span>
 
                 <p>
@@ -723,7 +659,6 @@
                 </p>
 
             </div>
-
 
             <button
                 type="button"
@@ -740,7 +675,6 @@
 
     </div>
 
-
     <!-- Overlay sukses -->
     <div
         class="success-overlay"
@@ -752,21 +686,16 @@
             <span
                 class="success-overlay__check material-symbols-outlined"
                 aria-hidden="true">
-
                 check_circle
-
             </span>
-
 
             <h2>
                 Autentikasi Berhasil
             </h2>
 
-
             <p id="successText">
                 Mengalihkan ke dasbor Anda&hellip;
             </p>
-
 
             <span
                 class="success-overlay__bar"

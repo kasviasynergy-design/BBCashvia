@@ -2,39 +2,12 @@ console.log("LOGIN JS BBCASHVIA TERLOAD");
 
 document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
-    // DATA DEMO
-    // =========================================================
-
-    const demoUsers = {
-        "admin@gmail.com": {
-            password: "Admin#2026",
-            role: "admin",
-            name: "Admin"
-        },
-
-        "bendahara@gmail.com": {
-            password: "Bendahara#2026",
-            role: "bendahara",
-            name: "Bendahara"
-        },
-
-        "viewer@gmail.com": {
-            password: "Viewer#2026",
-            role: "viewer",
-            name: "Viewer"
-        }
-    };
-
-
-    // =========================================================
     // ELEMENT
     // =========================================================
 
     const loginForm = document.getElementById("loginForm");
-
     const identityInput = document.getElementById("identity");
     const passwordInput = document.getElementById("password");
-
     const submitBtn = document.getElementById("submitBtn");
 
     const identityError = document.getElementById("identityError");
@@ -44,7 +17,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const alertText = document.getElementById("alertText");
 
     const roleTabs = document.querySelectorAll(".role-tab");
-
     const roleNoteIcon = document.getElementById("roleNoteIcon");
     const roleNoteText = document.getElementById("roleNoteText");
 
@@ -53,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const forgotLink = document.getElementById("forgotLink");
     const helpLink = document.getElementById("helpLink");
-
     const forgotModal = document.getElementById("forgotModal");
 
     const successOverlay = document.getElementById("successOverlay");
@@ -61,32 +32,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const pwPolicy = document.getElementById("pwPolicy");
 
-    const lengthRule = document.querySelector(
-        '[data-rule="length"]'
-    );
+    const lengthRule = document.querySelector('[data-rule="length"]');
+    const upperRule = document.querySelector('[data-rule="upper"]');
+    const specialRule = document.querySelector('[data-rule="special"]');
 
-    const upperRule = document.querySelector(
-        '[data-rule="upper"]'
-    );
+    // =========================================================
+    // CSRF TOKEN
+    // =========================================================
 
-    const specialRule = document.querySelector(
-        '[data-rule="special"]'
-    );
-
+    const csrfToken = document.querySelector(
+        'meta[name="csrf-token"]'
+    )?.getAttribute("content");
 
     // =========================================================
     // HELPER EMAIL
     // =========================================================
 
     function normalizeEmail(value) {
-        return String(value || "")
-            .trim()
-            .toLowerCase();
+        return String(value || "").trim().toLowerCase();
     }
 
-
     // =========================================================
-    // ROLE INFORMATION
+    // INFORMASI ROLE
     // =========================================================
 
     const roleInformation = {
@@ -100,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 hak otorisasi rekening, serta riwayat audit transaksi menyeluruh.
             `
         },
-
         bendahara: {
             icon: "account_balance_wallet",
             label: "Email Bendahara",
@@ -124,16 +90,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-
     function getSelectedRole() {
-        const activeRoleTab =
-            document.querySelector(".role-tab.is-active");
+        const activeRoleTab = document.querySelector(
+            ".role-tab.is-active"
+        );
 
-        return activeRoleTab
-            ? activeRoleTab.dataset.role
-            : null;
+        return activeRoleTab?.dataset.role || null;
     }
-
 
     // =========================================================
     // ROLE TAB
@@ -141,7 +104,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     roleTabs.forEach((tab) => {
         tab.addEventListener("click", () => {
-
             roleTabs.forEach((item) => {
                 item.classList.remove("is-active");
                 item.setAttribute("aria-selected", "false");
@@ -155,44 +117,24 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-
     function updateRoleInformation(role) {
         const info = roleInformation[role];
 
-        if (!info) {
-            return;
-        }
+        if (!info) return;
 
-        const identityLabel =
-            document.getElementById("identityLabel");
+        const identityLabel = document.getElementById("identityLabel");
+        const identityHint = document.getElementById("identityHint");
+        const identityIcon = document.getElementById("identityIcon");
 
-        const identityHint =
-            document.getElementById("identityHint");
-
-        const identityIcon =
-            document.getElementById("identityIcon");
-
-        if (identityLabel) {
-            identityLabel.textContent = info.label;
-        }
-
-        if (identityHint) {
-            identityHint.textContent = info.hint;
-        }
-
-        if (identityIcon) {
-            identityIcon.textContent = "badge";
-        }
-
-        if (roleNoteIcon) {
-            roleNoteIcon.textContent = info.icon;
-        }
+        if (identityLabel) identityLabel.textContent = info.label;
+        if (identityHint) identityHint.textContent = info.hint;
+        if (identityIcon) identityIcon.textContent = "badge";
+        if (roleNoteIcon) roleNoteIcon.textContent = info.icon;
 
         if (roleNoteText) {
             roleNoteText.innerHTML = info.text;
         }
     }
-
 
     // =========================================================
     // PASSWORD SHOW / HIDE
@@ -200,18 +142,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (togglePassword && passwordInput) {
         togglePassword.addEventListener("click", () => {
+            const isPassword = passwordInput.type === "password";
 
-            const isPassword =
-                passwordInput.type === "password";
-
-            passwordInput.type =
-                isPassword ? "text" : "password";
+            passwordInput.type = isPassword ? "text" : "password";
 
             if (peekIcon) {
-                peekIcon.textContent =
-                    isPassword
-                        ? "visibility_off"
-                        : "visibility";
+                peekIcon.textContent = isPassword
+                    ? "visibility_off"
+                    : "visibility";
             }
 
             togglePassword.setAttribute(
@@ -228,84 +166,43 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-
     // =========================================================
     // PASSWORD POLICY DISPLAY
     // =========================================================
 
     function updatePasswordPolicy(password) {
-
-        const hasLength =
-            password.length >= 8;
-
-        const hasUpper =
-            /[A-Z]/.test(password);
-
-        const hasSpecial =
-            /[^A-Za-z0-9]/.test(password);
-
-        updateRule(lengthRule, hasLength);
-        updateRule(upperRule, hasUpper);
-        updateRule(specialRule, hasSpecial);
+        updateRule(lengthRule, password.length >= 8);
+        updateRule(upperRule, /[A-Z]/.test(password));
+        updateRule(specialRule, /[^A-Za-z0-9]/.test(password));
     }
-
 
     function updateRule(element, valid) {
+        if (!element) return;
 
-        if (!element) {
-            return;
-        }
+        element.classList.toggle("is-ok", valid);
 
-        element.classList.toggle(
-            "is-ok",
-            valid
+        const icon = element.querySelector(
+            ".material-symbols-outlined"
         );
-
-        const icon =
-            element.querySelector(
-                ".material-symbols-outlined"
-            );
 
         if (icon) {
-            icon.textContent =
-                valid
-                    ? "check_circle"
-                    : "circle";
+            icon.textContent = valid ? "check_circle" : "circle";
         }
     }
 
-
     if (passwordInput) {
+        passwordInput.addEventListener("focus", () => {
+            if (pwPolicy) pwPolicy.hidden = false;
 
-        passwordInput.addEventListener(
-            "focus",
-            () => {
+            updatePasswordPolicy(passwordInput.value);
+        });
 
-                if (pwPolicy) {
-                    pwPolicy.hidden = false;
-                }
-
-                updatePasswordPolicy(
-                    passwordInput.value
-                );
-            }
-        );
-
-
-        passwordInput.addEventListener(
-            "input",
-            () => {
-
-                updatePasswordPolicy(
-                    passwordInput.value
-                );
-
-                clearPasswordError();
-                hideAlert();
-            }
-        );
+        passwordInput.addEventListener("input", () => {
+            updatePasswordPolicy(passwordInput.value);
+            clearPasswordError();
+            hideAlert();
+        });
     }
-
 
     // =========================================================
     // ERROR HANDLING
@@ -317,595 +214,304 @@ document.addEventListener("DOMContentLoaded", () => {
         hideAlert();
     }
 
-
     function clearIdentityError() {
-
         if (identityError) {
             identityError.textContent = "";
             identityError.hidden = true;
         }
 
-        if (identityInput) {
-            identityInput.classList.remove(
-                "is-invalid"
-            );
-        }
+        identityInput?.classList.remove("is-invalid");
     }
 
-
     function clearPasswordError() {
-
         if (passwordError) {
             passwordError.textContent = "";
             passwordError.hidden = true;
         }
 
-        if (passwordInput) {
-            passwordInput.classList.remove(
-                "is-invalid"
-            );
-        }
+        passwordInput?.classList.remove("is-invalid");
     }
 
-
     function showIdentityError(message) {
-
         if (identityError) {
             identityError.textContent = message;
             identityError.hidden = false;
         }
 
-        if (identityInput) {
-            identityInput.classList.add(
-                "is-invalid"
-            );
-        }
+        identityInput?.classList.add("is-invalid");
     }
 
-
     function showPasswordError(message) {
-
         if (passwordError) {
             passwordError.textContent = message;
             passwordError.hidden = false;
         }
 
-        if (passwordInput) {
-            passwordInput.classList.add(
-                "is-invalid"
+        passwordInput?.classList.add("is-invalid");
+    }
+
+    function showAlert(message) {
+        if (alertBox) alertBox.hidden = false;
+        if (alertText) alertText.textContent = message;
+    }
+
+    function hideAlert() {
+        if (alertBox) alertBox.hidden = true;
+        if (alertText) alertText.textContent = "";
+    }
+
+    // =========================================================
+    // TAMPILKAN ERROR DARI LARAVEL
+    // =========================================================
+
+    function showServerErrors(errors, fallbackMessage) {
+        clearErrors();
+
+        if (errors?.email?.length) {
+            showIdentityError(errors.email[0]);
+        }
+
+        if (errors?.password?.length) {
+            showPasswordError(errors.password[0]);
+        }
+
+        if (errors?.role?.length) {
+            showAlert(errors.role[0]);
+        }
+
+        if (
+            !errors?.email?.length &&
+            !errors?.password?.length &&
+            !errors?.role?.length
+        ) {
+            showAlert(
+                fallbackMessage ||
+                "Login gagal. Silakan periksa kembali data Anda."
             );
         }
     }
 
-
-    function showAlert(message) {
-
-        if (alertBox) {
-            alertBox.hidden = false;
-        }
-
-        if (alertText) {
-            alertText.textContent = message;
-        }
-    }
-
-
-    function hideAlert() {
-
-        if (alertBox) {
-            alertBox.hidden = true;
-        }
-
-        if (alertText) {
-            alertText.textContent = "";
-        }
-    }
-
-
     // =========================================================
-    // FORGOT PASSWORD MODAL
+    // MODAL LUPA PASSWORD
     // =========================================================
 
     function openForgotModal() {
-
-        if (!forgotModal) {
-            return;
-        }
+        if (!forgotModal) return;
 
         forgotModal.hidden = false;
         document.body.style.overflow = "hidden";
     }
 
-
     function closeForgotModal() {
-
-        if (!forgotModal) {
-            return;
-        }
+        if (!forgotModal) return;
 
         forgotModal.hidden = true;
         document.body.style.overflow = "";
     }
 
-
-    if (forgotLink) {
-        forgotLink.addEventListener("click", (event) => {
-            event.preventDefault();
-            openForgotModal();
-        });
-    }
-
-
-    if (helpLink) {
-        helpLink.addEventListener("click", (event) => {
-            event.preventDefault();
-            openForgotModal();
-        });
-    }
-
-
-    if (forgotModal) {
-
-        const closeButtons =
-            forgotModal.querySelectorAll(
-                "[data-close-modal]"
-            );
-
-        closeButtons.forEach((button) => {
-            button.addEventListener(
-                "click",
-                closeForgotModal
-            );
-        });
-    }
-
-
-    document.addEventListener("keydown", (event) => {
-
-        if (event.key === "Escape") {
-            closeForgotModal();
-        }
+    forgotLink?.addEventListener("click", (event) => {
+        event.preventDefault();
+        openForgotModal();
     });
 
+    helpLink?.addEventListener("click", (event) => {
+        event.preventDefault();
+        openForgotModal();
+    });
 
-    // =========================================================
-    // PASSWORD BARU YANG SUDAH DISIMPAN
-    // =========================================================
-
-    function getChangedPasswords() {
-
-        const storageKey =
-            "bbc_changed_passwords";
-
-        try {
-
-            const saved =
-                localStorage.getItem(storageKey);
-
-            if (!saved) {
-                return {};
-            }
-
-            const parsed =
-                JSON.parse(saved);
-
-            if (
-                parsed &&
-                typeof parsed === "object" &&
-                !Array.isArray(parsed)
-            ) {
-                return parsed;
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Gagal membaca password tersimpan:",
-                error
-            );
-
-        }
-
-        return {};
+    if (forgotModal) {
+        forgotModal
+            .querySelectorAll("[data-close-modal]")
+            .forEach((button) => {
+                button.addEventListener("click", closeForgotModal);
+            });
     }
 
-
-    // =========================================================
-    // SIMPAN SESSION USER
-    // =========================================================
-
-    function saveLoggedInUser(
-        email,
-        user
-    ) {
-
-        sessionStorage.setItem(
-            "bbc_user_email",
-            email
-        );
-
-        sessionStorage.setItem(
-            "bbc_user_role",
-            user.role
-        );
-
-        sessionStorage.setItem(
-            "bbc_user_name",
-            user.name
-        );
-    }
-
-
-    // =========================================================
-    // DASHBOARD REDIRECT
-    // =========================================================
-
-    function redirectToDashboard(role) {
-
-        const routes = {
-            admin: "/dashboard/admin",
-            bendahara: "/dashboard/bendahara",
-            viewer: "/dashboard/viewer"
-        };
-
-        const destination =
-            routes[role];
-
-        if (!destination) {
-            console.error(
-                "Role tidak memiliki dashboard:",
-                role
-            );
-
-            window.location.href = "/";
-            return;
-        }
-
-        window.location.href =
-            destination;
-    }
-
-
-    // =========================================================
-    // SUCCESS LOGIN
-    // =========================================================
-
-    function showSuccess(role) {
-
-        if (!successOverlay) {
-            redirectToDashboard(role);
-            return;
-        }
-
-        const messages = {
-            admin:
-                "Login berhasil. Mengarahkan ke Dashboard Admin...",
-
-            bendahara:
-                "Login berhasil. Mengarahkan ke Dashboard Bendahara...",
-
-            viewer:
-                "Login berhasil. Mengarahkan ke Dashboard Viewer..."
-        };
-
-        if (successText) {
-            successText.textContent =
-                messages[role] ||
-                "Login berhasil. Mengarahkan ke dashboard...";
-        }
-
-        successOverlay.hidden = false;
-
-        setTimeout(() => {
-            redirectToDashboard(role);
-        }, 800);
-    }
-
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeForgotModal();
+    });
 
     // =========================================================
     // LOADING
     // =========================================================
 
     function setLoading(isLoading) {
+        if (!submitBtn) return;
 
-        if (!submitBtn) {
-            return;
-        }
-
-        submitBtn.classList.toggle(
-            "is-loading",
-            isLoading
-        );
-
-        submitBtn.disabled =
-            isLoading;
+        submitBtn.classList.toggle("is-loading", isLoading);
+        submitBtn.disabled = isLoading;
     }
 
-
     // =========================================================
-    // LOGIN PROCESS
+    // OVERLAY LOGIN BERHASIL
     // =========================================================
 
-    function handleLogin() {
+    function showSuccess(role, redirectUrl) {
+        const messages = {
+            admin: "Login berhasil. Mengarahkan ke Dashboard Admin...",
+            bendahara: "Login berhasil. Mengarahkan ke Dashboard Bendahara...",
+            viewer: "Login berhasil. Mengarahkan ke Dashboard Viewer..."
+        };
 
-        if (
-            submitBtn &&
-            submitBtn.disabled
-        ) {
+        if (successText) {
+            successText.textContent =
+                messages[role] ||
+                "Login berhasil. Mengarahkan ke halaman berikutnya...";
+        }
+
+        if (!successOverlay) {
+            window.location.assign(redirectUrl);
             return;
         }
+
+        successOverlay.hidden = false;
+
+        window.setTimeout(() => {
+            window.location.assign(redirectUrl);
+        }, 800);
+    }
+
+    // =========================================================
+    // PROSES LOGIN KE LARAVEL
+    // =========================================================
+
+    async function handleLogin() {
+        if (submitBtn?.disabled) return;
 
         clearErrors();
 
-        const email =
-            normalizeEmail(
-                identityInput?.value
-            );
+        const email = normalizeEmail(identityInput?.value);
+        const password = passwordInput?.value || "";
+        const role = getSelectedRole();
 
-        const password =
-            passwordInput?.value || "";
-
-
-        // -----------------------------------------------------
-        // EMAIL KOSONG
-        // -----------------------------------------------------
-
+        // Validasi input di sisi frontend.
         if (!email) {
-
-            showIdentityError(
-                "Email wajib diisi."
-            );
-
+            showIdentityError("Email wajib diisi.");
             identityInput?.focus();
-
             return;
         }
 
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-        // -----------------------------------------------------
-        // PASSWORD KOSONG
-        // -----------------------------------------------------
+        if (!emailPattern.test(email)) {
+            showIdentityError("Masukkan alamat email yang valid.");
+            identityInput?.focus();
+            return;
+        }
 
         if (!password) {
-
-            showPasswordError(
-                "Kata sandi wajib diisi."
-            );
-
+            showPasswordError("Kata sandi wajib diisi.");
             passwordInput?.focus();
-
             return;
         }
 
-
-        // -----------------------------------------------------
-        // CARI USER
-        // -----------------------------------------------------
-
-        const user =
-            demoUsers[email];
-
-
-        if (!user) {
-
-            showIdentityError(
-                "Email belum terdaftar."
-            );
-
-            identityInput?.focus();
-
+        if (!role) {
+            showAlert("Silakan pilih peran pengguna.");
             return;
         }
 
-
-        // -----------------------------------------------------
-        // CEK ROLE
-        // -----------------------------------------------------
-
-        const selectedRole =
-            getSelectedRole();
-
-
-        if (
-            selectedRole &&
-            selectedRole !== user.role
-        ) {
-
+        if (!csrfToken) {
             showAlert(
-                "Peran yang dipilih tidak sesuai dengan akun ini."
+                "Token keamanan tidak ditemukan. Muat ulang halaman login."
             );
-
+            console.error("Meta CSRF token tidak ditemukan.");
             return;
         }
-
-
-        // -----------------------------------------------------
-        // AMBIL PASSWORD
-        // -----------------------------------------------------
-
-        const changedPasswords =
-            getChangedPasswords();
-
-        const hasChangedPassword =
-            Object.prototype.hasOwnProperty.call(
-                changedPasswords,
-                email
-            );
-
-
-        const correctPassword =
-            hasChangedPassword
-                ? String(changedPasswords[email])
-                : user.password;
-
-
-        // -----------------------------------------------------
-        // CEK PASSWORD
-        // -----------------------------------------------------
-
-        if (password !== correctPassword) {
-
-            showPasswordError(
-                "Kata sandi yang dimasukkan salah."
-            );
-
-            passwordInput?.focus();
-
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // LOGIN PERTAMA
-        // -----------------------------------------------------
-
-        if (!hasChangedPassword) {
-
-            sessionStorage.setItem(
-                "bbc_pending_email",
-                email
-            );
-
-            sessionStorage.setItem(
-                "bbc_pending_role",
-                user.role
-            );
-
-            window.location.href =
-                "/change-password";
-
-            return;
-        }
-
-
-        // -----------------------------------------------------
-        // LOGIN KEDUA
-        // -----------------------------------------------------
-
-        saveLoggedInUser(
-            email,
-            user
-        );
 
         setLoading(true);
 
-        showSuccess(user.role);
-    }
+        try {
+            const response = await fetch("/login", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "X-CSRF-TOKEN": csrfToken,
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password,
+                    role: role
+                })
+            });
 
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok || data.success !== true) {
+                showServerErrors(
+                    data.errors,
+                    data.message ||
+                    "Email, kata sandi, atau peran tidak sesuai."
+                );
+
+                return;
+            }
+
+            if (!data.redirect) {
+                showAlert(
+                    "Login berhasil, tetapi alamat tujuan belum tersedia."
+                );
+
+                console.error("Respons login tidak memiliki redirect:", data);
+                return;
+            }
+
+            // Laravel menentukan apakah harus mengganti password
+            // atau masuk ke dashboard.
+            if (data.must_change_password === true) {
+                window.location.assign(data.redirect);
+                return;
+            }
+
+            showSuccess(role, data.redirect);
+
+        } catch (error) {
+            console.error("Kesalahan saat menghubungi server:", error);
+
+            showAlert(
+                "Tidak dapat menghubungi server. Pastikan Laravel berjalan, lalu coba lagi."
+            );
+
+        } finally {
+            setLoading(false);
+        }
+    }
 
     // =========================================================
     // FORM SUBMIT
     // =========================================================
 
-    /*
-     * HANYA gunakan submit event.
-     *
-     * Jangan tambahkan click event ke submitBtn.
-     * Kalau keduanya digunakan, handleLogin() dapat dipanggil
-     * dua kali.
-     */
-
     if (loginForm) {
-
-        loginForm.addEventListener(
-            "submit",
-            (event) => {
-
-                event.preventDefault();
-
-                handleLogin();
-            }
-        );
-
+        loginForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            handleLogin();
+        });
     } else {
-
-        console.error(
-            "ERROR: #loginForm tidak ditemukan."
-        );
+        console.error("ERROR: #loginForm tidak ditemukan.");
     }
 
-
     // =========================================================
-    // CLEAR ERROR SAAT INPUT
-    // =========================================================
-
-    if (identityInput) {
-
-        identityInput.addEventListener(
-            "input",
-            () => {
-
-                clearIdentityError();
-                hideAlert();
-            }
-        );
-    }
-
-
-    // =========================================================
-    // ENTER
+    // HAPUS ERROR SAAT INPUT BERUBAH
     // =========================================================
 
-    if (identityInput) {
-
-        identityInput.addEventListener(
-            "keydown",
-            (event) => {
-
-                if (event.key === "Enter") {
-                    event.preventDefault();
-
-                    loginForm?.requestSubmit();
-                }
-            }
-        );
-    }
-
-
-    if (passwordInput) {
-
-        passwordInput.addEventListener(
-            "keydown",
-            (event) => {
-
-                if (event.key === "Enter") {
-                    event.preventDefault();
-
-                    loginForm?.requestSubmit();
-                }
-            }
-        );
-    }
-
+    identityInput?.addEventListener("input", () => {
+        clearIdentityError();
+        hideAlert();
+    });
 
     // =========================================================
     // INITIAL STATE
     // =========================================================
 
-    if (successOverlay) {
-        successOverlay.hidden = true;
-    }
-
-    if (forgotModal) {
-        forgotModal.hidden = true;
-    }
-
-    if (alertBox) {
-        alertBox.hidden = true;
-    }
-
-    if (identityError) {
-        identityError.hidden = true;
-    }
-
-    if (passwordError) {
-        passwordError.hidden = true;
-    }
-
+    if (successOverlay) successOverlay.hidden = true;
+    if (forgotModal) forgotModal.hidden = true;
+    if (alertBox) alertBox.hidden = true;
+    if (identityError) identityError.hidden = true;
+    if (passwordError) passwordError.hidden = true;
 
     updateRoleInformation("admin");
 
-    console.log(
-        "Login JS BBCashvia berhasil dijalankan."
-    );
+    console.log("Login JS BBCashvia berhasil dijalankan.");
 });

@@ -1,162 +1,75 @@
 document.addEventListener("DOMContentLoaded", () => {
-
     // =========================================================
     // ELEMENT
     // =========================================================
 
     const changePasswordForm =
-        document.getElementById(
-            "changePasswordForm"
-        );
+        document.getElementById("changePasswordForm");
 
     const newPassword =
-        document.getElementById(
-            "newPassword"
-        );
+        document.getElementById("newPassword");
 
     const confirmPassword =
-        document.getElementById(
-            "confirmPassword"
-        );
+        document.getElementById("confirmPassword");
 
     const passwordError =
-        document.getElementById(
-            "passwordError"
-        );
+        document.getElementById("passwordError");
 
     const confirmError =
-        document.getElementById(
-            "confirmError"
-        );
+        document.getElementById("confirmError");
 
     const successMessage =
-        document.getElementById(
-            "successMessage"
-        );
+        document.getElementById("successMessage");
 
     const toggleNewPassword =
-        document.getElementById(
-            "toggleNewPassword"
-        );
+        document.getElementById("toggleNewPassword");
 
     const toggleConfirmPassword =
-        document.getElementById(
-            "toggleConfirmPassword"
-        );
+        document.getElementById("toggleConfirmPassword");
 
     const submitButton =
         changePasswordForm?.querySelector(
             'button[type="submit"]'
         );
 
-
-    // =========================================================
-    // USER PENDING
-    // =========================================================
-
-    const email =
-        normalizeEmail(
-            sessionStorage.getItem(
-                "bbc_pending_email"
-            )
-        );
-
-    const role =
-        sessionStorage.getItem(
-            "bbc_pending_role"
-        );
-
-
-    // =========================================================
-    // CEK USER
-    // =========================================================
-
-    if (!email || !role) {
-
-        console.warn(
-            "Tidak ada user yang sedang melakukan change password."
-        );
-
-        window.location.href = "/";
-
-        return;
-    }
-
-
-    // =========================================================
-    // NORMALIZE EMAIL
-    // =========================================================
-
-    function normalizeEmail(value) {
-
-        return String(value || "")
-            .trim()
-            .toLowerCase();
-    }
+    const csrfToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content");
 
 
     // =========================================================
     // PASSWORD TOGGLE
     // =========================================================
 
-    function setupPasswordToggle(
-        button,
-        input
-    ) {
+    function setupPasswordToggle(button, input) {
+        if (!button || !input) return;
 
-        if (!button || !input) {
-            return;
-        }
+        button.addEventListener("click", () => {
+            const isPassword = input.type === "password";
 
-        button.addEventListener(
-            "click",
-            () => {
+            input.type = isPassword ? "text" : "password";
 
-                const isPassword =
-                    input.type === "password";
+            const icon = button.querySelector(
+                ".material-symbols-outlined"
+            );
 
-                input.type =
-                    isPassword
-                        ? "text"
-                        : "password";
-
-
-                const icon =
-                    button.querySelector(
-                        ".material-symbols-outlined"
-                    );
-
-
-                if (icon) {
-
-                    icon.textContent =
-                        isPassword
-                            ? "visibility_off"
-                            : "visibility";
-                }
-
-
-                button.setAttribute(
-                    "aria-label",
-                    isPassword
-                        ? "Sembunyikan kata sandi"
-                        : "Tampilkan kata sandi"
-                );
+            if (icon) {
+                icon.textContent = isPassword
+                    ? "visibility_off"
+                    : "visibility";
             }
-        );
+
+            button.setAttribute(
+                "aria-label",
+                isPassword
+                    ? "Sembunyikan kata sandi"
+                    : "Tampilkan kata sandi"
+            );
+        });
     }
 
-
-    setupPasswordToggle(
-        toggleNewPassword,
-        newPassword
-    );
-
-
-    setupPasswordToggle(
-        toggleConfirmPassword,
-        confirmPassword
-    );
+    setupPasswordToggle(toggleNewPassword, newPassword);
+    setupPasswordToggle(toggleConfirmPassword, confirmPassword);
 
 
     // =========================================================
@@ -164,348 +77,233 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
 
     function validatePassword(password) {
-
-        const hasLength =
-            password.length >= 8;
-
-        const hasUpper =
-            /[A-Z]/.test(password);
-
-        const hasSpecial =
-            /[^A-Za-z0-9]/.test(password);
-
         return (
-            hasLength &&
-            hasUpper &&
-            hasSpecial
+            password.length >= 8 &&
+            /[A-Z]/.test(password) &&
+            /[^A-Za-z0-9]/.test(password)
         );
     }
 
 
     // =========================================================
-    // CLEAR ERROR
+    // ERROR HANDLING
     // =========================================================
 
     function clearErrors() {
+        [passwordError, confirmError].forEach((element) => {
+            if (!element) return;
 
-        if (passwordError) {
-            passwordError.textContent = "";
-            passwordError.hidden = true;
-        }
-
-        if (confirmError) {
-            confirmError.textContent = "";
-            confirmError.hidden = true;
-        }
+            element.textContent = "";
+            element.hidden = true;
+        });
     }
 
+    function showError(element, message) {
+        if (!element) return;
 
-    // =========================================================
-    // AMBIL PASSWORD TERSIMPAN
-    // =========================================================
+        element.textContent = message;
+        element.hidden = false;
+    }
 
-    function getChangedPasswords() {
+    function showServerErrors(errors, fallbackMessage) {
+        clearErrors();
 
-        try {
+        if (errors?.new_password?.length) {
+            showError(passwordError, errors.new_password[0]);
+        }
 
-            const saved =
-                localStorage.getItem(
-                    "bbc_changed_passwords"
-                );
-
-            if (!saved) {
-                return {};
-            }
-
-            const parsed =
-                JSON.parse(saved);
-
-            if (
-                parsed &&
-                typeof parsed === "object" &&
-                !Array.isArray(parsed)
-            ) {
-                return parsed;
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Gagal membaca password tersimpan:",
-                error
+        if (errors?.new_password_confirmation?.length) {
+            showError(
+                confirmError,
+                errors.new_password_confirmation[0]
             );
         }
 
-        return {};
+        if (
+            !errors?.new_password?.length &&
+            !errors?.new_password_confirmation?.length
+        ) {
+            showError(
+                passwordError,
+                fallbackMessage ||
+                    "Password gagal diubah. Silakan coba lagi."
+            );
+        }
     }
 
 
     // =========================================================
-    // SIMPAN PASSWORD
-    // =========================================================
-
-    function saveChangedPassword(
-        email,
-        password
-    ) {
-
-        const changedPasswords =
-            getChangedPasswords();
-
-        changedPasswords[email] =
-            password;
-
-        localStorage.setItem(
-            "bbc_changed_passwords",
-            JSON.stringify(
-                changedPasswords
-            )
-        );
-    }
-
-
-    // =========================================================
-    // SUBMIT CHANGE PASSWORD
+    // SUBMIT CHANGE PASSWORD KE LARAVEL
     // =========================================================
 
     if (changePasswordForm) {
-
         changePasswordForm.addEventListener(
             "submit",
-            (event) => {
-
+            async (event) => {
                 event.preventDefault();
 
+                if (submitButton?.disabled) return;
 
                 clearErrors();
 
-
-                const password =
-                    newPassword?.value || "";
-
-                const confirmation =
-                    confirmPassword?.value || "";
-
-
-                // -------------------------------------------------
-                // PASSWORD KOSONG
-                // -------------------------------------------------
-
-                if (!password) {
-
-                    if (passwordError) {
-
-                        passwordError.textContent =
-                            "Kata sandi baru wajib diisi.";
-
-                        passwordError.hidden =
-                            false;
-                    }
-
-                    newPassword?.focus();
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // PASSWORD TIDAK SESUAI RULE
-                // -------------------------------------------------
-
-                if (
-                    !validatePassword(
-                        password
-                    )
-                ) {
-
-                    if (passwordError) {
-
-                        passwordError.textContent =
-                            "Kata sandi harus memiliki minimal 8 karakter, 1 huruf kapital, dan 1 karakter khusus.";
-
-                        passwordError.hidden =
-                            false;
-                    }
-
-                    newPassword?.focus();
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // KONFIRMASI KOSONG
-                // -------------------------------------------------
-
-                if (!confirmation) {
-
-                    if (confirmError) {
-
-                        confirmError.textContent =
-                            "Konfirmasi kata sandi wajib diisi.";
-
-                        confirmError.hidden =
-                            false;
-                    }
-
-                    confirmPassword?.focus();
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // PASSWORD TIDAK SAMA
-                // -------------------------------------------------
-
-                if (
-                    password !== confirmation
-                ) {
-
-                    if (confirmError) {
-
-                        confirmError.textContent =
-                            "Konfirmasi kata sandi tidak sama.";
-
-                        confirmError.hidden =
-                            false;
-                    }
-
-                    confirmPassword?.focus();
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // CEK EMAIL PENDING
-                // -------------------------------------------------
-
-                if (!email || !role) {
-
-                    window.location.href =
-                        "/";
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // SIMPAN PASSWORD BARU
-                // -------------------------------------------------
-
-                try {
-
-                    saveChangedPassword(
-                        email,
-                        password
-                    );
-
-                } catch (error) {
-
-                    console.error(
-                        "Gagal menyimpan password:",
-                        error
-                    );
-
-                    if (passwordError) {
-
-                        passwordError.textContent =
-                            "Kata sandi gagal disimpan. Silakan coba lagi.";
-
-                        passwordError.hidden =
-                            false;
-                    }
-
-                    return;
-                }
-
-
-                // -------------------------------------------------
-                // HAPUS PENDING
-                // -------------------------------------------------
-
-                sessionStorage.removeItem(
-                    "bbc_pending_email"
-                );
-
-                sessionStorage.removeItem(
-                    "bbc_pending_role"
-                );
-
-
-                // -------------------------------------------------
-                // SIMPAN STATUS BERHASIL
-                // -------------------------------------------------
-
                 if (successMessage) {
-
-                    successMessage.textContent =
-                        "Kata sandi berhasil dibuat. Mengarahkan ke halaman login...";
-
-                    successMessage.hidden =
-                        false;
+                    successMessage.textContent = "";
+                    successMessage.hidden = true;
                 }
 
+                const password = newPassword?.value || "";
+                const confirmation = confirmPassword?.value || "";
 
-                // -------------------------------------------------
-                // NONAKTIFKAN BUTTON
-                // -------------------------------------------------
+                // Password wajib diisi.
+                if (!password) {
+                    showError(
+                        passwordError,
+                        "Kata sandi baru wajib diisi."
+                    );
+
+                    newPassword?.focus();
+                    return;
+                }
+
+                // Validasi format password.
+                if (!validatePassword(password)) {
+                    showError(
+                        passwordError,
+                        "Kata sandi harus memiliki minimal 8 karakter, 1 huruf kapital, dan 1 karakter khusus."
+                    );
+
+                    newPassword?.focus();
+                    return;
+                }
+
+                // Konfirmasi wajib diisi.
+                if (!confirmation) {
+                    showError(
+                        confirmError,
+                        "Konfirmasi kata sandi wajib diisi."
+                    );
+
+                    confirmPassword?.focus();
+                    return;
+                }
+
+                // Password harus sama.
+                if (password !== confirmation) {
+                    showError(
+                        confirmError,
+                        "Konfirmasi kata sandi tidak sama."
+                    );
+
+                    confirmPassword?.focus();
+                    return;
+                }
+
+                // Pastikan token keamanan tersedia.
+                if (!csrfToken) {
+                    showError(
+                        passwordError,
+                        "Token keamanan tidak ditemukan. Muat ulang halaman."
+                    );
+
+                    console.error("Meta CSRF token tidak ditemukan.");
+                    return;
+                }
 
                 if (submitButton) {
                     submitButton.disabled = true;
                 }
 
+                try {
+                    const response = await fetch("/change-password", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json",
+                            "X-CSRF-TOKEN": csrfToken,
+                            "X-Requested-With": "XMLHttpRequest"
+                        },
+                        body: JSON.stringify({
+                            new_password: password,
+                            new_password_confirmation: confirmation
+                        })
+                    });
 
-                // -------------------------------------------------
-                // KEMBALI KE LOGIN
-                // -------------------------------------------------
+                    const data = await response.json().catch(() => ({}));
 
-                setTimeout(() => {
+                    if (!response.ok || data.success !== true) {
+                        if (response.status === 401) {
+                            window.location.assign("/");
+                            return;
+                        }
 
-                    window.location.href =
-                        "/?password_changed=1";
+                        showServerErrors(
+                            data.errors,
+                            data.message ||
+                                "Password gagal diubah. Silakan coba lagi."
+                        );
 
-                }, 1000);
+                        return;
+                    }
 
-            }
-        );
-    }
+                    // Password sudah berhasil disimpan oleh Laravel.
+                    if (successMessage) {
+                        successMessage.textContent =
+                            data.message ||
+                            "Password berhasil diubah. Mengarahkan ke halaman login...";
 
+                        successMessage.hidden = false;
+                    }
 
-    // =========================================================
-    // CLEAR ERROR SAAT MENGETIK
-    // =========================================================
+                    if (newPassword) newPassword.value = "";
+                    if (confirmPassword) confirmPassword.value = "";
 
-    if (newPassword) {
+                    // Bersihkan data sementara versi lama jika ada.
+                    sessionStorage.removeItem("bbc_pending_email");
+                    sessionStorage.removeItem("bbc_pending_role");
 
-        newPassword.addEventListener(
-            "input",
-            () => {
+                    window.setTimeout(() => {
+                        window.location.assign(data.redirect || "/");
+                    }, 1000);
 
-                if (passwordError) {
-                    passwordError.textContent = "";
-                    passwordError.hidden = true;
+                } catch (error) {
+                    console.error(
+                        "Kesalahan saat menghubungi server:",
+                        error
+                    );
+
+                    showError(
+                        passwordError,
+                        "Tidak dapat menghubungi server. Pastikan Laravel berjalan, lalu coba lagi."
+                    );
+
+                } finally {
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
                 }
             }
         );
     }
 
 
-    if (confirmPassword) {
+    // =========================================================
+    // HAPUS ERROR SAAT INPUT BERUBAH
+    // =========================================================
 
-        confirmPassword.addEventListener(
-            "input",
-            () => {
+    newPassword?.addEventListener("input", () => {
+        if (passwordError) {
+            passwordError.textContent = "";
+            passwordError.hidden = true;
+        }
+    });
 
-                if (confirmError) {
-                    confirmError.textContent = "";
-                    confirmError.hidden = true;
-                }
-            }
-        );
-    }
-
+    confirmPassword?.addEventListener("input", () => {
+        if (confirmError) {
+            confirmError.textContent = "";
+            confirmError.hidden = true;
+        }
+    });
 
     console.log(
         "Change Password JS BBCashvia berhasil dijalankan."
