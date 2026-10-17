@@ -169,7 +169,82 @@
 
     <!-- KONTEN UTAMA -->
     <div class="shell">
+
+        <!-- ===== TOPBAR ===== -->
+        <header class="topbar">
+
+            <div class="topbar__left">
+
+                <button type="button" class="topbar__burger" id="sidebarToggle" aria-label="Buka menu navigasi">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+                </button>
+
+                <div class="topbar__title">
+                    <h1>Transaksi</h1>
+                    <p id="topbarDate">—</p>
+                </div>
+
+            </div>
+
+
+            <div class="topbar__right">
+
+                <span class="topbar__chip">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                    TA 2026/2027 • Ganjil
+                </span>
+
+                <div class="topbar__profilewrap">
+
+                    <button type="button" class="topbar__profile" id="profileBtn" aria-haspopup="true"
+                        aria-expanded="false">
+                        <span class="topbar__avatar" aria-hidden="true">AN</span>
+                        <span class="topbar__profileinfo">
+                            <span class="topbar__profilename">Azis N.</span>
+                            <span class="topbar__profilerole">Admin</span>
+                        </span>
+                        <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">expand_more</span>
+                    </button>
+
+                    <div class="dropdown" id="profileMenu" role="menu">
+
+                        <div class="dropdown__head">
+                            <span class="dropdown__name">Azis N.</span>
+                            <span class="dropdown__mail">azinun@bbcashvia.sch.id</span>
+                        </div>
+
+                        <a href="/" class="dropdown__item dropdown__item--danger" role="menuitem">
+                            <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                            <span>Keluar</span>
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <!-- ===== KONTEN ===== -->
         <main class="content">
+
+            <!-- KEPALA HALAMAN -->
+            <section class="page-head">
+                <div class="page-head__text">
+                    <p class="page-head__eyebrow">Panel Admin • Kas Kelas</p>
+                    <h2 class="page-head__title">Transaksi</h2>
+                    <p class="page-head__sub">
+                        Catat pemasukan dan pengeluaran kas kelas lengkap dengan rincian dan bukti.
+                    </p>
+                </div>
+                <div class="page-head__actions">
+                    <button type="button" class="btn btn--primary" id="btnTambahTransaksi">
+                        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                        <span>Catat Transaksi</span>
+                    </button>
+                </div>
+            </section>
 
             <!-- RINGKASAN -->
             <section class="sum-grid" aria-label="Ringkasan transaksi">

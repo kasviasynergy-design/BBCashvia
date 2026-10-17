@@ -1589,6 +1589,7 @@ b.wajib {
         min-width: 0;
     }
 }
+
 /* Tablet: 769px - 1024px */
 @media (min-width: 769px) and (max-width: 1024px) {
     .sidebar {
@@ -1773,4 +1774,86 @@ b.wajib {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
     }
+}
+
+/* =========================================================
+   TAB DATA SISWA / DATA KELAS
+   ========================================================= */
+.tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+}
+
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tab-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================================================
+   AVATAR SISWA & KELAS (TIDAK KOSONG)
+   ========================================================= */
+.siswa-cell__avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 800;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+}
+
+.siswa-cell__avatar--pr {
+    background: #fdf2f8;
+    color: #db2777;
+}
+
+.cell-kelas {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--surface-soft);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-soft);
+    border: 1px solid var(--border);
+}
+
+.siswa-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.siswa-cell__info {
+    min-width: 0;
+}
+
+.siswa-cell__nama {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 13px;
+}
+
+.siswa-cell__nis {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: "JetBrains Mono", monospace;
 }

@@ -5,7 +5,10 @@ use App\Models\Siswa;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SiswaController;
+use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\IuranController;
+use App\Http\Controllers\Api\TransaksiController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,8 +60,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/admin/siswa', function () {
         $siswa = Siswa::with('kelas')->get();
+        $kelas = \App\Models\Kelas::orderBy('nama_kelas')
+            ->get(['id_kelas', 'nama_kelas']);
 
-        return view('admin-siswa', compact('siswa'));
+        return view('admin-siswa', compact('siswa', 'kelas'));
     });
 
     Route::get('/admin/laporan-kas', function () {
@@ -99,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
 
-  /*
+    /*
     |--------------------------------------------------------------------------
     | API DATA SISWA
     |--------------------------------------------------------------------------
@@ -126,6 +131,55 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | API DATA KELAS
+    |--------------------------------------------------------------------------
+    | Khusus Admin untuk membaca, menambah, mengedit, dan menghapus kelas.
+    */
+
+    Route::prefix('admin/api/kelas')
+        ->middleware('role:admin')
+        ->name('admin.api.kelas.')
+        ->group(function () {
+
+            Route::get('/', [KelasController::class, 'index'])
+                ->name('index');
+
+            Route::post('/', [KelasController::class, 'store'])
+                ->name('store');
+
+            Route::put('/{id}', [KelasController::class, 'update'])
+                ->name('update');
+
+            Route::delete('/{id}', [KelasController::class, 'destroy'])
+                ->name('destroy');
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | API DASHBOARD ADMIN
+    |--------------------------------------------------------------------------
+    | Statistik dan grafik untuk halaman Dashboard Admin.
+    */
+
+    Route::prefix('admin/api/dashboard')
+        ->middleware('role:admin')
+        ->name('admin.api.dashboard.')
+        ->group(function () {
+
+            Route::get('/', [DashboardController::class, 'index'])
+                ->name('index');
+
+            Route::get('/chart', [DashboardController::class, 'chart'])
+                ->name('chart');
+
+            Route::get('/recent', [DashboardController::class, 'recent'])
+                ->name('recent');
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
     | API IURAN
     |--------------------------------------------------------------------------
     | Khusus Admin untuk membaca, menambah, mengedit, dan menghapus iuran.
@@ -146,6 +200,35 @@ Route::middleware(['auth'])->group(function () {
                 ->name('update');
 
             Route::delete('/{id}', [IuranController::class, 'destroy'])
+                ->name('destroy');
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | API DATA TRANSAKSI (ADMIN)
+    |--------------------------------------------------------------------------
+    | Khusus Admin untuk membaca, menambah, mengedit, dan menghapus transaksi.
+    */
+
+    Route::prefix('admin/api/transaksi')
+        ->middleware('role:admin')
+        ->name('admin.api.transaksi.')
+        ->group(function () {
+
+            Route::get('/', [TransaksiController::class, 'index'])
+                ->name('index');
+
+            Route::post('/', [TransaksiController::class, 'store'])
+                ->name('store');
+
+            Route::get('/{id}', [TransaksiController::class, 'show'])
+                ->name('show');
+
+            Route::put('/{id}', [TransaksiController::class, 'update'])
+                ->name('update');
+
+            Route::delete('/{id}', [TransaksiController::class, 'destroy'])
                 ->name('destroy');
         });
 

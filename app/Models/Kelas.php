@@ -11,6 +11,8 @@ class Kelas extends Model
 
     protected $primaryKey = 'id_kelas';
 
+    public $timestamps = false;
+
     protected $fillable = [
         'nama_kelas',
         'tingkat',

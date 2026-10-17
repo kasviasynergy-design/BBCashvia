@@ -238,155 +238,214 @@
                 </div>
 
                 <div class="page-head__actions">
-                    <button type="button" class="btn btn--primary" id="btnTambahSiswa">
+                    <div class="tabs" role="tablist" aria-label="Pilih data">
+                        <button type="button" class="btn btn--primary tab-btn is-active"
+                            id="tabSiswa" role="tab" aria-selected="true" data-tab="siswa">
+                            <span class="material-symbols-outlined" aria-hidden="true">school</span>
+                            <span>Data Siswa</span>
+                        </button>
+                        <button type="button" class="btn btn--ghost tab-btn"
+                            id="tabKelas" role="tab" aria-selected="false" data-tab="kelas">
+                            <span class="material-symbols-outlined" aria-hidden="true">class</span>
+                            <span>Data Kelas</span>
+                        </button>
+                    </div>
+
+                    <button type="button" class="btn btn--primary" id="btnTambahSiswa"
+                        data-panel="siswa">
                         <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
                         <span>Tambah Siswa</span>
                     </button>
-                </div>
-
-            </section>
-
-
-            <!-- ===== RINGKASAN (MENGIKUTI FILTER) ===== -->
-            <section class="sum-grid" aria-label="Ringkasan data siswa">
-
-                <article class="sum-card sum-card--total">
-                    <div class="sum-card__iconwrap">
-                        <span class="material-symbols-outlined" aria-hidden="true">groups</span>
-                    </div>
-                    <div>
-                        <p class="sum-card__label">Total Siswa</p>
-                        <p class="sum-card__value" id="sumTotal">—</p>
-                        <p class="sum-card__note" id="sumTotalNote">sesuai filter</p>
-                    </div>
-                </article>
-
-                <article class="sum-card sum-card--lk">
-                    <div class="sum-card__iconwrap">
-                        <span class="material-symbols-outlined" aria-hidden="true">male</span>
-                    </div>
-                    <div>
-                        <p class="sum-card__label">Laki-laki</p>
-                        <p class="sum-card__value" id="sumLk">—</p>
-                        <p class="sum-card__note" id="sumLkNote">siswa</p>
-                    </div>
-                </article>
-
-                <article class="sum-card sum-card--pr">
-                    <div class="sum-card__iconwrap">
-                        <span class="material-symbols-outlined" aria-hidden="true">female</span>
-                    </div>
-                    <div>
-                        <p class="sum-card__label">Perempuan</p>
-                        <p class="sum-card__value" id="sumPr">—</p>
-                        <p class="sum-card__note" id="sumPrNote">siswa</p>
-                    </div>
-                </article>
-
-                <article class="sum-card sum-card--tunggak">
-                    <div class="sum-card__iconwrap">
-                        <span class="material-symbols-outlined" aria-hidden="true">event_busy</span>
-                    </div>
-                    <div>
-                        <p class="sum-card__label">Belum Bayar</p>
-                        <p class="sum-card__value" id="sumBelum">—</p>
-                        <p class="sum-card__note" id="sumBelumNote">iuran Oktober 2026</p>
-                    </div>
-                </article>
-
-            </section>
-
-
-            <!-- ===== PANEL FILTER ===== -->
-            <section class="panel filterbar" aria-label="Filter siswa">
-
-                <div class="filterbar__search">
-                    <span class="material-symbols-outlined" aria-hidden="true">search</span>
-                    <input type="search" id="cariSiswa" placeholder="Cari nama siswa atau NIS…" autocomplete="off">
-                </div>
-
-                <div class="filterbar__selects">
-
-                    <label class="field-select">
-                        <span class="field-select__label">Kelas</span>
-                        <select id="filterKelas">
-                            <option value="semua">Semua Kelas</option>
-                            <option value="XI RPL 1">XI RPL 1</option>
-                            <option value="XI RPL 2">XI RPL 2</option>
-                            <option value="X TKJ 1">X TKJ 1</option>
-                        </select>
-                    </label>
-
-                    <label class="field-select">
-                        <span class="field-select__label">Jenis Kelamin</span>
-                        <select id="filterJk">
-                            <option value="semua">Semua</option>
-                            <option value="L">Laki-laki</option>
-                            <option value="P">Perempuan</option>
-                        </select>
-                    </label>
-
-                    <label class="field-select">
-                        <span class="field-select__label">Status Iuran</span>
-                        <select id="filterIuran">
-                            <option value="semua">Semua Status</option>
-                            <option value="lunas">Sudah Bayar</option>
-                            <option value="sebagian">Sebagian</option>
-                            <option value="belum">Belum Bayar</option>
-                        </select>
-                    </label>
-
-                    <button type="button" class="btn btn--ghost btn--sm" id="btnResetFilter">
-                        <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
-                        <span>Reset</span>
+                    <button type="button" class="btn btn--primary hidden" id="btnTambahKelas"
+                        data-panel="kelas">
+                        <span class="material-symbols-outlined" aria-hidden="true">class_add</span>
+                        <span>Tambah Kelas</span>
                     </button>
-
                 </div>
 
             </section>
 
 
-            <!-- ===== TABEL SISWA ===== -->
-            <section class="panel">
+            <!-- ===== PANEL DATA SISWA (TAB) ===== -->
+            <div id="panelSiswa">
 
-                <div class="panel__head">
-                    <div>
-                        <p class="panel__eyebrow">ANGGOTA KELAS</p>
-                        <h3 class="panel__title">Daftar Siswa</h3>
-                        <p class="panel__sub" id="tabelInfo">— siswa ditampilkan</p>
+                <!-- ===== RINGKASAN (MENGIKUTI FILTER) ===== -->
+                <section class="sum-grid" aria-label="Ringkasan data siswa">
+
+                    <article class="sum-card sum-card--total">
+                        <div class="sum-card__iconwrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">groups</span>
+                        </div>
+                        <div>
+                            <p class="sum-card__label">Total Siswa</p>
+                            <p class="sum-card__value" id="sumTotal">—</p>
+                            <p class="sum-card__note" id="sumTotalNote">sesuai filter</p>
+                        </div>
+                    </article>
+
+                    <article class="sum-card sum-card--lk">
+                        <div class="sum-card__iconwrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">male</span>
+                        </div>
+                        <div>
+                            <p class="sum-card__label">Laki-laki</p>
+                            <p class="sum-card__value" id="sumLk">—</p>
+                            <p class="sum-card__note" id="sumLkNote">siswa</p>
+                        </div>
+                    </article>
+
+                    <article class="sum-card sum-card--pr">
+                        <div class="sum-card__iconwrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">female</span>
+                        </div>
+                        <div>
+                            <p class="sum-card__label">Perempuan</p>
+                            <p class="sum-card__value" id="sumPr">—</p>
+                            <p class="sum-card__note" id="sumPrNote">siswa</p>
+                        </div>
+                    </article>
+
+                    <article class="sum-card sum-card--tunggak">
+                        <div class="sum-card__iconwrap">
+                            <span class="material-symbols-outlined" aria-hidden="true">event_busy</span>
+                        </div>
+                        <div>
+                            <p class="sum-card__label">Belum Bayar</p>
+                            <p class="sum-card__value" id="sumBelum">—</p>
+                            <p class="sum-card__note" id="sumBelumNote">iuran Oktober 2026</p>
+                        </div>
+                    </article>
+
+                </section>
+
+
+                <!-- ===== PANEL FILTER ===== -->
+                <section class="panel filterbar" aria-label="Filter siswa">
+
+                    <div class="filterbar__search">
+                        <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                        <input type="search" id="cariSiswa" placeholder="Cari nama siswa atau NIS…" autocomplete="off">
                     </div>
-                </div>
 
-                <div class="table-wrap">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Siswa</th>
-                                <th scope="col">Kelas</th>
-                                <th scope="col">Jenis Kelamin</th>
-                                <th scope="col">Kontak</th>
-                                <th scope="col">Status Iuran</th>
-                                <th scope="col" class="th-c">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="isiTabelSiswa"></tbody>
-                    </table>
+                    <div class="filterbar__selects">
 
-                    <div class="empty-state" id="emptyState" hidden>
-                        <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
-                        <p>Tidak ada siswa yang cocok dengan filter.</p>
-                        <button type="button" class="btn btn--ghost btn--sm" id="btnKosongkanFilter">
-                            Reset Filter
+                        <label class="field-select">
+                            <span class="field-select__label">Kelas</span>
+                            <select id="filterKelas">
+                                <option value="semua">Semua Kelas</option>
+                                <option value="XI RPL 1">XI RPL 1</option>
+                                <option value="XI RPL 2">XI RPL 2</option>
+                                <option value="X TKJ 1">X TKJ 1</option>
+                            </select>
+                        </label>
+
+                        <label class="field-select">
+                            <span class="field-select__label">Jenis Kelamin</span>
+                            <select id="filterJk">
+                                <option value="semua">Semua</option>
+                                <option value="L">Laki-laki</option>
+                                <option value="P">Perempuan</option>
+                            </select>
+                        </label>
+
+                        <label class="field-select">
+                            <span class="field-select__label">Status Iuran</span>
+                            <select id="filterIuran">
+                                <option value="semua">Semua Status</option>
+                                <option value="lunas">Sudah Bayar</option>
+                                <option value="sebagian">Sebagian</option>
+                                <option value="belum">Belum Bayar</option>
+                            </select>
+                        </label>
+
+                        <button type="button" class="btn btn--ghost btn--sm" id="btnResetFilter">
+                            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+                            <span>Reset</span>
                         </button>
+
                     </div>
-                </div>
 
-            </section>
+                </section>
 
 
-            <footer class="content__foot">
-                BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
-            </footer>
+                <!-- ===== TABEL SISWA ===== -->
+                <section class="panel">
+
+                    <div class="panel__head">
+                        <div>
+                            <p class="panel__eyebrow">ANGGOTA KELAS</p>
+                            <h3 class="panel__title">Daftar Siswa</h3>
+                            <p class="panel__sub" id="tabelInfo">— siswa ditampilkan</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Siswa</th>
+                                    <th scope="col">Kelas</th>
+                                    <th scope="col">Jenis Kelamin</th>
+                                    <th scope="col">Kontak</th>
+                                    <th scope="col">Status Iuran</th>
+                                    <th scope="col" class="th-c">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="isiTabelSiswa"></tbody>
+                        </table>
+
+                        <div class="empty-state" id="emptyState" hidden>
+                            <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+                            <p>Tidak ada siswa yang cocok dengan filter.</p>
+                            <button type="button" class="btn btn--ghost btn--sm" id="btnKosongkanFilter">
+                                Reset Filter
+                            </button>
+                        </div>
+                    </div>
+
+                </section>
+
+            </div>
+
+            <!-- ===== PANEL DATA KELAS (TAB) ===== -->
+            <div id="panelKelas" hidden>
+
+                <section class="panel">
+                    <div class="panel__head">
+                        <div>
+                            <p class="panel__eyebrow">DATA KELAS</p>
+                            <h3 class="panel__title">Daftar Kelas</h3>
+                            <p class="panel__sub" id="tabelInfoKelas">— kelas ditampilkan</p>
+                        </div>
+                    </div>
+
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Kelas</th>
+                                    <th scope="col">Tingkat</th>
+                                    <th scope="col">Tahun Ajaran</th>
+                                    <th scope="col">Jumlah Siswa</th>
+                                    <th scope="col" class="th-c">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="isiTabelKelas"></tbody>
+                        </table>
+
+                        <div class="empty-state" id="emptyStateKelas" hidden>
+                            <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+                            <p>Tidak ada kelas yang tersedia.</p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+
+                <footer class="content__foot">
+                    BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
+                </footer>
 
         </main>
 
@@ -416,8 +475,8 @@
 
                     <label class="field">
                         <span class="field__label">NIS <b class="wajib">*</b></span>
-                        <input type="text" id="inputNis" inputmode="numeric" maxlength="4"
-                            placeholder="Contoh: 2441" required autocomplete="off">
+                        <input type="text" id="inputNis" inputmode="numeric" maxlength="20"
+                            placeholder="Contoh: 2024000101" required autocomplete="off">
                     </label>
 
                     <label class="field">
@@ -603,6 +662,97 @@
                 <div class="modal__foot modal__foot--tengah">
                     <button type="button" class="btn btn--ghost" data-tutup-modal="modalHapus">Batal</button>
                     <button type="button" class="btn btn--danger" id="btnKonfirmasiHapus">
+                        <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                        <span>Ya, Hapus</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MODAL: TAMBAH / UBAH KELAS
+    ====================================================== -->
+    <div class="modal-backdrop" id="modalFormKelas" aria-hidden="true">
+
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalFormKelasTitle">
+
+            <div class="modal__head">
+                <div>
+                    <p class="modal__eyebrow" id="modalFormKelasEyebrow">KELAS BARU</p>
+                    <h3 class="modal__title" id="modalFormKelasTitle">Tambah Kelas</h3>
+                </div>
+                <button type="button" class="modal__close" data-tutup-modal="modalFormKelas" aria-label="Tutup">
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+            </div>
+
+            <form class="modal__body" id="formKelas" novalidate>
+
+                <div class="form-grid">
+
+                    <label class="field">
+                        <span class="field__label">Nama Kelas <b class="wajib">*</b></span>
+                        <input type="text" id="inputNamaKelas" placeholder="Contoh: XI RPL 1"
+                            required autocomplete="off" maxlength="50">
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Tingkat <span class="field__opsional">(opsional)</span></span>
+                        <input type="text" id="inputTingkat" placeholder="Contoh: XI" autocomplete="off" maxlength="20">
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Tahun Ajaran <span class="field__opsional">(opsional)</span></span>
+                        <input type="text" id="inputTahunAjaran" placeholder="Contoh: 2026/2027"
+                            autocomplete="off" maxlength="20">
+                    </label>
+
+                </div>
+
+                <p class="form-error" id="formErrorKelas" hidden></p>
+
+                <div class="modal__foot">
+                    <button type="button" class="btn btn--ghost" data-tutup-modal="modalFormKelas">Batal</button>
+                    <button type="submit" class="btn btn--primary" id="btnSimpanKelas">
+                        <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                        <span id="btnSimpanKelasText">Simpan Kelas</span>
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MODAL: KONFIRMASI HAPUS KELAS
+    ====================================================== -->
+    <div class="modal-backdrop" id="modalHapusKelas" aria-hidden="true">
+
+        <div class="modal modal--kecil" role="alertdialog" aria-modal="true" aria-labelledby="modalHapusKelasTitle">
+
+            <div class="modal__body modal__body--hapus">
+
+                <span class="hapus-icon hapus-icon--merah" aria-hidden="true">
+                    <span class="material-symbols-outlined">class_remove</span>
+                </span>
+
+                <h3 class="modal__title" id="modalHapusKelasTitle">Hapus Data Kelas?</h3>
+
+                <p class="hapus-text" id="hapusKelasText">
+                    Data kelas akan dihapus dari daftar.
+                </p>
+
+                <div class="modal__foot modal__foot--tengah">
+                    <button type="button" class="btn btn--ghost" data-tutup-modal="modalHapusKelas">Batal</button>
+                    <button type="button" class="btn btn--danger" id="btnKonfirmasiHapusKelas">
                         <span class="material-symbols-outlined" aria-hidden="true">delete</span>
                         <span>Ya, Hapus</span>
                     </button>
