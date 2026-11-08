@@ -1,3 +1,8 @@
+// BBCASHVIA - modul bersama S3-07 (pengaman simpan ganda).
+import {
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
     // ELEMENT
@@ -71,17 +76,87 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPasswordToggle(toggleNewPassword, newPassword);
     setupPasswordToggle(toggleConfirmPassword, confirmPassword);
 
+    // Real-time validation: periksa setiap kali isi berubah.
+    newPassword?.addEventListener("input", perbaruiPersyaratan);
+    confirmPassword?.addEventListener("input", perbaruiPersyaratan);
+
+    // Inisialisasi tampilan persyaratan saat halaman dibuka.
+    perbaruiPersyaratan();
+
 
     // =========================================================
-    // VALIDASI PASSWORD
+    // VALIDASI PASSWORD REAL-TIME
     // =========================================================
+
+    function cekPersyaratan(password) {
+        return {
+            length: password.length >= 8,
+            upper: /[A-Z]/.test(password),
+            number: /[0-9]/.test(password),
+            symbol: /[^A-Za-z0-9]/.test(password),
+        };
+    }
+
+    function semuaPersyaratanTerpenuhi(password) {
+        const c = cekPersyaratan(password);
+        return c.length && c.upper && c.number && c.symbol;
+    }
+
+    function perbaruiPersyaratan() {
+        const password = newPassword?.value || "";
+        const c = cekPersyaratan(password);
+
+        document.querySelectorAll("#passwordRequirements li").forEach((item) => {
+            const req = item.getAttribute("data-req");
+            const icon = item.querySelector(".req-icon");
+            const terpenuhi = c[req] === true;
+
+            item.classList.toggle("is-met", terpenuhi);
+            item.classList.toggle("is-unmet", !terpenuhi && password.length > 0);
+
+            if (icon) {
+                icon.textContent = terpenuhi ? "✓" : "○";
+            }
+        });
+
+        // Konfirmasi password real-time.
+        const confirmation = confirmPassword?.value || "";
+        if (confirmation.length > 0) {
+            if (password === confirmation) {
+                if (confirmError) {
+                    confirmError.textContent = "";
+                    confirmError.hidden = true;
+                }
+                confirmPassword?.classList.remove("is-invalid");
+                confirmPassword?.classList.add("is-valid");
+            } else {
+                if (confirmError) {
+                    confirmError.textContent = "Konfirmasi kata sandi tidak sama.";
+                    confirmError.hidden = false;
+                }
+                confirmPassword?.classList.add("is-invalid");
+                confirmPassword?.classList.remove("is-valid");
+            }
+        } else {
+            if (confirmError) {
+                confirmError.textContent = "";
+                confirmError.hidden = true;
+            }
+            confirmPassword?.classList.remove("is-invalid", "is-valid");
+        }
+
+        // Tombol simpan hanya aktif jika semua terpenuhi & konfirmasi cocok.
+        if (submitButton) {
+            const siap =
+                semuaPersyaratanTerpenuhi(password) &&
+                confirmation.length > 0 &&
+                password === confirmation;
+            submitButton.disabled = !siap;
+        }
+    }
 
     function validatePassword(password) {
-        return (
-            password.length >= 8 &&
-            /[A-Z]/.test(password) &&
-            /[^A-Za-z0-9]/.test(password)
-        );
+        return semuaPersyaratanTerpenuhi(password);
     }
 
 
@@ -142,7 +217,20 @@ document.addEventListener("DOMContentLoaded", () => {
             async (event) => {
                 event.preventDefault();
 
-                if (submitButton?.disabled) return;
+                if (submitButton?.disabled) {
+                    const mulai = Number(submitButton.dataset.kunciWaktu || 0);
+                    if (mulai > 0 && (Date.now() - mulai) > 30000) {
+                        submitButton.disabled = false;
+                        submitButton.textContent =
+                            submitButton.dataset.labelAsli ||
+                            "Simpan Kata Sandi";
+                        delete submitButton.dataset.kunciWaktu;
+                    } else if (mulai === 0) {
+                        // Tombol dinonaktifkan oleh validasi (belum siap) - biarkan.
+                    } else {
+                        return;
+                    }
+                }
 
                 clearErrors();
 
@@ -210,7 +298,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 if (submitButton) {
+                    // S3-07: tombol dinonaktifkan lalu berubah menjadi
+                    // "Memproses..." selama proses berjalan.
+                    if (!submitButton.dataset.labelAsli) {
+                        submitButton.dataset.labelAsli =
+                            submitButton.textContent;
+                    }
+                    submitButton.dataset.kunciWaktu = String(Date.now());
                     submitButton.disabled = true;
+                    submitButton.textContent = "Memproses...";
                 }
 
                 try {
@@ -242,6 +338,15 @@ document.addEventListener("DOMContentLoaded", () => {
                             data.message ||
                                 "Password gagal diubah. Silakan coba lagi."
                         );
+
+                        // Pulihkan tombol agar bisa dicoba lagi.
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.textContent =
+                                submitButton.dataset.labelAsli ||
+                                "Simpan Kata Sandi";
+                            delete submitButton.dataset.kunciWaktu;
+                        }
 
                         return;
                     }
@@ -279,7 +384,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 } finally {
                     if (submitButton) {
+                        // S3-07: label tombol pulih ke teks aslinya.
                         submitButton.disabled = false;
+                        submitButton.textContent =
+                            submitButton.dataset.labelAsli ||
+                            "Simpan Kata Sandi";
+                        delete submitButton.dataset.kunciWaktu;
                     }
                 }
             }

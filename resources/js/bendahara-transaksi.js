@@ -1,7 +1,14 @@
 /* =========================================================
-   BBCASHVIA — BENDAHARA TRANSAKSI
-   FRONTEND SIMULASI
+   BBCASHVIA - BENDAHARA TRANSAKSI
+   Data berasal dari database (endpoint /bendahara/api/*).
 ========================================================= */
+
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -104,14 +111,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const formatTanggal = (tanggal) => {
 
         if (!tanggal) {
-            return "—";
+            return "-";
         }
 
-        const date =
-            new Date(`${tanggal}T00:00:00`);
+        // Terima "2026-10-19", "2026-10-19 00:00:00", atau ISO penuh.
+        const bagian = String(tanggal).slice(0, 10).split("-");
+
+        if (bagian.length !== 3 || !bagian[0]) {
+            return String(tanggal);
+        }
+
+        const date = new Date(
+            Number(bagian[0]),
+            Number(bagian[1]) - 1,
+            Number(bagian[2])
+        );
 
         if (Number.isNaN(date.getTime())) {
-            return tanggal;
+            return String(tanggal);
         }
 
         return new Intl.DateTimeFormat(
@@ -147,270 +164,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
-       DATA DEMO SISWA
+       ENDPOINT + STATE DATA
+       Data berasal dari database (endpoint /bendahara/api/*).
+       Tidak menggunakan data dummy.
     ===================================================== */
 
-    const DATA_SISWA = [
-        {
-            nis: "24001",
-            nama: "Ahmad Fauzan",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24002",
-            nama: "Aisyah Putri",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24003",
-            nama: "Bagas Pratama",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24004",
-            nama: "Citra Lestari",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24005",
-            nama: "Dimas Saputra",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24006",
-            nama: "Eka Ramadhan",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24007",
-            nama: "Fajar Nugraha",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24008",
-            nama: "Gina Maharani",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24009",
-            nama: "Hafiz Ramadhan",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24010",
-            nama: "Intan Permata",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24011",
-            nama: "Joko Prasetyo",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24012",
-            nama: "Kania Safitri",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24013",
-            nama: "Luthfi Maulana",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24014",
-            nama: "Maya Sari",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24015",
-            nama: "Nanda Akbar",
-            kelas: "XI RPL 1"
-        },
-        {
-            nis: "24016",
-            nama: "Olivia Maharani",
-            kelas: "XI RPL 1"
-        }
-    ];
+    const API_TRANSAKSI = "/bendahara/api/transaksi";
+    const API_SISWA = "/bendahara/api/siswa";
+    const API_IURAN = "/bendahara/api/iuran";
+    const API_KATEGORI = "/bendahara/api/transaksi/kategori";
 
+    let DATA_SISWA = [];
 
-    /* =====================================================
-       DATA DEMO IURAN
-    ===================================================== */
+    let DATA_IURAN = [];
 
-    const DATA_IURAN = [
-        {
-            id: "IUR-001",
-            nama: "Iuran Kas Oktober",
-            periode: "Oktober 2026",
-            nominal: 10000
-        },
-        {
-            id: "IUR-002",
-            nama: "Iuran Kas September",
-            periode: "September 2026",
-            nominal: 10000
-        },
-        {
-            id: "IUR-003",
-            nama: "Iuran Kegiatan Kelas",
-            periode: "Kegiatan 2026",
-            nominal: 25000
-        }
-    ];
-
-
-    /* =====================================================
-       DATA DEMO TRANSAKSI
-    ===================================================== */
-
-    let DATA_TRANSAKSI = [
-
-        {
-            id: "TRX-001",
-            jenis: "masuk",
-            nis: "24001",
-            siswa: "Ahmad Fauzan",
-            iuranId: "IUR-001",
-            iuran: "Iuran Kas Oktober",
-            kategori: "Iuran Kas",
-            nominal: 10000,
-            diterima: 10000,
-            kembalian: 0,
-            masukKas: 10000,
-            metode: "Tunai",
-            tanggal: "2026-10-01",
-            keterangan: "Pembayaran kas bulan Oktober",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-002",
-            jenis: "masuk",
-            nis: "24002",
-            siswa: "Aisyah Putri",
-            iuranId: "IUR-001",
-            iuran: "Iuran Kas Oktober",
-            kategori: "Iuran Kas",
-            nominal: 10000,
-            diterima: 20000,
-            kembalian: 10000,
-            masukKas: 10000,
-            metode: "Tunai",
-            tanggal: "2026-10-02",
-            keterangan: "Pembayaran kas bulan Oktober",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-003",
-            jenis: "masuk",
-            nis: "24003",
-            siswa: "Bagas Pratama",
-            iuranId: "IUR-001",
-            iuran: "Iuran Kas Oktober",
-            kategori: "Iuran Kas",
-            nominal: 10000,
-            diterima: 10000,
-            kembalian: 0,
-            masukKas: 10000,
-            metode: "Transfer",
-            tanggal: "2026-10-02",
-            keterangan: "Pembayaran melalui transfer",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-004",
-            jenis: "masuk",
-            nis: "24004",
-            siswa: "Citra Lestari",
-            iuranId: "IUR-002",
-            iuran: "Iuran Kas September",
-            kategori: "Iuran Kas",
-            nominal: 10000,
-            diterima: 10000,
-            kembalian: 0,
-            masukKas: 10000,
-            metode: "Transfer",
-            tanggal: "2026-09-30",
-            keterangan: "Pembayaran kas bulan September",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-005",
-            jenis: "masuk",
-            nis: "24005",
-            siswa: "Dimas Saputra",
-            iuranId: "IUR-003",
-            iuran: "Iuran Kegiatan Kelas",
-            kategori: "Iuran Kegiatan",
-            nominal: 25000,
-            diterima: 30000,
-            kembalian: 5000,
-            masukKas: 25000,
-            metode: "Tunai",
-            tanggal: "2026-10-03",
-            keterangan: "Iuran kegiatan kelas",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-006",
-            jenis: "masuk",
-            nis: "24006",
-            siswa: "Eka Ramadhan",
-            iuranId: "IUR-001",
-            iuran: "Iuran Kas Oktober",
-            kategori: "Iuran Kas",
-            nominal: 10000,
-            diterima: 10000,
-            kembalian: 0,
-            masukKas: 10000,
-            metode: "Transfer",
-            tanggal: "2026-10-04",
-            keterangan: "Pembayaran kas bulan Oktober",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-007",
-            jenis: "keluar",
-            nis: "",
-            siswa: "",
-            iuranId: "",
-            iuran: "",
-            kategori: "Kegiatan Kelas",
-            nominal: 150000,
-            diterima: 0,
-            kembalian: 0,
-            masukKas: 0,
-            metode: "Tunai",
-            tanggal: "2026-10-04",
-            keterangan: "Pembelian perlengkapan kegiatan kelas",
-            petugas: "Bendahara"
-        },
-
-        {
-            id: "TRX-008",
-            jenis: "keluar",
-            nis: "",
-            siswa: "",
-            iuranId: "",
-            iuran: "",
-            kategori: "Perlengkapan",
-            nominal: 75000,
-            diterima: 0,
-            kembalian: 0,
-            masukKas: 0,
-            metode: "Transfer",
-            tanggal: "2026-10-04",
-            keterangan: "Pembelian perlengkapan kelas",
-            petugas: "Bendahara"
-        }
-
-    ];
+    let DATA_TRANSAKSI = [];
 
 
     /* =====================================================
@@ -425,38 +193,276 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let toastTimer = null;
 
+    let csrfToken = "";
+
+
+    const bacaCsrf = () => {
+
+        const meta =
+            document.querySelector(
+                'meta[name="csrf-token"]'
+            );
+
+        return meta
+            ? meta.getAttribute("content")
+            : "";
+
+    };
+
+
+    const ambilJSON = async (url) => {
+
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+
+            respons = await fetch(url, {
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") {
+                throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            }
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal mengambil data dari server.");
+        }
+
+        return hasil;
+
+    };
+
+
+    const kirimJSON = async (url, method, payload) => {
+
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+
+            respons = await fetch(url, {
+                method,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                    // S3-07: POST dibawa kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    ...(String(method).toUpperCase() === "POST"
+                        ? { "X-Idempotency-Key": kunciIdempoten() }
+                        : {}),
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") {
+                throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            }
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+
+            if (hasil?.errors) {
+                const pesan = Object.values(hasil.errors).flat().filter(Boolean);
+                if (pesan.length) throw new Error(pesan.join(" "));
+            }
+
+            throw new Error(hasil?.message || "Terjadi kesalahan saat menyimpan.");
+
+        }
+
+        return hasil;
+
+    };
+
+
+    const hapusJSON = async (url) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken
+                },
+                credentials: "same-origin"
+            });
+
+        } catch {
+
+            throw new Error(
+                "Tidak dapat terhubung ke server."
+            );
+
+        }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+
+            throw new Error(
+                hasil?.message ||
+                "Gagal menghapus data."
+            );
+
+        }
+
+        return hasil;
+
+    };
+
 
     /* =====================================================
-       KATEGORI
+       KATEGORI (SATU SUMBER DARI BACKEND)
     ===================================================== */
 
-    const KATEGORI_MASUK = [
-        "Iuran Kas",
-        "Iuran Kegiatan",
-        "Pemasukan Lainnya"
-    ];
+    /*
+     * Daftar kategori diambil dari endpoint /bendahara/api/transaksi/kategori
+     * agar sama persis dengan dropdown filter dan dengan aturan server.
+     * Cadangan berikut hanya dipakai bila pengambilan gagal.
+     */
+    const KATEGORI_CADANGAN = {
+        masuk: [
+            { value: "Iuran", label: "Iuran" },
+            { value: "kas", label: "Kas" },
+            { value: "pemasukan lainnya", label: "Pemasukan Lainnya" }
+        ],
+        keluar: [
+            { value: "kebutuhan kelas", label: "Kebutuhan Kelas" },
+            { value: "perlengkapan kelas", label: "Perlengkapan Kelas" },
+            { value: "kegiatan kelas", label: "Kegiatan Kelas" },
+            { value: "pengeluaran lainnya", label: "Pengeluaran Lainnya" }
+        ]
+    };
 
 
-    const KATEGORI_KELUAR = [
-        "Kegiatan Kelas",
-        "Perlengkapan",
-        "Konsumsi",
-        "Transportasi",
-        "Pengeluaran Lainnya"
-    ];
+    let KATEGORI_MASUK = [...KATEGORI_CADANGAN.masuk];
+
+    let KATEGORI_KELUAR = [...KATEGORI_CADANGAN.keluar];
+
+
+    const muatKategori = async () => {
+
+        let hasil;
+
+        try {
+
+            hasil = await ambilJSON(API_KATEGORI);
+
+        } catch {
+
+            return;
+
+        }
+
+        const data = hasil?.data;
+        if (!data) return;
+
+        if (Array.isArray(data.masuk) && data.masuk.length) {
+            KATEGORI_MASUK = data.masuk;
+        }
+
+        if (Array.isArray(data.keluar) && data.keluar.length) {
+            KATEGORI_KELUAR = data.keluar;
+        }
+
+        // Isi ulang pilihan yang mungkin sudah memakai daftar cadangan.
+        isiKategoriForm();
+        isiKategoriFilter();
+
+    };
+
+
+    const labelKategori = (value) => {
+
+        const semua =
+            [...KATEGORI_MASUK, ...KATEGORI_KELUAR];
+
+        const cocok =
+            semua.find(
+                (item) => item.value === value
+            );
+
+        if (cocok) {
+            return cocok.label;
+        }
+
+        const teks = String(value || "").trim();
+
+        return teks
+            ? teks.charAt(0).toUpperCase() + teks.slice(1)
+            : "-";
+
+    };
 
 
     /* =====================================================
        CALCULATION
+       Semantik cicilan: "nominalBayar" adalah pembayaran
+       SAAT INI (boleh sebagian dari tagihan), "diterima" adalah
+       uang tunai yang diserahkan bendahara (untuk kembalian).
     ===================================================== */
 
     const hitungKembalian = (
-        tagihan,
+        nominalBayar,
         diterima
     ) => {
 
         const total =
-            Number(tagihan) || 0;
+            Number(nominalBayar) || 0;
 
         const bayar =
             Number(diterima) || 0;
@@ -470,12 +476,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     const hitungMasukKas = (
-        tagihan,
+        nominalBayar,
         diterima
     ) => {
 
         const total =
-            Number(tagihan) || 0;
+            Number(nominalBayar) || 0;
 
         const bayar =
             Number(diterima) || 0;
@@ -484,6 +490,241 @@ document.addEventListener("DOMContentLoaded", () => {
             total,
             bayar
         );
+
+    };
+
+
+    /* =====================================================
+       INFO PEMBAYARAN (CICILAN) - DATA ASLI DARI DATABASE
+       "Pembayaran sebelumnya" = jumlah seluruh transaksi
+       pemasukan yang sudah tercatat untuk pasangan
+       (siswa, iuran). Sisa tagihan = tagihan - terbayar.
+    ===================================================== */
+
+    const hitungTerbayar = (
+        idSiswa,
+        idIuran,
+        kecualiId = null
+    ) =>
+        DATA_TRANSAKSI.reduce(
+            (total, t) => {
+
+                if (t.jenis !== "masuk") {
+                    return total;
+                }
+
+                if (
+                    String(t.id_siswa ?? "") !==
+                    String(idSiswa)
+                ) {
+                    return total;
+                }
+
+                if (
+                    String(t.iuranId ?? "") !==
+                    String(idIuran)
+                ) {
+                    return total;
+                }
+
+                // Saat mengubah transaksi, baris itu sendiri
+                // dikecualikan agar tidak dihitung dua kali.
+                if (
+                    kecualiId != null &&
+                    String(t.id_transaksi) ===
+                    String(kecualiId)
+                ) {
+                    return total;
+                }
+
+                return (
+                    total +
+                    (Number(t.nominal) || 0)
+                );
+
+            },
+            0
+        );
+
+    const perbaruiInfoPembayaran = () => {
+
+        const inputSiswa =
+            $("inputSiswa");
+
+        const inputIuran =
+            $("inputIuran");
+
+        const inputSisaTagihan =
+            $("inputSisaTagihan");
+
+        const inputNominalBayar =
+            $("inputNominalBayar");
+
+        if (
+            !inputSisaTagihan
+        ) {
+            return;
+        }
+
+        const idSiswa =
+            inputSiswa?.value || "";
+
+        const idIuran =
+            inputIuran?.value || "";
+
+        const adaPilihan =
+            Boolean(idSiswa) &&
+            Boolean(idIuran);
+
+        const iuran =
+            DATA_IURAN.find(
+                (item) =>
+                    String(item.id) === String(idIuran)
+            );
+
+        const tagihan =
+            Number(iuran?.nominal) || 0;
+
+        // Saat mode edit, baris yang sedang diubah dikecualikan.
+        const trxEdit =
+            modeForm === "edit"
+                ? DATA_TRANSAKSI.find(
+                    (item) =>
+                        String(item.id) ===
+                        String(idSedangDiubah)
+                )
+                : null;
+
+        const terbayar =
+            adaPilihan
+                ? hitungTerbayar(
+                    idSiswa,
+                    idIuran,
+                    trxEdit?.id_transaksi ?? null
+                )
+                : 0;
+
+        const sisa =
+            Math.max(tagihan - terbayar, 0);
+
+        inputSisaTagihan.value = adaPilihan
+            ? new Intl.NumberFormat("id-ID").format(sisa)
+            : "";
+
+        // Saran cicilan: placeholder mengikuti sisa tagihan.
+        if (
+            inputNominalBayar &&
+            modeForm === "tambah"
+        ) {
+
+            inputNominalBayar.placeholder =
+                adaPilihan && sisa > 0
+                    ? new Intl.NumberFormat("id-ID").format(sisa)
+                    : "0";
+
+        }
+
+        hitungUangLive();
+
+    };
+
+
+    /* =====================================================
+       PEMETAAN DATA DARI DATABASE
+    ===================================================== */
+
+    const petakanSiswa = (s) => ({
+        id_siswa: s.id_siswa,
+        nis: s.nis ?? "",
+        nama: s.nama ?? "-",
+        kelas: s.kelas || "-"
+    });
+
+
+    const petakanIuran = (i) => ({
+        id: i.id_iuran,
+        nama: i.nama_iuran ?? "-",
+        periode: i.keterangan || "-",
+        keterangan: i.keterangan || "",
+        status: String(i.status ?? "").toLowerCase(),
+        id_kelas: i.id_kelas,
+        nominal: Number(i.nominal) || 0
+    });
+
+
+    const petakanTransaksi = (t) => {
+
+        const jenis =
+            ["PEMASUKAN", "M"].includes(String(t.jenis || "").toUpperCase())
+                ? "masuk"
+                : "keluar";
+
+        const siswaCocok =
+            t.id_siswa != null
+                ? DATA_SISWA.find(
+                    (s) =>
+                        String(s.id_siswa) === String(t.id_siswa)
+                )
+                : null;
+
+        const iuranCocok =
+            t.id_iuran != null
+                ? DATA_IURAN.find(
+                    (i) =>
+                        String(i.id) === String(t.id_iuran)
+                )
+                : null;
+
+        return {
+
+            id_transaksi: t.id_transaksi,
+
+            /* Nomor bukti dipakai sebagai identitas tampilan. */
+            id: t.no_bukti ?? "-",
+
+            jenis,
+
+            nis: siswaCocok
+                ? siswaCocok.nis
+                : "",
+
+            siswa:
+                t.nama_pembayar ||
+                (siswaCocok ? siswaCocok.nama : ""),
+
+            id_siswa: t.id_siswa,
+
+            iuranId: t.id_iuran,
+
+            iuran:
+                iuranCocok
+                    ? iuranCocok.nama
+                    : (t.keterangan || ""),
+
+            kategori: t.kategori || "",
+
+            nominal: Number(t.nominal) || 0,
+
+            diterima: Number(t.uang_diterima) || 0,
+
+            kembalian: Number(t.kembalian) || 0,
+
+            masukKas:
+                jenis === "masuk"
+                    ? Number(t.nominal) || 0
+                    : 0,
+
+            metode: t.metode === "TF" ? "Transfer" : "Tunai",
+
+            tanggal: t.tanggal
+                ? String(t.tanggal).slice(0, 10)
+                : "",
+
+            keterangan: t.keterangan || "",
+
+            petugas: t.dicatat_oleh || t.pic || "Bendahara"
+
+        };
 
     };
 
@@ -540,10 +781,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.createElement("option");
 
             option.value =
-                siswa.nis;
+                siswa.id_siswa;
 
             option.textContent =
-                `${siswa.nama} — ${siswa.nis}`;
+                `${siswa.nama} - ${siswa.nis}`;
 
             select.appendChild(option);
 
@@ -556,7 +797,7 @@ document.addEventListener("DOMContentLoaded", () => {
        SELECT IURAN
     ===================================================== */
 
-    const isiPilihanIuran = () => {
+    const isiPilihanIuran = (idTerpilih = "") => {
 
         const select =
             $("inputIuran");
@@ -571,7 +812,20 @@ document.addEventListener("DOMContentLoaded", () => {
             </option>
         `;
 
-        DATA_IURAN.forEach((iuran) => {
+        // Hanya iuran Aktif yang boleh dipakai untuk pembayaran baru.
+        // Saat mengubah transaksi lama, iuran yang sudah Selesai tetap
+        // ditampilkan agar relasi lama tidak hilang tanpa sengaja.
+        const daftar =
+            DATA_IURAN.filter(
+                (iuran) =>
+                    iuran.status === "aktif" ||
+                    (
+                        idTerpilih &&
+                        String(iuran.id) === String(idTerpilih)
+                    )
+            );
+
+        daftar.forEach((iuran) => {
 
             const option =
                 document.createElement("option");
@@ -580,11 +834,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 iuran.id;
 
             option.textContent =
-                `${iuran.nama} — ${formatRupiah(iuran.nominal)}`;
+                `${iuran.nama} - ${formatRupiah(iuran.nominal)}` +
+                (iuran.status === "aktif"
+                    ? ""
+                    : " (Selesai)");
 
             select.appendChild(option);
 
         });
+
+        if (idTerpilih) {
+            select.value = String(idTerpilih);
+        }
 
     };
 
@@ -602,43 +863,141 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        const nilaiSebelumnya =
+            select.value;
+
+        /*
+         * Tampilkan SELURUH kategori (7 pilihan) dipisah per jenis:
+         * kelompok "Pemasukan" dan "Pengeluaran". Saat pengguna
+         * memilih kategori, jenis transaksi menyesuaikan otomatis
+         * supaya server tidak pernah menerima kombinasi yang salah.
+         */
+        select.innerHTML = "";
+
+        const buatGrup = (nama, daftar) => {
+
+            const grup =
+                document.createElement("optgroup");
+
+            grup.label =
+                nama;
+
+            daftar.forEach((kategori) => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    kategori.value;
+
+                option.textContent =
+                    kategori.label;
+
+                grup.appendChild(option);
+
+            });
+
+            select.appendChild(grup);
+
+        };
+
+        buatGrup("Pemasukan", KATEGORI_MASUK);
+        buatGrup("Pengeluaran", KATEGORI_KELUAR);
+
+        const semua =
+            [...KATEGORI_MASUK, ...KATEGORI_KELUAR];
+
+        if (
+            semua.some(
+                (item) => item.value === nilaiSebelumnya
+            )
+        ) {
+            select.value =
+                nilaiSebelumnya;
+        } else if (select.options.length) {
+            select.selectedIndex = 0;
+        }
+
+    };
+
+
+    /**
+     * Kategori menentukan jenis transaksi.
+     *
+     * Kategori pengeluaran hanya sah bila jenis = Pengeluaran, jadi
+     * saat pengguna memilih kategori dari kelompok pengeluaran, radio
+     * jenis otomatis dipindah ke Pengeluaran (dan sebaliknya).
+     */
+    const sesuaikanJenisKeKategori = () => {
+
+        const select =
+            $("inputKategori");
+
+        if (!select) {
+            return;
+        }
+
+        const kategori =
+            select.value;
+
+        if (!kategori) {
+            return;
+        }
+
+        const masuk =
+            KATEGORI_MASUK.some(
+                (item) => item.value === kategori
+            );
+
+        const nilaiJenis =
+            masuk ? "masuk" : "keluar";
+
+        const radio =
+            document.querySelector(
+                `input[name="jenisTransaksi"][value="${nilaiJenis}"]`
+            );
+
+        if (radio && !radio.checked) {
+            radio.checked = true;
+            sesuaikanFormJenis();
+        }
+
+    };
+
+
+    /**
+     * Pindahkan pilihan kategori ke kategori pertama yang sah untuk
+     * jenis yang sedang aktif (mencegah kombinasi tidak valid).
+     */
+    const pilihKategoriPertamaSesuaiJenis = () => {
+
+        const select =
+            $("inputKategori");
+
+        if (!select) {
+            return;
+        }
+
         const jenis =
             document.querySelector(
                 'input[name="jenisTransaksi"]:checked'
-            )?.value || "masuk";
+            )?.value ?? "masuk";
 
         const daftar =
             jenis === "keluar"
                 ? KATEGORI_KELUAR
                 : KATEGORI_MASUK;
 
-        const nilaiSebelumnya =
-            select.value;
+        const pertama =
+            daftar[0]?.value;
 
-        select.innerHTML = `
-            <option value="">
-                Pilih kategori
-            </option>
-        `;
-
-        daftar.forEach((kategori) => {
-
-            const option =
-                document.createElement("option");
-
-            option.value =
-                kategori;
-
-            option.textContent =
-                kategori;
-
-            select.appendChild(option);
-
-        });
-
-        if (daftar.includes(nilaiSebelumnya)) {
-            select.value =
-                nilaiSebelumnya;
+        if (
+            pertama &&
+            [...select.options].some(
+                (o) => o.value === pertama
+            )
+        ) {
+            select.value = pertama;
         }
 
     };
@@ -675,10 +1034,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.createElement("option");
 
             option.value =
-                kategori;
+                kategori.value;
 
             option.textContent =
-                kategori;
+                kategori.label;
 
             select.appendChild(option);
 
@@ -709,14 +1068,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const selected =
             DATA_IURAN.find(
                 (item) =>
-                    item.id === inputIuran.value
+                    String(item.id) === String(inputIuran.value)
             );
 
         if (!selected) {
 
             inputTagihan.value = "";
 
-            hitungUangLive();
+            perbaruiInfoPembayaran();
 
             return;
 
@@ -726,7 +1085,7 @@ document.addEventListener("DOMContentLoaded", () => {
             new Intl.NumberFormat("id-ID")
                 .format(selected.nominal);
 
-        hitungUangLive();
+        perbaruiInfoPembayaran();
 
     };
 
@@ -737,11 +1096,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const hitungUangLive = () => {
 
-        const inputTagihan =
-            $("inputTagihan");
-
         const inputDiterima =
             $("inputDiterima");
+
+        const inputNominalBayar =
+            $("inputNominalBayar");
 
         const hasilKembalian =
             $("hasilKembalian");
@@ -753,17 +1112,17 @@ document.addEventListener("DOMContentLoaded", () => {
             $("uangHint");
 
         if (
-            !inputTagihan ||
             !inputDiterima ||
+            !inputNominalBayar ||
             !hasilKembalian ||
             !hasilMasukKas
         ) {
             return;
         }
 
-        const tagihan =
+        const bayar =
             parseAngka(
-                inputTagihan.value
+                inputNominalBayar.value
             );
 
         const diterima =
@@ -773,13 +1132,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const kembalian =
             hitungKembalian(
-                tagihan,
+                bayar,
                 diterima
             );
 
         const masukKas =
             hitungMasukKas(
-                tagihan,
+                bayar,
                 diterima
             );
 
@@ -796,31 +1155,58 @@ document.addEventListener("DOMContentLoaded", () => {
                 "is-peringatan"
             );
 
+            const sisa =
+                parseAngka(
+                    $("inputSisaTagihan")?.value
+                );
+
             if (
-                tagihan > 0 &&
-                diterima > 0 &&
-                diterima < tagihan
+                bayar > 0 &&
+                sisa > 0 &&
+                bayar > sisa
             ) {
 
                 uangHint.textContent =
-                    `Uang diterima masih kurang ${formatRupiah(tagihan - diterima)}.`;
+                    `Nominal pembayaran melebihi sisa tagihan (sisa ${formatRupiah(sisa)}).`;
 
                 uangHint.classList.add(
                     "is-peringatan"
                 );
 
             } else if (
-                tagihan > 0 &&
-                diterima >= tagihan
+                bayar > 0 &&
+                diterima > 0 &&
+                diterima < bayar
             ) {
 
                 uangHint.textContent =
-                    `Kembalian ${formatRupiah(kembalian)} dan uang yang masuk ke kas ${formatRupiah(masukKas)}.`;
+                    `Uang diterima masih kurang ${formatRupiah(bayar - diterima)} dari nominal pembayaran.`;
+
+                uangHint.classList.add(
+                    "is-peringatan"
+                );
+
+            } else if (
+                bayar > 0 &&
+                diterima >= bayar
+            ) {
+
+                if (sisa > 0 && bayar < sisa) {
+
+                    uangHint.textContent =
+                        `Cicilan: sisa tagihan berikutnya ${formatRupiah(sisa - bayar)}.`;
+
+                } else {
+
+                    uangHint.textContent =
+                        `Tagihan lunas. Kembalian ${formatRupiah(kembalian)} dan uang yang masuk ke kas ${formatRupiah(masukKas)}.`;
+
+                }
 
             } else {
 
                 uangHint.textContent =
-                    "Masukkan jumlah uang yang diterima bendahara untuk menghitung kembalian.";
+                    "Masukkan nominal pembayaran (boleh penuh atau cicilan) untuk menghitung kembalian.";
 
             }
 
@@ -877,6 +1263,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const labelMasukKas =
             $("labelMasukKas");
 
+        const infoTagihanGroup =
+            $("infoTagihanGroup");
+
+        const inputNominalBayar =
+            $("inputNominalBayar");
+
         if (jenis === "keluar") {
 
             if (siswaGroup) {
@@ -889,6 +1281,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (tagihanGroup) {
                 tagihanGroup.hidden = true;
+            }
+
+            if (infoTagihanGroup) {
+                infoTagihanGroup.hidden = true;
             }
 
             if (uangBox) {
@@ -909,6 +1305,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (inputTagihan) {
                 inputTagihan.value = "";
+            }
+
+            if (inputNominalBayar) {
+                inputNominalBayar.value = "";
             }
 
             if (inputDiterima) {
@@ -939,6 +1339,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 tagihanGroup.hidden = false;
             }
 
+            if (infoTagihanGroup) {
+                infoTagihanGroup.hidden = false;
+            }
+
             if (uangBox) {
                 uangBox.hidden = false;
             }
@@ -965,7 +1369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         isiKategoriForm();
 
-        hitungUangLive();
+        perbaruiInfoPembayaran();
 
     };
 
@@ -1015,6 +1419,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (inputNominalKeluar) {
             inputNominalKeluar.value = "";
+        }
+
+
+        const inputNominalBayar =
+            $("inputNominalBayar");
+
+        if (inputNominalBayar) {
+            inputNominalBayar.value = "";
+            inputNominalBayar.placeholder = "0";
+        }
+
+
+        const inputSisaTagihan =
+            $("inputSisaTagihan");
+
+        if (inputSisaTagihan) {
+            inputSisaTagihan.value = "";
         }
 
 
@@ -1114,6 +1535,12 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
 
+        const nominalBayar =
+            parseAngka(
+                $("inputNominalBayar")?.value
+            );
+
+
         const nominalKeluar =
             parseAngka(
                 $("inputNominalKeluar")?.value
@@ -1141,14 +1568,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const siswa =
             DATA_SISWA.find(
                 (item) =>
-                    item.nis === siswaNis
+                    String(item.id_siswa) === String(siswaNis)
             );
 
 
         const iuran =
             DATA_IURAN.find(
                 (item) =>
-                    item.id === iuranId
+                    String(item.id) === String(iuranId)
             );
 
 
@@ -1163,6 +1590,8 @@ document.addEventListener("DOMContentLoaded", () => {
             tagihan,
 
             diterima,
+
+            nominalBayar,
 
             nominalKeluar,
 
@@ -1274,10 +1703,88 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            const trxAsal =
+                modeForm === "edit"
+                    ? DATA_TRANSAKSI.find(
+                        (item) =>
+                            String(item.id) ===
+                            String(idSedangDiubah)
+                    )
+                    : null;
+
+            const iuranLamaTidakBerubah =
+                trxAsal &&
+                String(trxAsal.iuranId) === String(data.iuran.id) &&
+                data.nominalBayar <=
+                    Number(trxAsal.nominal || 0) + 0.009;
+
+            if (
+                String(data.iuran.status || "").toLowerCase() !==
+                    "aktif" &&
+                !iuranLamaTidakBerubah
+            ) {
+
+                showError(
+                    "Iuran ini sudah berstatus Selesai dan tidak dapat menerima pembayaran baru."
+                );
+
+                return false;
+
+            }
+
+
             if (!data.tagihan) {
 
                 showError(
                     "Nominal tagihan belum tersedia."
+                );
+
+                return false;
+
+            }
+
+
+            if (!data.nominalBayar) {
+
+                showError(
+                    "Masukkan nominal pembayaran saat ini (boleh penuh atau cicilan)."
+                );
+
+                return false;
+
+            }
+
+
+            // Sisa tagihan dari data asli: tagihan - semua pembayaran
+            // pemasukan yang sudah tercatat (baris yang sedang diedit
+            // dikecualikan agar tidak dihitung dua kali).
+            const trxEdit =
+                modeForm === "edit"
+                    ? DATA_TRANSAKSI.find(
+                        (item) =>
+                            String(item.id) ===
+                            String(idSedangDiubah)
+                    )
+                    : null;
+
+            const terbayar =
+                hitungTerbayar(
+                    data.siswa.id_siswa,
+                    data.iuran.id,
+                    trxEdit?.id_transaksi ?? null
+                );
+
+            const sisa =
+                Math.max(
+                    Number(data.tagihan) - terbayar,
+                    0
+                );
+
+
+            if (data.nominalBayar > sisa) {
+
+                showError(
+                    `Pembayaran melebihi sisa tagihan. Sisa tagihan saat ini ${formatRupiah(sisa)}.`
                 );
 
                 return false;
@@ -1298,11 +1805,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (
                 data.diterima <
-                data.tagihan
+                data.nominalBayar
             ) {
 
                 showError(
-                    "Jumlah uang yang diterima masih kurang dari nominal tagihan."
+                    "Jumlah uang yang diterima masih kurang dari nominal pembayaran."
                 );
 
                 return false;
@@ -1401,7 +1908,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const cocokKategori =
                     kategori === "semua" ||
-                    trx.kategori === kategori;
+                    String(trx.kategori ?? "").toLowerCase() ===
+                        String(kategori).toLowerCase();
 
 
                 const tanggal =
@@ -1665,13 +2173,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             <strong>
                                 ${escapeHtml(
-                                    trx.siswa || "—"
+                                    trx.siswa || "-"
                                 )}
                             </strong>
 
                             <small>
                                 NIS ${escapeHtml(
-                                    trx.nis || "—"
+                                    trx.nis || "-"
                                 )}
                             </small>
 
@@ -1734,7 +2242,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         "Pembayaran iuran"
                     )
                     : (
-                        `Kategori: ${trx.kategori || "—"}`
+                        `Kategori: ${labelKategori(trx.kategori)}`
                     );
 
 
@@ -1794,7 +2302,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <small class="transaction-date">
                         ${escapeHtml(
-                            trx.tanggal || "—"
+                            trx.tanggal || "-"
                         )}
                     </small>
 
@@ -1808,6 +2316,13 @@ document.addEventListener("DOMContentLoaded", () => {
                             trx.metode
                         )}
                     </span>
+
+                </td>
+
+
+                <td class="cell-petugas">
+
+                    ${escapeHtml(trx.petugas || "-")}
 
                 </td>
 
@@ -2002,6 +2517,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         resetForm();
 
+        isiPilihanIuran();
+
         bukaModal(
             "modalForm"
         );
@@ -2018,7 +2535,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const trx =
             DATA_TRANSAKSI.find(
                 (item) =>
-                    item.id === id
+                    String(item.id) === String(id)
             );
 
 
@@ -2066,10 +2583,14 @@ document.addEventListener("DOMContentLoaded", () => {
             trx.jenis === "masuk"
         ) {
 
+            isiPilihanIuran(trx.iuranId);
+
             if ($("inputSiswa")) {
 
                 $("inputSiswa").value =
-                    trx.nis || "";
+                    trx.id_siswa != null
+                        ? trx.id_siswa
+                        : "";
 
             }
 
@@ -2077,14 +2598,22 @@ document.addEventListener("DOMContentLoaded", () => {
             if ($("inputIuran")) {
 
                 $("inputIuran").value =
-                    trx.iuranId || "";
+                    trx.iuranId != null
+                        ? trx.iuranId
+                        : "";
 
             }
 
 
-            if ($("inputTagihan")) {
+            // Tagihan diisi ulang dari data iuran asli, lalu info
+            // pembayaran sebelumnya & sisa dihitung dari transaksi
+            // database (baris yang diedit dikecualikan).
+            updateNominalIuran();
 
-                $("inputTagihan").value =
+
+            if ($("inputNominalBayar")) {
+
+                $("inputNominalBayar").value =
                     new Intl.NumberFormat(
                         "id-ID"
                     ).format(
@@ -2132,6 +2661,10 @@ document.addEventListener("DOMContentLoaded", () => {
             $("inputKategori").value =
                 trx.kategori || "";
 
+            // Samakan jenis dengan kategori transaksi yang dibuka
+            // agar kombinasi tetap valid saat disimpan ulang.
+            sesuaikanJenisKeKategori();
+
         }
 
 
@@ -2172,7 +2705,220 @@ document.addEventListener("DOMContentLoaded", () => {
        SAVE
     ===================================================== */
 
-    const simpanTransaksi = () => {
+    /* =========================================================
+       CATAT BANYAK TRANSAKSI (BENDAHARA)
+    ========================================================= */
+    let nomorBaris = 0;
+
+    const barisBanyakHtml = (index) => `
+        <div class="baris-transaksi" data-baris="${index}">
+            <div class="baris-transaksi__head">
+                <span class="baris-transaksi__nomor">Baris ${index + 1}</span>
+
+                <button type="button" class="icon-btn icon-btn--hapus" data-hapus-baris
+                    aria-label="Hapus baris ${index + 1}" title="Hapus baris">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Jenis <b class="wajib">*</b></span>
+                    <select class="baris-jenis">
+                        <option value="masuk">Pemasukan</option>
+                        <option value="keluar">Pengeluaran</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Kategori <b class="wajib">*</b></span>
+                    <select class="baris-kategori"></select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Tanggal <b class="wajib">*</b></span>
+                    <input type="date" class="baris-tanggal">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Nominal <b class="wajib">*</b></span>
+                    <span class="input-uang">
+                        <span class="input-uang__pre" aria-hidden="true">Rp</span>
+                        <input type="text" class="baris-nominal" inputmode="numeric" placeholder="0" autocomplete="off">
+                    </span>
+                </label>
+
+                <label class="field field--full">
+                    <span class="field__label">Keterangan <b class="wajib">*</b></span>
+                    <input type="text" class="baris-keterangan" placeholder="Contoh: setoran kas kelas" autocomplete="off">
+                </label>
+            </div>
+        </div>
+    `;
+
+    const isiKategoriBaris = (baris) => {
+        const jenis = baris.querySelector(".baris-jenis")?.value || "masuk";
+        const pilih = baris.querySelector(".baris-kategori");
+        if (!pilih) return;
+
+        const daftar = jenis === "masuk" ? KATEGORI_MASUK : KATEGORI_KELUAR;
+        const nilaiLama = pilih.value;
+
+        pilih.innerHTML = daftar
+            .map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`)
+            .join("");
+
+        if ([...pilih.options].some((o) => o.value === nilaiLama)) {
+            pilih.value = nilaiLama;
+        }
+    };
+
+    const tambahBarisTransaksi = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return;
+
+        const index = nomorBaris++;
+        wadah.insertAdjacentHTML("beforeend", barisBanyakHtml(index));
+
+        const baris = wadah.querySelector(`[data-baris="${index}"]`);
+        if (!baris) return;
+
+        isiKategoriBaris(baris);
+
+        const tanggal = baris.querySelector(".baris-tanggal");
+        if (tanggal) {
+            const d = new Date();
+            tanggal.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        }
+
+        const nominal = baris.querySelector(".baris-nominal");
+        nominal?.addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        });
+
+        const jenis = baris.querySelector(".baris-jenis");
+        jenis?.addEventListener("change", () => isiKategoriBaris(baris));
+
+        const keterangan = baris.querySelector(".baris-keterangan");
+        if (keterangan) keterangan.focus();
+    };
+
+    const perbaruiNomorBaris = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return;
+
+        wadah.querySelectorAll(".baris-transaksi").forEach((baris, i) => {
+            const label = baris.querySelector(".baris-transaksi__nomor");
+            if (label) label.textContent = `Baris ${i + 1}`;
+        });
+    };
+
+    const bukaFormBanyak = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return;
+
+        wadah.innerHTML = "";
+        nomorBaris = 0;
+
+        const kotakGalat = $("formBanyakError");
+        if (kotakGalat) kotakGalat.hidden = true;
+
+        tambahBarisTransaksi();
+        bukaModal("modalFormBanyak");
+    };
+
+    const kumpulkanBaris = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return { galat: ["Form tidak ditemukan"], data: [] };
+
+        const galat = [];
+        const data = [];
+
+        wadah.querySelectorAll(".baris-transaksi").forEach((baris, i) => {
+            const nomor = i + 1;
+            const jenis = baris.querySelector(".baris-jenis")?.value || "masuk";
+            const kategori = baris.querySelector(".baris-kategori")?.value || "";
+            const tanggal = baris.querySelector(".baris-tanggal")?.value || "";
+            const nominal = parseAngka(baris.querySelector(".baris-nominal")?.value || "");
+            const keterangan = (baris.querySelector(".baris-keterangan")?.value || "").trim();
+
+            if (!tanggal) galat.push(`Baris ${nomor}: tanggal wajib diisi`);
+            if (!kategori) galat.push(`Baris ${nomor}: kategori wajib dipilih`);
+            if (nominal <= 0) galat.push(`Baris ${nomor}: nominal wajib lebih dari 0`);
+            if (!keterangan) galat.push(`Baris ${nomor}: keterangan wajib diisi`);
+
+            if (tanggal && kategori && nominal > 0 && keterangan) {
+                data.push({
+                    tanggal: `${tanggal} 00:00:00`,
+                    jenis: jenis === "masuk" ? "pemasukan" : "pengeluaran",
+                    kategori,
+                    nominal,
+                    uang_diterima: nominal,
+                    keterangan,
+                    metode: "CH"
+                });
+            }
+        });
+
+        if (!data.length && !galat.length) {
+            galat.push("Tambahkan minimal satu baris transaksi.");
+        }
+
+        return { galat, data };
+    };
+
+    const simpanBanyakTransaksi = async (e) => {
+        e.preventDefault();
+
+        const kotakGalat = $("formBanyakError");
+        const { galat, data } = kumpulkanBaris();
+
+        if (galat.length) {
+            if (kotakGalat) {
+                kotakGalat.textContent = galat.join(" • ");
+                kotakGalat.hidden = false;
+            }
+            return;
+        }
+
+        if (kotakGalat) kotakGalat.hidden = true;
+
+        const tombol = $("btnSimpanBanyak");
+
+        const pemulihanTombol = kunciTombolSimpan(tombol);
+        if (!pemulihanTombol) return;
+
+        try {
+            const hasil = await kirimJSON(API_TRANSAKSI, "POST", { transaksi: data });
+
+            const jumlah = hasil.jumlah ?? data.length;
+            tutupModal("modalFormBanyak");
+            tampilkanToast(`${jumlah} transaksi berhasil dicatat`);
+            await muatData();
+        } catch (error) {
+            if (kotakGalat) {
+                kotakGalat.textContent = error?.message || "Gagal menyimpan transaksi.";
+                kotakGalat.hidden = false;
+            }
+        } finally {
+            pemulihanTombol.pulihkan();
+        }
+    };
+
+    const simpanTransaksi = async () => {
+
+        // S3-07: kunci tombol simpan saat proses (teks
+        // "Memproses...", tidak dapat diklik dua kali via klik maupun
+        // Enter). null = masih diproses, boleh henti.
+        const tombolSimpan = $("formTransaksi")?.querySelector(
+            'button[type="submit"]'
+        );
+
+        const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+
+        if (!pemulihanTombol) return;
+
+        try {
 
         const data =
             ambilDataForm();
@@ -2189,203 +2935,136 @@ document.addEventListener("DOMContentLoaded", () => {
             data.jenis === "masuk";
 
 
-        const kembalian =
-            isMasuk
-                ? hitungKembalian(
-                    data.tagihan,
-                    data.diterima
-                )
-                : 0;
-
-
-        const masukKas =
-            isMasuk
-                ? hitungMasukKas(
-                    data.tagihan,
-                    data.diterima
-                )
-                : 0;
-
-
+        // Pemasukan: nominal yang dicatat adalah pembayaran SAAT INI
+        // (boleh cicilan/sebagian), bukan seluruh tagihan.
         const nominal =
             isMasuk
-                ? data.tagihan
+                ? data.nominalBayar
                 : data.nominalKeluar;
 
 
-        if (
-            modeForm === "edit"
-        ) {
+        const payload = {
 
-            const index =
-                DATA_TRANSAKSI.findIndex(
-                    (item) =>
-                        item.id === idSedangDiubah
+            id_siswa:
+                isMasuk && data.siswa
+                    ? data.siswa.id_siswa
+                    : null,
+
+            id_iuran:
+                isMasuk && data.iuran
+                    ? data.iuran.id
+                    : null,
+
+            tanggal: `${data.tanggal} 00:00:00`,
+
+            nominal,
+
+            keterangan:
+                data.keterangan ||
+                (
+                    isMasuk
+                        ? "Pembayaran iuran"
+                        : "Pengeluaran kas"
+                ),
+
+            nama_pembayar:
+                isMasuk && data.siswa
+                    ? data.siswa.nama
+                    : "",
+
+            metode:
+                data.metode === "Transfer"
+                    ? "TF"
+                    : "CH",
+
+            jenis:
+                isMasuk ? "pemasukan" : "pengeluaran",
+
+            kategori:
+                data.kategori || null,
+
+            periode: "",
+
+            uang_diterima:
+                isMasuk
+                    ? data.diterima
+                    : nominal,
+
+            kembalian: 0
+
+        };
+
+
+        try {
+
+            if (modeForm === "edit") {
+
+                const trx =
+                    DATA_TRANSAKSI.find(
+                        (item) =>
+                            String(item.id) === String(idSedangDiubah)
+                    );
+
+                if (!trx) {
+                    return;
+                }
+
+                await kirimJSON(
+                    `${API_TRANSAKSI}/${trx.id_transaksi}`,
+                    "PUT",
+                    payload
                 );
 
+                tampilkanToast(
+                    "Transaksi berhasil diperbarui."
+                );
 
-            if (
-                index !== -1
-            ) {
+            } else {
 
-                const dataLama =
-                    DATA_TRANSAKSI[index];
+                await kirimJSON(
+                    API_TRANSAKSI,
+                    "POST",
+                    payload
+                );
 
-
-                DATA_TRANSAKSI[index] = {
-
-                    ...dataLama,
-
-                    jenis:
-                        data.jenis,
-
-                    nis:
-                        isMasuk
-                            ? data.siswa.nis
-                            : "",
-
-                    siswa:
-                        isMasuk
-                            ? data.siswa.nama
-                            : "",
-
-                    iuranId:
-                        isMasuk
-                            ? data.iuran.id
-                            : "",
-
-                    iuran:
-                        isMasuk
-                            ? data.iuran.nama
-                            : "",
-
-                    kategori:
-                        data.kategori,
-
-                    nominal,
-
-                    diterima:
-                        isMasuk
-                            ? data.diterima
-                            : 0,
-
-                    kembalian,
-
-                    masukKas,
-
-                    metode:
-                        data.metode,
-
-                    tanggal:
-                        data.tanggal,
-
-                    keterangan:
-                        data.keterangan ||
-                        (
-                            isMasuk
-                                ? "Pembayaran iuran"
-                                : "Pengeluaran kas"
-                        )
-
-                };
+                tampilkanToast(
+                    "Transaksi berhasil ditambahkan."
+                );
 
             }
 
+        } catch (error) {
 
-            tampilkanToast(
-                "Transaksi berhasil diperbarui."
-            );
+            const errorBox =
+                $("formError");
 
-        } else {
+            if (errorBox) {
 
-            const nomor =
-                DATA_TRANSAKSI.length + 1;
+                errorBox.textContent =
+                    error.message;
 
+                errorBox.hidden = false;
 
-            const id =
-                `TRX-${String(
-                    nomor
-                ).padStart(
-                    3,
-                    "0"
-                )}`;
+            }
 
-
-            DATA_TRANSAKSI.unshift({
-
-                id,
-
-                jenis:
-                    data.jenis,
-
-                nis:
-                    isMasuk
-                        ? data.siswa.nis
-                        : "",
-
-                siswa:
-                    isMasuk
-                        ? data.siswa.nama
-                        : "",
-
-                iuranId:
-                    isMasuk
-                        ? data.iuran.id
-                        : "",
-
-                iuran:
-                    isMasuk
-                        ? data.iuran.nama
-                        : "",
-
-                kategori:
-                    data.kategori,
-
-                nominal,
-
-                diterima:
-                    isMasuk
-                        ? data.diterima
-                        : 0,
-
-                kembalian,
-
-                masukKas,
-
-                metode:
-                    data.metode,
-
-                tanggal:
-                    data.tanggal,
-
-                keterangan:
-                    data.keterangan ||
-                    (
-                        isMasuk
-                            ? "Pembayaran iuran"
-                            : "Pengeluaran kas"
-                    ),
-
-                petugas:
-                    "Bendahara"
-
-            });
-
-
-            tampilkanToast(
-                "Transaksi berhasil ditambahkan."
-            );
+            return;
 
         }
 
 
-        renderTable();
+        await muatData();
 
         tutupModal(
             "modalForm"
         );
 
         resetForm();
+
+        } finally {
+            // S3-07: tombol pulih setelah proses apa pun berakhir
+            // (sukses, gagal validasi, maupun galat server).
+            pemulihanTombol.pulihkan();
+        }
 
     };
 
@@ -2399,7 +3078,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const trx =
             DATA_TRANSAKSI.find(
                 (item) =>
-                    item.id === id
+                    String(item.id) === String(id)
             );
 
 
@@ -2433,7 +3112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if ($("detailMetode")) {
 
             $("detailMetode").textContent =
-                trx.metode || "—";
+                trx.metode || "-";
 
         }
 
@@ -2441,7 +3120,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if ($("detailKategori")) {
 
             $("detailKategori").textContent =
-                trx.kategori || "—";
+                labelKategori(trx.kategori);
 
         }
 
@@ -2450,8 +3129,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             $("detailSiswa").textContent =
                 isMasuk
-                    ? `${trx.siswa || "—"} (${trx.nis || "—"})`
-                    : "—";
+                    ? `${trx.siswa || "-"} (${trx.nis || "-"})`
+                    : "-";
 
         }
 
@@ -2460,8 +3139,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             $("detailIuran").textContent =
                 isMasuk
-                    ? trx.iuran || "—"
-                    : "—";
+                    ? trx.iuran || "-"
+                    : "-";
 
         }
 
@@ -2480,7 +3159,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             $("detailPetugas").textContent =
                 trx.petugas ||
-                "Bendahara";
+                "-";
 
         }
 
@@ -2578,7 +3257,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const trx =
             DATA_TRANSAKSI.find(
                 (item) =>
-                    item.id === id
+                    String(item.id) === String(id)
             );
 
 
@@ -2610,29 +3289,42 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
-    const konfirmasiHapus = () => {
+    const konfirmasiHapus = async () => {
 
         if (!idSedangDihapus) {
             return;
         }
 
 
-        const index =
-            DATA_TRANSAKSI.findIndex(
+        const trx =
+            DATA_TRANSAKSI.find(
                 (item) =>
-                    item.id === idSedangDihapus
+                    String(item.id) === String(idSedangDihapus)
             );
 
 
-        if (index === -1) {
+        if (!trx) {
+            tutupModal("modalHapus");
+            idSedangDihapus = null;
             return;
         }
 
 
-        DATA_TRANSAKSI.splice(
-            index,
-            1
-        );
+        try {
+
+            await hapusJSON(
+                `${API_TRANSAKSI}/${trx.id_transaksi}`
+            );
+
+        } catch (error) {
+
+            tampilkanToast(
+                error.message
+            );
+
+            return;
+
+        }
 
 
         const id =
@@ -2648,7 +3340,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
 
-        renderTable();
+        await muatData();
 
 
         tampilkanToast(
@@ -2942,8 +3634,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const logout = () => {
 
-            window.location.href =
-                "/";
+            window.location.href = "/logout";
 
         };
 
@@ -2997,11 +3688,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const tambah =
             $("btnTambahTransaksi");
 
+        const inputSiswa =
+            $("inputSiswa");
+
         const inputIuran =
             $("inputIuran");
 
         const inputDiterima =
             $("inputDiterima");
+
+        const inputNominalBayar =
+            $("inputNominalBayar");
 
         const inputNominalKeluar =
             $("inputNominalKeluar");
@@ -3085,6 +3782,68 @@ document.addEventListener("DOMContentLoaded", () => {
 
         }
 
+        const catatBanyak =
+            $("btnTambahBanyak");
+
+        if (catatBanyak) {
+
+            catatBanyak.addEventListener(
+                "click",
+                bukaFormBanyak
+            );
+
+        }
+
+        $("btnTambahBaris")?.addEventListener(
+            "click",
+            tambahBarisTransaksi
+        );
+
+        $("isiBarisTransaksi")?.addEventListener(
+            "click",
+            (e) => {
+
+                const tombol =
+                    e.target.closest(
+                        "[data-hapus-baris]"
+                    );
+
+                if (!tombol) return;
+
+                const baris =
+                    tombol.closest(
+                        ".baris-transaksi"
+                    );
+
+                if (!baris) return;
+
+                const jumlah =
+                    $("isiBarisTransaksi")
+                        ?.querySelectorAll(
+                            ".baris-transaksi"
+                        ).length || 0;
+
+                if (jumlah <= 1) {
+
+                    tampilkanToast(
+                        "Minimal satu baris transaksi harus ada."
+                    );
+
+                    return;
+
+                }
+
+                baris.remove();
+                perbaruiNomorBaris();
+
+            }
+        );
+
+        $("formTransaksiBanyak")?.addEventListener(
+            "submit",
+            simpanBanyakTransaksi
+        );
+
 
         document
             .querySelectorAll(
@@ -3095,11 +3854,39 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     radio.addEventListener(
                         "change",
-                        sesuaikanFormJenis
+                        () => {
+
+                            // Saat jenis diganti, kategori dipindah ke
+                            // kategori pertama yang sah untuk jenis itu
+                            // agar kombinasi tetap valid di server.
+                            pilihKategoriPertamaSesuaiJenis();
+
+                            sesuaikanFormJenis();
+
+                        }
                     );
 
                 }
             );
+
+
+        // Saat pengguna memilih kategori, jenis ikut menyesuaikan.
+        $("inputKategori")?.addEventListener(
+            "change",
+            sesuaikanJenisKeKategori
+        );
+
+
+        if (inputSiswa) {
+
+            // Siswa berganti → pembayaran sebelumnya & sisa tagihan
+            // dihitung ulang dari data transaksi asli.
+            inputSiswa.addEventListener(
+                "change",
+                perbaruiInfoPembayaran
+            );
+
+        }
 
 
         if (inputIuran) {
@@ -3107,6 +3894,24 @@ document.addEventListener("DOMContentLoaded", () => {
             inputIuran.addEventListener(
                 "change",
                 updateNominalIuran
+            );
+
+        }
+
+
+        if (inputNominalBayar) {
+
+            inputNominalBayar.addEventListener(
+                "input",
+                () => {
+
+                    formatTeksUang(
+                        inputNominalBayar
+                    );
+
+                    hitungUangLive();
+
+                }
             );
 
         }
@@ -3293,8 +4098,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =====================================================
+       MUAT DATA DARI DATABASE
+    ===================================================== */
+
+    const muatData = async () => {
+
+        const tbodyBend = $("isiTabelTransaksi");
+        if (tbodyBend) {
+            tbodyBend.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="9"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        let hasilSiswa = { data: [] };
+        let hasilIuran = { data: [] };
+        let hasilTransaksi = { data: [] };
+
+        try {
+
+            [hasilSiswa, hasilIuran, hasilTransaksi] =
+                await Promise.all([
+                    ambilJSON(API_SISWA),
+                    ambilJSON(API_IURAN),
+                    ambilJSON(API_TRANSAKSI)
+                ]);
+
+        } catch (error) {
+
+            console.error(error);
+
+            tampilkanToast(error.message);
+
+            return;
+
+        }
+
+        DATA_SISWA = (Array.isArray(hasilSiswa?.data)
+            ? hasilSiswa.data
+            : []
+        ).map(petakanSiswa);
+
+        DATA_IURAN = (Array.isArray(hasilIuran?.data)
+            ? hasilIuran.data
+            : []
+        ).map(petakanIuran);
+
+        DATA_TRANSAKSI = (
+            Array.isArray(hasilTransaksi?.data)
+                ? hasilTransaksi.data
+                : []
+        ).map(petakanTransaksi);
+
+        isiPilihanSiswa();
+
+        isiPilihanIuran();
+
+        renderTable();
+
+    };
+
+
+    /* =====================================================
        INITIALIZE
     ===================================================== */
+
+    csrfToken = bacaCsrf();
 
     updateTanggal();
 
@@ -3317,5 +4185,9 @@ document.addEventListener("DOMContentLoaded", () => {
     renderTable();
 
     resetForm();
+
+    // Ambil daftar kategori dari server lebih dulu (sumber tunggal),
+    // lalu muat data. Bila gagal, daftar cadangan tetap dipakai.
+    muatKategori().finally(muatData);
 
 });

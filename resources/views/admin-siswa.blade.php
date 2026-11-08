@@ -6,10 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Data Siswa — BBCashvia</title>
+    <title>Data Siswa - BBCashvia</title>
 
     <meta name="description"
-        content="Halaman Data Siswa BBCashvia — kelola daftar anggota kelas, lengkap dengan NIS, kelas, kontak, dan status iuran setiap siswa.">
+        content="Halaman Data Siswa BBCashvia - kelola daftar anggota kelas, lengkap dengan NIS, kelas, kontak, dan status iuran setiap siswa.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +22,9 @@
 
     @vite([
         'resources/css/admin-siswa.css',
-        'resources/js/admin-siswa.js'
+        'resources/js/admin-siswa.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
@@ -143,14 +145,14 @@
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
-                <div class="sidebar__avatar" aria-hidden="true">AN</div>
+                <div class="sidebar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
                 <div class="sidebar__userinfo">
-                    <span class="sidebar__username">Azis N.</span>
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Administrator' }}</span>
                     <span class="sidebar__userrole">Admin</span>
                 </div>
             </div>
 
-            <a href="/" class="sidebar__logout">
+            <a href="/logout" class="sidebar__logout">
                 <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 <span>Keluar</span>
             </a>
@@ -176,7 +178,7 @@
 
                 <div class="topbar__title">
                     <h1>Data Siswa</h1>
-                    <p id="topbarDate">—</p>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -193,10 +195,10 @@
 
                     <button type="button" class="topbar__profile" id="profileBtn" aria-haspopup="true"
                         aria-expanded="false">
-                        <span class="topbar__avatar" aria-hidden="true">AN</span>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
                         <span class="topbar__profileinfo">
-                            <span class="topbar__profilename">Azis N.</span>
-                            <span class="topbar__profilerole">Admin</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Admin • {{ auth()->user()->labelKelas() }}</span>
                         </span>
                         <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">expand_more</span>
                     </button>
@@ -204,11 +206,12 @@
                     <div class="dropdown" id="profileMenu" role="menu">
 
                         <div class="dropdown__head">
-                            <span class="dropdown__name">Azis N.</span>
-                            <span class="dropdown__mail">azinun@bbcashvia.sch.id</span>
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
-                        <a href="/" class="dropdown__item dropdown__item--danger" role="menuitem">
+                        <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
                             <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                             <span>Keluar</span>
                         </a>
@@ -229,10 +232,14 @@
             <section class="page-head">
 
                 <div class="page-head__text">
-                    <p class="page-head__eyebrow">Panel Admin • Kas Kelas</p>
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/admin">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Data Siswa</span>
+                    </nav>
                     <h2 class="page-head__title">Data Siswa</h2>
                     <p class="page-head__sub">
-                        Kelola daftar anggota kelas — tambah, ubah, dan hapus data siswa
+                        Kelola daftar anggota kelas - tambah, ubah, dan hapus data siswa
                         beserta status iurannya dalam satu tempat.
                     </p>
                 </div>
@@ -278,7 +285,7 @@
                         </div>
                         <div>
                             <p class="sum-card__label">Total Siswa</p>
-                            <p class="sum-card__value" id="sumTotal">—</p>
+                            <p class="sum-card__value" id="sumTotal">-</p>
                             <p class="sum-card__note" id="sumTotalNote">sesuai filter</p>
                         </div>
                     </article>
@@ -289,7 +296,7 @@
                         </div>
                         <div>
                             <p class="sum-card__label">Laki-laki</p>
-                            <p class="sum-card__value" id="sumLk">—</p>
+                            <p class="sum-card__value" id="sumLk">-</p>
                             <p class="sum-card__note" id="sumLkNote">siswa</p>
                         </div>
                     </article>
@@ -300,7 +307,7 @@
                         </div>
                         <div>
                             <p class="sum-card__label">Perempuan</p>
-                            <p class="sum-card__value" id="sumPr">—</p>
+                            <p class="sum-card__value" id="sumPr">-</p>
                             <p class="sum-card__note" id="sumPrNote">siswa</p>
                         </div>
                     </article>
@@ -311,8 +318,8 @@
                         </div>
                         <div>
                             <p class="sum-card__label">Belum Bayar</p>
-                            <p class="sum-card__value" id="sumBelum">—</p>
-                            <p class="sum-card__note" id="sumBelumNote">iuran Oktober 2026</p>
+                            <p class="sum-card__value" id="sumBelum">-</p>
+                            <p class="sum-card__note" id="sumBelumNote">belum bayar / sebagian</p>
                         </div>
                     </article>
 
@@ -333,9 +340,6 @@
                             <span class="field-select__label">Kelas</span>
                             <select id="filterKelas">
                                 <option value="semua">Semua Kelas</option>
-                                <option value="XI RPL 1">XI RPL 1</option>
-                                <option value="XI RPL 2">XI RPL 2</option>
-                                <option value="X TKJ 1">X TKJ 1</option>
                             </select>
                         </label>
 
@@ -375,7 +379,7 @@
                         <div>
                             <p class="panel__eyebrow">ANGGOTA KELAS</p>
                             <h3 class="panel__title">Daftar Siswa</h3>
-                            <p class="panel__sub" id="tabelInfo">— siswa ditampilkan</p>
+                            <p class="panel__sub" id="tabelInfo">- siswa ditampilkan</p>
                         </div>
                     </div>
 
@@ -415,7 +419,7 @@
                         <div>
                             <p class="panel__eyebrow">DATA KELAS</p>
                             <h3 class="panel__title">Daftar Kelas</h3>
-                            <p class="panel__sub" id="tabelInfoKelas">— kelas ditampilkan</p>
+                            <p class="panel__sub" id="tabelInfoKelas"> kelas ditampilkan</p>
                         </div>
                     </div>
 
@@ -444,7 +448,7 @@
 
 
                 <footer class="content__foot">
-                    BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
+                    BBCashvia - Kas Kelas Digital • Seluruh data ditampilkan langsung dari database.
                 </footer>
 
         </main>
@@ -475,17 +479,14 @@
 
                     <label class="field">
                         <span class="field__label">NIS <b class="wajib">*</b></span>
-                        <input type="text" id="inputNis" inputmode="numeric" maxlength="20"
+                        <input type="text" id="inputNis" inputmode="numeric" maxlength="11"
                             placeholder="Contoh: 2024000101" required autocomplete="off">
                     </label>
 
                     <label class="field">
                         <span class="field__label">Kelas <b class="wajib">*</b></span>
                         <select id="inputKelas" required>
-                            <option value="">— Pilih kelas —</option>
-                            <option value="XI RPL 1">XI RPL 1</option>
-                            <option value="XI RPL 2">XI RPL 2</option>
-                            <option value="X TKJ 1">X TKJ 1</option>
+                            <option value="">- Pilih kelas -</option>
                         </select>
                     </label>
 
@@ -565,7 +566,7 @@
             <div class="modal__head">
                 <div>
                     <p class="modal__eyebrow">DETAIL SISWA</p>
-                    <h3 class="modal__title" id="detailNama">—</h3>
+                    <h3 class="modal__title" id="detailNama">-</h3>
                 </div>
                 <button type="button" class="modal__close" data-tutup-modal="modalDetail" aria-label="Tutup">
                     <span class="material-symbols-outlined" aria-hidden="true">close</span>
@@ -575,12 +576,12 @@
             <div class="modal__body">
 
                 <div class="detail-profil">
-                    <div class="detail-profil__avatar" id="detailAvatar" aria-hidden="true">—</div>
+                    <div class="detail-profil__avatar" id="detailAvatar" aria-hidden="true">-</div>
                     <div class="detail-profil__info">
-                        <p class="detail-profil__nama" id="detailNamaKecil">—</p>
+                        <p class="detail-profil__nama" id="detailNamaKecil">-</p>
                         <div class="detail-profil__meta">
-                            <span class="cell-kelas" id="detailKelas">—</span>
-                            <span class="chip chip--lk" id="detailJk">—</span>
+                            <span class="cell-kelas" id="detailKelas">-</span>
+                            <span class="chip chip--lk" id="detailJk">-</span>
                         </div>
                     </div>
                 </div>
@@ -590,23 +591,23 @@
 
                     <div class="detail-item">
                         <span class="detail-item__label">NIS</span>
-                        <span class="detail-item__value detail-item__value--mono" id="detailNis">—</span>
+                        <span class="detail-item__value detail-item__value--mono" id="detailNis">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Jenis Kelamin</span>
-                        <span class="detail-item__value" id="detailJkTeks">—</span>
+                        <span class="detail-item__value" id="detailJkTeks">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">No. HP / WhatsApp</span>
-                        <span class="detail-item__value detail-item__value--mono" id="detailHp">—</span>
+                        <span class="detail-item__value detail-item__value--mono" id="detailHp">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Status Iuran Berjalan</span>
                         <span class="detail-item__value">
-                            <span class="badge badge--none" id="detailStatus">—</span>
+                            <span class="badge badge--none" id="detailStatus">-</span>
                         </span>
                     </div>
 
@@ -618,7 +619,7 @@
 
                     <p class="riwayat-box__title">
                         <span class="material-symbols-outlined" aria-hidden="true">sell</span>
-                        Ringkasan Iuran (Besar iuran Rp 250.000/bulan)
+                        Ringkasan Iuran
                     </p>
 
                     <div id="riwayatIuran"></div>
@@ -697,7 +698,7 @@
 
                     <label class="field">
                         <span class="field__label">Nama Kelas <b class="wajib">*</b></span>
-                        <input type="text" id="inputNamaKelas" placeholder="Contoh: XI RPL 1"
+                        <input type="text" id="inputNamaKelas" placeholder="Contoh: XI RPL"
                             required autocomplete="off" maxlength="50">
                     </label>
 
@@ -772,6 +773,7 @@
     </div>
 
 
+    @include('partials.konfirmasi-logout')
 </body>
 
 </html>

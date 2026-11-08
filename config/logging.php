@@ -65,6 +65,20 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+        |--------------------------------------------------------------------------
+        | CHANNEL KUSTOM: BERKAS ERROR
+        |--------------------------------------------------------------------------
+        | Berkas log khusus galat (S3-02): hanya mencatat pesan level
+        | error ke atas, dipisahkan dari laravel.log agar mudah diaudit.
+        */
+        'error-file' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/app-error.log'),
+            'level' => env('LOG_ERROR_LEVEL', 'error'),
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

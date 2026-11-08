@@ -39,7 +39,7 @@ class AuthController extends Controller
             return $this->loginError(
                 $request,
                 'email',
-                'Email atau password yang Anda masukkan salah.'
+                'Email yang Anda masukkan salah atau tidak terdaftar.'
             );
         }
 
@@ -47,7 +47,7 @@ class AuthController extends Controller
             return $this->loginError(
                 $request,
                 'password',
-                'Email atau password yang Anda masukkan salah.'
+                'Password yang Anda masukkan salah.'
             );
         }
 
@@ -134,13 +134,14 @@ class AuthController extends Controller
                 'string',
                 'min:8',
                 'regex:/[A-Z]/',
+                'regex:/[0-9]/',
                 'regex:/[^A-Za-z0-9]/',
                 'confirmed',
             ],
         ], [
             'new_password.required' => 'Password baru wajib diisi.',
             'new_password.min' => 'Password minimal 8 karakter.',
-            'new_password.regex' => 'Password harus mengandung huruf kapital dan karakter khusus.',
+            'new_password.regex' => 'Password harus mengandung huruf kapital, angka, dan karakter khusus.',
             'new_password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 

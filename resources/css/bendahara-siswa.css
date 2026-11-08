@@ -1,7 +1,7 @@
 @import url("./bendahara-dashboard.css");
 
 /* =========================================================
-   BBCASHVIA — BENDAHARA DATA SISWA
+   BBCASHVIA Ã¢â‚¬â€ BENDAHARA DATA SISWA
    Style mengikuti Bendahara Dashboard
    Isi khusus: informasi kelas, statistik, dan tabel siswa
 ========================================================= */
@@ -49,7 +49,7 @@
 .modal-backdrop button:focus-visible,
 .modal-backdrop input:focus-visible,
 .modal-backdrop select:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, .2);
+    outline: 3px solid rgba(43, 161, 158, .2);
     outline-offset: 2px;
 }
 
@@ -59,36 +59,60 @@
 }
 
 /* =========================================================
-   HEADER DATA SISWA
-   Mengikuti hero Bendahara Dashboard
+   HEADER HALAMAN (TANPA KOTAK WARNA)
+   Hierarki & tipografi mengikuti hero Bendahara Dashboard,
+   tetapi latar transparan tanpa kardus/border biru.
 ========================================================= */
 
-.hero {
+.page-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    min-width: 0;
+    margin-bottom: 24px;
+}
+
+.page-head__text {
     min-width: 0;
 }
 
-.hero__text {
-    min-width: 0;
-}
-
-.hero__eyebrow {
+.page-head__eyebrow {
+    margin-bottom: 7px;
+    color: var(--primary);
+    font-size: 13.5px;
+    font-weight: 800;
+    letter-spacing: .04em;
     text-transform: uppercase;
+    line-height: 1.4;
 }
 
-.hero__title {
+.page-head__title {
     margin: 0;
+    color: var(--text);
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.3;
     overflow-wrap: anywhere;
 }
 
-.hero__sub {
+.page-head__sub {
+    margin-top: 7px;
+    max-width: 650px;
+    color: var(--text-soft);
+    font-size: 15.5px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
 }
 
-.hero__actions {
+.page-head__actions {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.hero__actions .btn {
+.page-head__actions .btn {
     white-space: nowrap;
 }
 
@@ -122,7 +146,7 @@
 }
 
 .class-info__icon .material-symbols-outlined {
-    font-size: 22px;
+    font-size: 24px;
 }
 
 .class-info__text {
@@ -132,13 +156,13 @@
     gap: 4px;
     min-width: 0;
     color: var(--text-soft);
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.6;
 }
 
 .class-info__eyebrow {
     color: var(--primary);
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -146,7 +170,7 @@
 
 .class-info__text strong {
     color: var(--text);
-    font-size: 14px;
+    font-size: 17.5px;
     font-weight: 800;
 }
 
@@ -155,13 +179,13 @@
     align-items: baseline;
     gap: 6px;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 14.5px;
     white-space: nowrap;
 }
 
 .class-info__count strong {
     color: var(--primary);
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
 }
@@ -190,7 +214,7 @@
 
 .stat-card__label {
     color: var(--text-soft);
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 600;
     line-height: 1.6;
 }
@@ -198,7 +222,7 @@
 .stat-card__value {
     margin-top: 5px;
     color: var(--text);
-    font-size: 23px;
+    font-size: 25px;
     font-weight: 800;
     line-height: 1.4;
     overflow-wrap: anywhere;
@@ -206,8 +230,8 @@
 }
 
 .stat-card__icon--siswa {
-    background: #eff6ff;
-    color: #2563eb;
+    background: #D4F1F9;
+    color: #2BA19E;
 }
 
 .stat-card__icon--in {
@@ -217,7 +241,7 @@
 
 .stat-card__icon--warning {
     background: var(--warning-soft);
-    color: var(--warning);
+    color: var(--warning-text);
 }
 
 .stat-card__icon--trx {
@@ -231,7 +255,7 @@
     padding-top: 10px;
     border-top: 1px solid var(--border);
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.6;
 }
 
@@ -266,7 +290,7 @@
 
 .panel__eyebrow {
     color: var(--primary);
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 800;
     letter-spacing: .08em;
     text-transform: uppercase;
@@ -275,7 +299,7 @@
 .panel__title {
     margin-top: 3px;
     color: var(--text);
-    font-size: 14px;
+    font-size: 17.5px;
     font-weight: 800;
     line-height: 1.5;
 }
@@ -283,7 +307,7 @@
 .panel__sub {
     margin-top: 4px;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.6;
 }
 
@@ -300,7 +324,7 @@
     padding: 9px 13px;
     border: 1px solid transparent;
     border-radius: 8px;
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
     line-height: 1.4;
     cursor: pointer;
@@ -309,7 +333,7 @@
 }
 
 .btn .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 .btn--primary {
@@ -325,7 +349,7 @@
 }
 
 .btn--ghost {
-    border-color: #dbeafe;
+    border-color: #D4F1F9;
     background: #fff;
     color: var(--primary);
 }
@@ -366,13 +390,13 @@
 .student-search:focus-within,
 .student-filter:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+    box-shadow: 0 0 0 3px rgba(43, 161, 158, .08);
 }
 
 .student-search > .material-symbols-outlined,
 .student-filter > .material-symbols-outlined {
     flex-shrink: 0;
-    font-size: 19px;
+    font-size: 21px;
 }
 
 .student-search input,
@@ -385,7 +409,7 @@
     outline: none;
     background: transparent;
     color: var(--text);
-    font-size: 11px;
+    font-size: 14.5px;
 }
 
 .student-search input::placeholder {
@@ -414,7 +438,7 @@
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 #f8fafc;
+    scrollbar-color: #cbd5e1 #FFFDFF;
 }
 
 .table-wrap::-webkit-scrollbar {
@@ -422,7 +446,7 @@
 }
 
 .table-wrap::-webkit-scrollbar-track {
-    background: #f8fafc;
+    background: #FFFDFF;
 }
 
 .table-wrap::-webkit-scrollbar-thumb {
@@ -444,7 +468,7 @@
     border-bottom: 1px solid var(--border);
     background: #fafafa;
     color: var(--text-muted);
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 800;
     letter-spacing: .045em;
     white-space: nowrap;
@@ -452,10 +476,10 @@
 
 .student-table tbody td {
     padding: 13px 16px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #D4F1F9;
     background: #fff;
     color: var(--text-soft);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.6;
     vertical-align: middle;
     white-space: nowrap;
@@ -502,7 +526,7 @@
 .student-name__text strong {
     display: block;
     color: var(--text);
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
     white-space: normal;
     overflow-wrap: anywhere;
@@ -526,7 +550,7 @@
     border-radius: 50%;
     background: var(--primary-soft);
     color: var(--primary);
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 800;
 }
 
@@ -536,13 +560,13 @@
     border-radius: 6px;
     background: var(--surface-soft);
     color: var(--text-soft);
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 700;
 }
 
 .student-table .money {
     color: var(--text);
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 650;
     font-variant-numeric: tabular-nums;
 }
@@ -551,7 +575,7 @@
    STATUS IURAN
 ========================================================= */
 
-.student-table .status-badge {
+.status-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -560,25 +584,26 @@
     padding: 4px 8px;
     border: 0;
     border-radius: 999px;
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 700;
     line-height: 1.5;
     white-space: nowrap;
 }
 
-.student-table .status-badge--success,
-.student-table .badge--ok {
+.status-badge--success,
+.badge--ok {
     background: var(--success-soft);
     color: var(--success);
 }
 
-.student-table .status-badge--warning,
-.student-table .badge--partial {
+.status-badge--warning,
+.badge--partial {
     background: var(--warning-soft);
-    color: var(--warning);
+    color: var(--warning-text);
 }
 
-.student-table .badge--none {
+.status-badge--danger,
+.badge--none {
     background: var(--danger-soft);
     color: var(--danger);
 }
@@ -611,7 +636,7 @@
 }
 
 .action-btn .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 .action-btn--view {
@@ -620,16 +645,16 @@
 }
 
 .action-btn--view:hover {
-    background: #dbeafe;
+    background: #D4F1F9;
 }
 
 .action-btn--edit {
     background: var(--warning-soft);
-    color: var(--warning);
+    color: var(--warning-text);
 }
 
 .action-btn--edit:hover {
-    background: #fef3c7;
+    background: #F4D98E;
 }
 
 .action-btn--delete {
@@ -672,13 +697,13 @@
 }
 
 .table-empty__icon .material-symbols-outlined {
-    font-size: 27px;
+    font-size: 29px;
 }
 
 .table-empty h3 {
     margin: 0;
     color: var(--text);
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 800;
 }
 
@@ -686,7 +711,7 @@
     max-width: 380px;
     margin: 0;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.8;
 }
 
@@ -707,7 +732,7 @@
 
 .pagination-info {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.7;
 }
 
@@ -734,13 +759,13 @@
     border-radius: 7px;
     background: #fff;
     color: var(--text-soft);
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
     cursor: pointer;
 }
 
 .page-btn:hover:not(:disabled) {
-    border-color: #bfdbfe;
+    border-color: #A5DBE3;
     background: var(--primary-soft);
     color: var(--primary);
 }
@@ -761,6 +786,10 @@
    MODAL
 ========================================================= */
 
+body.modal-open {
+    overflow: hidden;
+}
+
 .modal-backdrop {
     position: fixed;
     z-index: 2000;
@@ -771,8 +800,8 @@
     padding: 20px;
     overflow-y: auto;
     background: rgba(15, 23, 42, .55);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 .modal-backdrop.is-open,
@@ -816,7 +845,7 @@
 .modal__eyebrow {
     margin-bottom: 6px;
     color: var(--primary);
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 800;
     letter-spacing: .08em;
 }
@@ -825,7 +854,7 @@
 .modal__title {
     margin: 0;
     color: var(--text);
-    font-size: 17px;
+    font-size: 20.5px;
     font-weight: 800;
     line-height: 1.5;
 }
@@ -833,7 +862,7 @@
 .modal__header p {
     margin: 5px 0 0;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.7;
 }
 
@@ -894,7 +923,7 @@
 
 .form-group label {
     color: var(--text-soft);
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
 }
 
@@ -913,13 +942,13 @@
     outline: none;
     background: #fff;
     color: var(--text);
-    font-size: 11px;
+    font-size: 14.5px;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .08);
+    box-shadow: 0 0 0 3px rgba(43, 161, 158, .08);
 }
 
 .form-group input[readonly] {
@@ -929,14 +958,14 @@
 
 .form-hint {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.6;
 }
 
 .form-error {
     display: none;
     color: var(--danger);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.5;
 }
 
@@ -969,7 +998,7 @@
     border-radius: 50%;
     background: var(--primary-soft);
     color: var(--primary);
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 800;
 }
 
@@ -982,14 +1011,14 @@
 
 .detail-profile__info strong {
     color: var(--text);
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 800;
     overflow-wrap: anywhere;
 }
 
 .detail-profile__info span {
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 14.5px;
     overflow-wrap: anywhere;
 }
 
@@ -1013,13 +1042,13 @@
 
 .detail-item > span {
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 600;
 }
 
 .detail-item strong {
     color: var(--text);
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 750;
     line-height: 1.7;
     overflow-wrap: anywhere;
@@ -1044,12 +1073,12 @@
     width: max-content;
     max-width: calc(100vw - 32px);
     padding: 12px 15px;
-    border: 1px solid #bbf7d0;
+    border: 1px solid #A5DBE3;
     border-radius: 10px;
     background: var(--success-soft);
-    color: #166534;
+    color: #237A77;
     box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.6;
     opacity: 0;
     visibility: hidden;
@@ -1071,7 +1100,7 @@
 .toast > .material-symbols-outlined {
     flex: 0 0 auto;
     color: var(--success);
-    font-size: 21px;
+    font-size: 23px;
 }
 
 .toast > div {
@@ -1081,13 +1110,13 @@
 }
 
 .toast strong {
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 800;
 }
 
 .toast span:not(.material-symbols-outlined) {
-    color: #166534;
-    font-size: 11px;
+    color: #237A77;
+    font-size: 14.5px;
 }
 
 /* =========================================================
@@ -1097,7 +1126,7 @@
 .content__foot {
     padding: 20px 0 8px;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.5;
     text-align: center;
 }
@@ -1144,6 +1173,30 @@
         margin-bottom: 18px;
     }
 
+    .page-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .page-head__title {
+        font-size: 22px;
+    }
+
+    .page-head__sub {
+        font-size: 14.5px;
+    }
+
+    .page-head__actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .page-head__actions .btn {
+        flex: 1;
+    }
+
     .stat-card {
         padding: 15px;
     }
@@ -1159,19 +1212,19 @@
     }
 
     .stat-card__icon .material-symbols-outlined {
-        font-size: 19px;
+        font-size: 21px;
     }
 
     .stat-card__value {
-        font-size: 17px;
+        font-size: 20.5px;
     }
 
     .stat-card__label {
-        font-size: 10px;
+        font-size: 13.5px;
     }
 
     .stat-card__foot {
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
     .panel,
@@ -1226,7 +1279,7 @@
 
     .modal__header h2,
     .modal__title {
-        font-size: 16px;
+        font-size: 19.5px;
     }
 
     #studentForm {
@@ -1280,14 +1333,19 @@
     }
 
     .stat-card__value {
-        font-size: 15px;
+        font-size: 18.5px;
     }
 
-    .hero__actions {
-        width: 100%;
+    .page-head__title {
+        font-size: 20px;
     }
 
-    .hero__actions .btn {
+    .page-head__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-head__actions .btn {
         width: 100%;
     }
 
@@ -1322,7 +1380,7 @@
     }
 
     .stat-card__value {
-        font-size: 17px;
+        font-size: 20.5px;
     }
 }
 

@@ -11,11 +11,15 @@ class Iuran extends Model
 
     protected $primaryKey = 'id_iuran';
 
-    public $timestamps = true;
+    // Tabel `iuran` pada skema nyata tidak memiliki kolom
+    // created_at/updated_at, sehingga Eloquent tidak boleh
+    // mencoba menuliskannya.
+    public $timestamps = false;
 
     const UPDATED_AT = null;
 
     protected $fillable = [
+        'id_kelas',
         'nama_iuran',
         'keterangan',
         'jatuh_tempo',
@@ -28,6 +32,15 @@ class Iuran extends Model
         'jatuh_tempo' => 'date',
         'nominal' => 'decimal:2',
     ];
+
+    public function kelas()
+    {
+        return $this->belongsTo(
+            Kelas::class,
+            'id_kelas',
+            'id_kelas'
+        );
+    }
 
     public function transaksi(): HasMany
     {

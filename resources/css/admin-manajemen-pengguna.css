@@ -1,5 +1,5 @@
 /* =========================================================
-   BBCashvia — Admin Manajemen Pengguna
+   BBCashvia Ã¢â‚¬â€ Admin Manajemen Pengguna
    Visual mengikuti Admin Dashboard
    ========================================================= */
 
@@ -7,33 +7,34 @@
     --sidebar-w: 264px;
     --topbar-h: 64px;
 
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --surface-soft: #f1f5f9;
+    --bg: #FFFDFF;
+    --surface: #FFFFFF;
+    --surface-soft: #D4F1F9;
 
     --text: #0f172a;
     --text-soft: #64748b;
     --text-muted: #94a3b8;
 
-    --border: #e2e8f0;
+    --border: #A5DBE3;
 
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --primary-soft: #eff6ff;
+    --primary: #2BA19E;
+    --primary-dark: #237A77;
+    --primary-soft: #D4F1F9;
 
-    --success: #16a34a;
-    --success-soft: #f0fdf4;
+    --success: #2BA19E;
+    --success-soft: #D4F1F9;
 
     --danger: #dc2626;
     --danger-soft: #fef2f2;
 
-    --warning: #d97706;
-    --warning-soft: #fffbeb;
+    --warning: #F4D98E;
+    --warning-soft: #F4D98E;
+    --warning-text: #8C6D1F;
 
     --sidebar-bg: #ffffff;
     --sidebar-text: #475569;
-    --sidebar-active: #eff6ff;
-    --sidebar-active-text: #2563eb;
+    --sidebar-active: #D4F1F9;
+    --sidebar-active-text: #2BA19E;
 
     --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
     --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
@@ -97,7 +98,7 @@ a {
     font-weight: normal;
     font-style: normal;
 
-    font-size: 22px;
+    font-size: 24px;
     line-height: 1;
 
     letter-spacing: normal;
@@ -201,7 +202,7 @@ a {
 .sidebar__brandname {
     color: var(--text);
 
-    font-size: 15px;
+    font-size: 18.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -213,7 +214,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.2;
     font-weight: 500;
 }
@@ -249,7 +250,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -272,7 +273,7 @@ a {
 
     color: var(--sidebar-text);
 
-    font-size: 13px;
+    font-size: 16.5px;
     line-height: 1.2;
     font-weight: 600;
 
@@ -286,13 +287,13 @@ a {
 
     color: #64748b;
 
-    font-size: 20px;
+    font-size: 22px;
 
     transition: color 0.2s ease;
 }
 
 .side-link:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
     color: var(--text);
 }
 
@@ -362,9 +363,9 @@ a {
 
     /* biru lembut, tidak terlalu terang */
     background: #eaf2ff;
-    color: #2563eb;
+    color: #2BA19E;
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 800;
     line-height: 1;
 }
@@ -386,7 +387,7 @@ a {
 
     color: var(--text);
 
-    font-size: 12px;
+    font-size: 14.5px;
     line-height: 1.3;
     font-weight: 700;
 
@@ -397,9 +398,9 @@ a {
 .sidebar__userrole {
     display: block;
 
-    color: #5b8acb;
+    color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 12.5px;
     line-height: 1.2;
     font-weight: 600;
 }
@@ -423,7 +424,7 @@ a {
 
     color: var(--text-soft);
 
-    font-size: 12px;
+    font-size: 15.5px;
     font-weight: 600;
 
     transition:
@@ -432,7 +433,7 @@ a {
 }
 
 .sidebar__logout .material-symbols-outlined {
-    font-size: 19px;
+    font-size: 21px;
 }
 
 .sidebar__logout:hover {
@@ -519,7 +520,7 @@ a {
 
     color: var(--text);
 
-    font-size: 17px;
+    font-size: 20.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -531,7 +532,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.2;
     font-weight: 500;
 }
@@ -553,7 +554,7 @@ a {
 
     border-radius: 9px;
 
-    background: #f8fafc;
+    background: #FFFDFF;
     color: var(--text);
 
     cursor: pointer;
@@ -569,7 +570,7 @@ a {
 }
 
 .topbar__burger .material-symbols-outlined {
-    font-size: 22px;
+    font-size: 24px;
 }
 
 
@@ -597,9 +598,9 @@ a {
 
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 14.5px;
     line-height: 1;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .topbar__profilewrap {
@@ -627,7 +628,7 @@ a {
 }
 
 .topbar__profile:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
 }
 
 .topbar__avatar {
@@ -643,7 +644,7 @@ a {
     background: var(--primary-soft);
     color: var(--primary);
 
-    font-size: 10px;
+    font-size: 16.5px;
     font-weight: 800;
 }
 
@@ -657,7 +658,7 @@ a {
 .topbar__profilename {
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.2;
     font-weight: 700;
 }
@@ -667,14 +668,14 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 12.5px;
     line-height: 1.2;
     font-weight: 500;
 }
 
 .topbar__profile .chevron {
     color: var(--text-muted);
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 
@@ -686,7 +687,7 @@ a {
     top: calc(100% + 8px);
     right: 0;
 
-    width: 150px;
+    width: 220px;
 
     display: none;
 
@@ -706,6 +707,37 @@ a {
     display: block;
 }
 
+.dropdown__head {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+
+    padding: 10px;
+
+    border-bottom: 1px solid var(--border);
+
+    margin-bottom: 4px;
+}
+
+.dropdown__name {
+    color: var(--text);
+
+    font-size: 15.5px;
+    font-weight: 700;
+}
+
+.dropdown__mail {
+    overflow: hidden;
+
+    color: var(--text-muted);
+
+    font-size: 13.5px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .dropdown a {
     min-height: 38px;
 
@@ -714,13 +746,13 @@ a {
 
     gap: 9px;
 
-    padding: 8px 10px;
+    padding: 10px;
 
     border-radius: 7px;
 
     color: var(--text-soft);
 
-    font-size: 11px;
+    font-size: 15.5px;
     font-weight: 600;
 }
 
@@ -730,7 +762,7 @@ a {
 }
 
 .dropdown .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 
@@ -740,9 +772,7 @@ a {
 
 .content {
     width: 100%;
-    max-width: 1500px;
-
-    margin: 0 auto;
+    flex: 1;
 
     padding: 28px;
 }
@@ -752,7 +782,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 14.5px;
     line-height: 1.4;
 
     text-align: right;
@@ -765,7 +795,7 @@ a {
 
 .page-head {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
 
     gap: 20px;
@@ -782,7 +812,7 @@ a {
 
     color: var(--primary);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -790,27 +820,25 @@ a {
     text-transform: uppercase;
 }
 
-.page-head h2 {
+.page-head__title {
     margin: 0;
 
     color: var(--text);
 
-    font-size: 25px;
-    line-height: 1.2;
+    font-size: 26px;
+    line-height: 1.25;
     font-weight: 800;
-
-    letter-spacing: -0.025em;
 }
 
-.page-head p {
-    max-width: 680px;
+.page-head__sub {
+    max-width: 720px;
 
-    margin: 7px 0 0;
+    margin-top: 6px;
 
     color: var(--text-soft);
 
-    font-size: 12px;
-    line-height: 1.65;
+    font-size: 16.5px;
+    line-height: 1.5;
 }
 
 .page-head__actions {
@@ -828,20 +856,20 @@ a {
    ========================================================= */
 
 .btn {
-    min-height: 40px;
+    min-height: 38px;
 
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    gap: 8px;
+    gap: 7px;
 
     padding: 9px 14px;
 
     border: 1px solid transparent;
-    border-radius: 9px;
+    border-radius: 8px;
 
-    font-size: 12px;
+    font-size: 15.5px;
     line-height: 1;
     font-weight: 700;
 
@@ -864,7 +892,7 @@ a {
 }
 
 .btn .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .btn--primary {
@@ -872,7 +900,7 @@ a {
     color: #ffffff;
 
     box-shadow:
-        0 2px 5px rgba(37, 99, 235, 0.18);
+        0 2px 5px rgba(43, 161, 158, 0.18);
 }
 
 .btn--primary:hover {
@@ -888,7 +916,7 @@ a {
 }
 
 .btn--secondary:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
     color: var(--text);
 }
 
@@ -908,11 +936,11 @@ a {
 
     border-radius: 8px;
 
-    font-size: 11px;
+    font-size: 14.5px;
 }
 
 .btn--sm .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 19.5px;
 }
 
 
@@ -926,11 +954,11 @@ a {
 
     gap: 13px;
 
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 
     padding: 16px 18px;
 
-    border: 1px solid #dbeafe;
+    border: 1px solid #D4F1F9;
     border-radius: var(--radius-md);
 
     background: #f8fbff;
@@ -953,7 +981,7 @@ a {
 }
 
 .aturan__icon .material-symbols-outlined {
-    font-size: 19px;
+    font-size: 21px;
 }
 
 .aturan__content {
@@ -963,7 +991,7 @@ a {
 .aturan__title {
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.3;
     font-weight: 800;
 }
@@ -987,7 +1015,7 @@ a {
 
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.5;
 }
 
@@ -996,7 +1024,7 @@ a {
 
     color: var(--primary);
 
-    font-size: 14px;
+    font-size: 17.5px;
 }
 
 
@@ -1012,7 +1040,7 @@ a {
 
     gap: 14px;
 
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .sum-card {
@@ -1039,9 +1067,9 @@ a {
 .sum-card__label {
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 14.5px;
     line-height: 1.2;
-    font-weight: 800;
+    font-weight: 600;
 
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -1052,11 +1080,9 @@ a {
 
     color: var(--text);
 
-    font-family: "JetBrains Mono", monospace;
-
     font-size: 22px;
     line-height: 1.2;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .sum-card__note {
@@ -1064,7 +1090,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 13.5px;
     line-height: 1.4;
 }
 
@@ -1082,7 +1108,7 @@ a {
 }
 
 .sum-card__icon .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .sum-card__icon--primary {
@@ -1096,7 +1122,7 @@ a {
 }
 
 .sum-card__icon--neutral {
-    background: #f1f5f9;
+    background: #D4F1F9;
     color: var(--text-soft);
 }
 
@@ -1112,6 +1138,50 @@ a {
     background: #ffffff;
 
     box-shadow: var(--shadow-sm);
+
+    margin-bottom: 24px;
+
+    overflow: hidden;
+}
+
+.panel__head {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 18px 20px;
+
+    border-bottom: 1px solid var(--border);
+}
+
+.panel__eyebrow {
+    color: var(--primary);
+
+    font-size: 12.5px;
+    font-weight: 800;
+
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.panel__title {
+    margin-top: 3px;
+
+    color: var(--text);
+
+    font-size: 18.5px;
+    font-weight: 800;
+}
+
+.panel__sub {
+    margin-top: 3px;
+
+    color: var(--text-muted);
+
+    font-size: 14.5px;
 }
 
 
@@ -1123,18 +1193,20 @@ a {
     display: flex;
     align-items: flex-end;
 
-    gap: 10px;
+    justify-content: space-between;
 
-    margin-bottom: 14px;
+    flex-wrap: wrap;
 
-    padding: 12px;
+    gap: 14px;
+
+    padding: 14px 18px;
 }
 
 .filterbar__search {
     min-width: 260px;
     flex: 1;
 
-    height: 40px;
+    height: 38px;
 
     display: flex;
     align-items: center;
@@ -1144,21 +1216,21 @@ a {
     padding: 0 11px;
 
     border: 1px solid var(--border);
-    border-radius: 9px;
+    border-radius: 8px;
 
     background: #ffffff;
 }
 
 .filterbar__search:focus-within {
-    border-color: #93c5fd;
+    border-color: var(--primary);
 
     box-shadow:
-        0 0 0 3px rgba(37, 99, 235, 0.08);
+        0 0 0 3px rgba(43, 161, 158, 0.12);
 }
 
 .filterbar__search .material-symbols-outlined {
     color: var(--text-muted);
-    font-size: 19px;
+    font-size: 21px;
 }
 
 .filterbar__search input {
@@ -1175,7 +1247,7 @@ a {
 
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 15.5px;
 }
 
 .filterbar__search input::placeholder {
@@ -1193,7 +1265,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 12.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -1203,28 +1275,28 @@ a {
 
 .filterbar__field select {
     width: 100%;
-    height: 40px;
+    height: 38px;
 
     padding: 0 10px;
 
     border: 1px solid var(--border);
-    border-radius: 9px;
+    border-radius: 8px;
 
     outline: 0;
 
     background: #ffffff;
-    color: var(--text-soft);
+    color: var(--text);
 
-    font-size: 11px;
+    font-size: 15.5px;
 
     cursor: pointer;
 }
 
 .filterbar__field select:focus {
-    border-color: #93c5fd;
+    border-color: var(--primary);
 
     box-shadow:
-        0 0 0 3px rgba(37, 99, 235, 0.08);
+        0 0 0 3px rgba(43, 161, 158, 0.12);
 }
 
 .filterbar__actions {
@@ -1233,7 +1305,7 @@ a {
 }
 
 .filterbar__actions .btn {
-    min-height: 40px;
+    min-height: 38px;
 }
 
 
@@ -1264,7 +1336,7 @@ a {
 
     color: var(--primary);
 
-    font-size: 8px;
+    font-size: 12.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -1274,7 +1346,7 @@ a {
 .table-panel__title {
     color: var(--text);
 
-    font-size: 13px;
+    font-size: 18.5px;
     line-height: 1.3;
     font-weight: 800;
 }
@@ -1282,8 +1354,7 @@ a {
 .table-panel__info {
     color: var(--text-muted);
 
-    font-size: 10px;
-    font-weight: 500;
+    font-size: 14.5px;
 }
 
 .table-wrap {
@@ -1314,15 +1385,15 @@ a {
 .data-table th {
     height: 42px;
 
-    padding: 0 14px;
+    padding: 0 18px;
 
-    background: #f8fafc;
+    background: #FFFDFF;
 
     border-bottom: 1px solid var(--border);
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 13.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -1342,13 +1413,13 @@ a {
 .data-table td {
     min-height: 58px;
 
-    padding: 12px 14px;
+    padding: 14px 18px;
 
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid var(--border);
 
-    color: var(--text-soft);
+    color: var(--text);
 
-    font-size: 11px;
+    font-size: 15.5px;
     line-height: 1.45;
 
     vertical-align: middle;
@@ -1395,7 +1466,7 @@ a {
     background: var(--primary-soft);
     color: var(--primary);
 
-    font-size: 10px;
+    font-size: 14.5px;
     font-weight: 800;
 }
 
@@ -1406,7 +1477,7 @@ a {
 .user-cell__name {
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 14.5px;
     line-height: 1.3;
     font-weight: 700;
 }
@@ -1418,7 +1489,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 13.5px;
     line-height: 1.3;
 
     text-overflow: ellipsis;
@@ -1428,7 +1499,7 @@ a {
 .login-cell {
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 13.5px;
 }
 
 
@@ -1449,7 +1520,7 @@ a {
 
     border-radius: 999px;
 
-    font-size: 9px;
+    font-size: 13.5px;
     line-height: 1;
     font-weight: 700;
 
@@ -1462,7 +1533,7 @@ a {
 }
 
 .badge--neutral {
-    background: #f1f5f9;
+    background: #D4F1F9;
     color: var(--text-soft);
 }
 
@@ -1520,7 +1591,7 @@ a {
 .row-action:hover {
     background: var(--primary-soft);
 
-    border-color: #bfdbfe;
+    border-color: #A5DBE3;
 
     color: var(--primary);
 }
@@ -1550,7 +1621,7 @@ a {
 }
 
 .row-action .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 
@@ -1587,7 +1658,7 @@ a {
 }
 
 .empty-state__icon .material-symbols-outlined {
-    font-size: 23px;
+    font-size: 25px;
 }
 
 .empty-state h3 {
@@ -1595,7 +1666,7 @@ a {
 
     color: var(--text);
 
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 800;
 }
 
@@ -1606,7 +1677,7 @@ a {
 
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.5;
 }
 
@@ -1641,10 +1712,10 @@ body.modal-open {
     position: absolute;
     inset: 0;
 
-    background: rgba(15, 23, 42, 0.48);
+    background: rgba(15, 23, 42, 0.55);
 
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
 }
 
 .modal-dialog {
@@ -1690,7 +1761,7 @@ body.modal-open {
 
     color: var(--primary);
 
-    font-size: 8px;
+    font-size: 12.5px;
     line-height: 1.2;
     font-weight: 800;
 
@@ -1706,7 +1777,7 @@ body.modal-open {
 
     color: var(--text);
 
-    font-size: 16px;
+    font-size: 19.5px;
     line-height: 1.25;
     font-weight: 800;
 }
@@ -1716,7 +1787,7 @@ body.modal-open {
 
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.4;
 }
 
@@ -1732,7 +1803,7 @@ body.modal-open {
 
     border-radius: 8px;
 
-    background: #f8fafc;
+    background: #FFFDFF;
     color: var(--text-soft);
 
     cursor: pointer;
@@ -1748,7 +1819,7 @@ body.modal-open {
 }
 
 .modal__close .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 .modal__body {
@@ -1799,7 +1870,7 @@ body.modal-open {
 
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.2;
     font-weight: 700;
 }
@@ -1820,7 +1891,7 @@ body.modal-open {
 
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 14.5px;
 
     transition:
         border-color 0.2s ease,
@@ -1829,10 +1900,10 @@ body.modal-open {
 
 .field input:focus,
 .field select:focus {
-    border-color: #93c5fd;
+    border-color: #A5DBE3;
 
     box-shadow:
-        0 0 0 3px rgba(37, 99, 235, 0.08);
+        0 0 0 3px rgba(43, 161, 158, 0.08);
 }
 
 .field input::placeholder {
@@ -1841,7 +1912,7 @@ body.modal-open {
 
 .field input:disabled,
 .field select:disabled {
-    background: #f8fafc;
+    background: #FFFDFF;
 
     color: var(--text-muted);
 
@@ -1855,7 +1926,7 @@ body.modal-open {
 
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 12.5px;
     line-height: 1.45;
 }
 
@@ -1899,7 +1970,7 @@ body.modal-open {
 }
 
 .password-toggle .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 
@@ -1919,7 +1990,7 @@ body.modal-open {
 
     color: var(--danger);
 
-    font-size: 10px;
+    font-size: 14.5px;
     line-height: 1.45;
     font-weight: 600;
 }
@@ -1965,13 +2036,13 @@ body.modal-open {
 }
 
 .delete-box__icon .material-symbols-outlined {
-    font-size: 20px;
+    font-size: 22px;
 }
 
 .delete-box__title {
     color: var(--text);
 
-    font-size: 12px;
+    font-size: 15.5px;
     line-height: 1.3;
     font-weight: 800;
 }
@@ -1981,7 +2052,7 @@ body.modal-open {
 
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.55;
 }
 
@@ -2049,13 +2120,13 @@ body.modal-open {
 }
 
 .toast__icon .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 .toast__text {
     color: var(--text-soft);
 
-    font-size: 10px;
+    font-size: 13.5px;
     line-height: 1.4;
     font-weight: 600;
 }
@@ -2218,7 +2289,7 @@ body.modal-open {
     }
 
     .topbar__title h1 {
-        font-size: 16px;
+        font-size: 19.5px;
     }
 
     .content {
@@ -2232,11 +2303,11 @@ body.modal-open {
     }
 
     .page-head h2 {
-        font-size: 22px;
+        font-size: 24px;
     }
 
     .page-head p {
-        font-size: 11px;
+        font-size: 14.5px;
     }
 
     .page-head__actions {
@@ -2264,7 +2335,7 @@ body.modal-open {
     }
 
     .sum-card__value {
-        font-size: 15px;
+        font-size: 18.5px;
     }
 
     .sum-card__icon {
@@ -2275,7 +2346,7 @@ body.modal-open {
     }
 
     .sum-card__icon .material-symbols-outlined {
-        font-size: 17px;
+        font-size: 20.5px;
     }
 
     .filterbar {
@@ -2374,11 +2445,11 @@ body.modal-open {
     }
 
     .topbar__title h1 {
-        font-size: 15px;
+        font-size: 18.5px;
     }
 
     .topbar__title p {
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
     .content {
@@ -2386,7 +2457,7 @@ body.modal-open {
     }
 
     .page-head h2 {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .sum-grid {
@@ -2398,17 +2469,17 @@ body.modal-open {
     }
 
     .sum-card__label {
-        font-size: 10px;
+        font-size: 13.5px;
     }
 
     .sum-card__value {
         margin-top: 9px;
 
-        font-size: 13px;
+        font-size: 16.5px;
     }
 
     .sum-card__note {
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
     .filterbar {
@@ -2421,11 +2492,11 @@ body.modal-open {
     }
 
     .modal__title {
-        font-size: 14px;
+        font-size: 17.5px;
     }
 
     .btn {
-        font-size: 11px;
+        font-size: 14.5px;
     }
 }
 
@@ -2441,7 +2512,7 @@ body.modal-open {
     }
 
     .sum-card__value {
-        font-size: 16px;
+        font-size: 19.5px;
     }
 
     .page-head__actions .btn {
@@ -2468,4 +2539,12 @@ body.modal-open {
 
         animation-iteration-count: 1 !important;
     }
+}
+
+/* =========================================================
+   HIDDEN GUARD
+   ========================================================= */
+
+[hidden] {
+    display: none !important;
 }

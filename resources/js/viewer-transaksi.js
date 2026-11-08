@@ -1,644 +1,970 @@
 /* ============================================================
-   BBCASHVIA — VIEWER TRANSAKSI
-   Dummy data + interaksi UI
+   BBCASHVIA - VIEWER TRANSAKSI
+   Data berasal dari database (endpoint /data/transaksi).
+   Tidak menggunakan data dummy.
+   Viewer juga dapat menambah transaksi untuk kelasnya
+   lewat endpoint /viewer/api/transaksi.
 ============================================================ */
 
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
-/* ============================================================
-   DATA TRANSAKSI SAYA
-============================================================ */
+document.addEventListener("DOMContentLoaded", () => {
 
-const myTransactions = [
-    {
-        noBukti: "TRX-2026-001",
-        tanggal: "01 Okt 2026",
-        iuran: "Kas Kelas",
-        periode: "Oktober 2026",
-        nominal: 20000,
-        metode: "Tunai",
-        status: "Berhasil"
-    },
-    {
-        noBukti: "TRX-2026-002",
-        tanggal: "05 Okt 2026",
-        iuran: "Kebersihan",
-        periode: "Oktober 2026",
-        nominal: 10000,
-        metode: "Tunai",
-        status: "Berhasil"
-    },
-    {
-        noBukti: "TRX-2026-003",
-        tanggal: "08 Okt 2026",
-        iuran: "Kegiatan Kelas",
-        periode: "Oktober 2026",
-        nominal: 25000,
-        metode: "Transfer",
-        status: "Berhasil"
-    }
-];
+    /* ============================================================
+       ENDPOINT + STATE
+    ============================================================ */
+
+    const API_URL = "/data/transaksi";
+
+    const BULAN_SINGKAT = [
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
+    ];
+
+    const PETAKAN_KATEGORI = {
+        "iuran": "Iuran",
+        "kas": "Kas",
+        "kebutuhan kelas": "Kebutuhan Kelas",
+        "perlengkapan kelas": "Perlengkapan Kelas",
+        "kegiatan kelas": "Kegiatan Kelas",
+        "pemasukan lainnya": "Pemasukan Lainnya",
+        "pengeluaran lainnya": "Pengeluaran Lainnya"
+    };
+
+    let grupTransaksi = [];
 
 
-/* ============================================================
-   DATA TRANSAKSI KAS KELAS
-============================================================ */
+    /* ============================================================
+       AKSES API
+    ============================================================ */
 
-const classTransactions = [
-    {
-        noBukti: "TRX-2026-001",
-        tanggal: "01 Okt 2026",
-        jenis: "Pemasukan",
-        kategori: "Iuran",
-        keterangan: "Kas Kelas",
-        nominal: 20000
-    },
-    {
-        noBukti: "TRX-2026-002",
-        tanggal: "02 Okt 2026",
-        jenis: "Pemasukan",
-        kategori: "Iuran",
-        keterangan: "Kebersihan",
-        nominal: 10000
-    },
-    {
-        noBukti: "TRX-2026-003",
-        tanggal: "03 Okt 2026",
-        jenis: "Pengeluaran",
-        kategori: "Operasional",
-        keterangan: "Alat Kebersihan",
-        nominal: 15000
-    }
-];
+    const permintaanAPI = async (url, opsi = {}) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        let respons;
+        try {
+            respons = await fetch(url, {
+                ...opsi,
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    ...(opsi.headers || {})
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* Respons bukan JSON. */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal memuat data transaksi.");
+        }
+
+        return hasil;
+    };
 
 
-/* ============================================================
-   FORMAT RUPIAH
-============================================================ */
+    /* ============================================================
+       HELPER
+    ============================================================ */
 
-function formatRupiah(value) {
+    const escapeHtml = (teks) => {
 
-    return new Intl.NumberFormat(
-        "id-ID",
-        {
+        return String(teks ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    };
+
+    const labelKategori = (kategori) => {
+
+        const kunci = String(kategori || "").toLowerCase();
+
+        return PETAKAN_KATEGORI[kunci] || (kategori || "-");
+
+    };
+
+    const formatTanggal = (nilai) => {
+
+        const iso = String(nilai ?? "").slice(0, 10);
+        const bagian = iso.split("-");
+
+        if (bagian.length !== 3) {
+            return iso || "-";
+        }
+
+        const bulan = Number(bagian[1]);
+
+        return `${bagian[2]} ${BULAN_SINGKAT[bulan - 1] ?? bagian[1]} ${bagian[0]}`;
+
+    };
+
+    /* Nilai jenis dari database: pemasukan / pengeluaran
+       (data lama bisa berupa masuk / M). */
+    const jenisTransaksi = (nilai) => {
+
+        const arah = String(nilai ?? "").toLowerCase();
+
+        if (arah === "pemasukan" || arah === "masuk" || arah === "m") {
+            return "Pemasukan";
+        }
+
+        return "Pengeluaran";
+
+    };
+
+    const formatCurrency = (value) => {
+
+        return new Intl.NumberFormat("id-ID", {
             style: "currency",
             currency: "IDR",
             minimumFractionDigits: 0
-        }
-    ).format(value);
+        }).format(Number(value) || 0);
 
-}
+    };
 
+    const inisial = (nama) => {
 
-/* ============================================================
-   TRANSAKSI SAYA
-============================================================ */
+        return String(nama || "-")
+            .split(" ")
+            .slice(0, 2)
+            .map((kata) => kata.charAt(0))
+            .join("")
+            .toUpperCase();
 
-const myTableBody =
-    document.getElementById("myTransactionTableBody");
-
-const mySearchInput =
-    document.getElementById("mySearchInput");
-
-const myStatusFilter =
-    document.getElementById("myStatusFilter");
-
-const myTableCount =
-    document.getElementById("myTableCount");
-
-const myEmptyState =
-    document.getElementById("myEmptyState");
+    };
 
 
-function renderMyTransactions(data) {
+    /* ============================================================
+       KELOMPOKKAN - SATU BARIS UTAMA PER NO BUKTI
+       (pembayaran multi-iuran disimpan sebagai beberapa baris
+        dengan no_bukti sama; nominal utamanya = nominal_grup)
+    ============================================================ */
 
-    if (!myTableBody) {
-        return;
-    }
+    const kelompokkan = (baris) => {
 
-    myTableBody.innerHTML = "";
+        const peta = new Map();
 
+        baris.forEach((t) => {
 
-    if (data.length === 0) {
+            const noBukti = String(t.no_bukti || ("TRX-" + (t.id_transaksi ?? "")));
 
-        myEmptyState?.classList.add("show");
+            if (peta.has(noBukti)) {
+                return;
+            }
 
-        if (myTableCount) {
-            myTableCount.textContent = "0";
-        }
-
-        return;
-    }
-
-
-    myEmptyState?.classList.remove("show");
-
-
-    data.forEach((item, index) => {
-
-        const row =
-            document.createElement("tr");
-
-
-        const statusClass =
-            item.status === "Berhasil"
-                ? ""
-                : "pending";
-
-
-        row.innerHTML = `
-            <td>
-                ${index + 1}
-            </td>
-
-            <td>
-                <span class="receipt-number">
-                    ${item.noBukti}
-                </span>
-            </td>
-
-            <td>
-                ${item.tanggal}
-            </td>
-
-            <td>
-                <span class="transaction-name">
-                    ${item.iuran}
-                </span>
-            </td>
-
-            <td>
-                ${item.periode}
-            </td>
-
-            <td>
-                <span class="transaction-nominal income">
-                    ${formatRupiah(item.nominal)}
-                </span>
-            </td>
-
-            <td>
-                ${item.metode}
-            </td>
-
-            <td>
-                <span class="status-badge ${statusClass}">
-                    ${item.status}
-                </span>
-            </td>
-        `;
-
-
-        myTableBody.appendChild(row);
-
-    });
-
-
-    if (myTableCount) {
-        myTableCount.textContent = data.length;
-    }
-
-}
-
-
-function filterMyTransactions() {
-
-    const keyword =
-        mySearchInput?.value
-            .trim()
-            .toLowerCase() || "";
-
-
-    const selectedStatus =
-        myStatusFilter?.value || "all";
-
-
-    const filtered =
-        myTransactions.filter((item) => {
-
-            const matchesSearch =
-                item.noBukti
-                    .toLowerCase()
-                    .includes(keyword) ||
-
-                item.iuran
-                    .toLowerCase()
-                    .includes(keyword) ||
-
-                item.periode
-                    .toLowerCase()
-                    .includes(keyword);
-
-
-            const matchesStatus =
-                selectedStatus === "all" ||
-                item.status === selectedStatus;
-
-
-            return matchesSearch && matchesStatus;
+            peta.set(noBukti, {
+                bukti: noBukti,
+                tanggal: formatTanggal(t.tanggal),
+                waktu: t.waktu || "",
+                jenis: jenisTransaksi(t.jenis),
+                kategori: labelKategori(t.kategori),
+                keterangan: t.keterangan || "",
+                pembayar: t.nama_pembayar || "",
+                nominal: Number(t.nominal_grup ?? t.nominal) || 0,
+                jumlahRincian: Number(t.jumlah_rincian) || 1
+            });
 
         });
 
+        return [...peta.values()];
 
-    renderMyTransactions(filtered);
-
-}
-
-
-mySearchInput?.addEventListener(
-    "input",
-    filterMyTransactions
-);
+    };
 
 
-myStatusFilter?.addEventListener(
-    "change",
-    filterMyTransactions
-);
+    /* ============================================================
+       ELEMENT (ID PERSIS SEPERTI BLADE)
+    ============================================================ */
+
+    const transaksiTableBody =
+        document.getElementById("transaksiTableBody");
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    const statusFilter =
+        document.getElementById("statusFilter");
+
+    const tableCount =
+        document.getElementById("tableCount");
+
+    const emptyState =
+        document.getElementById("emptyState");
+
+    const totalTransaksi =
+        document.getElementById("totalTransaksi");
+
+    const totalPemasukan =
+        document.getElementById("totalPemasukan");
+
+    const totalPengeluaran =
+        document.getElementById("totalPengeluaran");
 
 
-renderMyTransactions(myTransactions);
+    /* ============================================================
+       RINGKASAN
+    ============================================================ */
 
+    const isiRingkasan = (data) => {
 
-/* ============================================================
-   TRANSAKSI KAS KELAS
-============================================================ */
+        const masuk = data
+            .filter((item) => item.jenis === "Pemasukan")
+            .reduce((total, item) => total + item.nominal, 0);
 
-const classTableBody =
-    document.getElementById("classTransactionTableBody");
+        const keluar = data
+            .filter((item) => item.jenis === "Pengeluaran")
+            .reduce((total, item) => total + item.nominal, 0);
 
-const classSearchInput =
-    document.getElementById("classSearchInput");
-
-const classTypeFilter =
-    document.getElementById("classTypeFilter");
-
-const classTableCount =
-    document.getElementById("classTableCount");
-
-const classEmptyState =
-    document.getElementById("classEmptyState");
-
-
-function renderClassTransactions(data) {
-
-    if (!classTableBody) {
-        return;
-    }
-
-    classTableBody.innerHTML = "";
-
-
-    if (data.length === 0) {
-
-        classEmptyState?.classList.add("show");
-
-        if (classTableCount) {
-            classTableCount.textContent = "0";
+        if (totalTransaksi) {
+            totalTransaksi.textContent = `${data.length} transaksi`;
         }
 
-        return;
-    }
+        if (totalPemasukan) {
+            totalPemasukan.textContent = formatCurrency(masuk);
+        }
+
+        if (totalPengeluaran) {
+            totalPengeluaran.textContent = formatCurrency(keluar);
+        }
+
+    };
 
 
-    classEmptyState?.classList.remove("show");
+    /* ============================================================
+       RENDER TABEL - KOLOM: TANGGAL | KETERANGAN | JENIS |
+       NOMINAL | SISWA  (sesuai struktur tabel halaman)
+    ============================================================ */
 
+    const renderTable = (data) => {
 
-    data.forEach((item, index) => {
+        if (!transaksiTableBody) {
+            return;
+        }
 
-        const row =
-            document.createElement("tr");
+        transaksiTableBody.innerHTML = "";
 
+        if (data.length === 0) {
 
-        const typeClass =
-            item.jenis === "Pemasukan"
-                ? "income"
-                : "expense";
+            emptyState?.classList.add("show");
 
+            if (tableCount) {
+                tableCount.textContent = "0";
+            }
 
-        const nominalClass =
-            item.jenis === "Pemasukan"
-                ? "income"
-                : "expense";
+            return;
 
+        }
 
-        const prefix =
-            item.jenis === "Pemasukan"
-                ? "+"
-                : "-";
+        emptyState?.classList.remove("show");
 
+        data.forEach((item, index) => {
 
-        row.innerHTML = `
-            <td>
-                ${index + 1}
-            </td>
+            const masuk = item.jenis === "Pemasukan";
 
-            <td>
-                <span class="receipt-number">
-                    ${item.noBukti}
-                </span>
-            </td>
+            const typeClass = masuk ? "success" : "danger";
 
-            <td>
-                ${item.tanggal}
-            </td>
+            const prefix = masuk ? "+" : "-";
 
-            <td>
-                <span class="transaction-type ${typeClass}">
-                    ${item.jenis}
-                </span>
-            </td>
+            const pembayarCell = item.pembayar
+                ? `
+                    <div class="table-person">
+                        <div class="table-avatar">
+                            ${escapeHtml(inisial(item.pembayar))}
+                        </div>
 
-            <td>
-                ${item.kategori}
-            </td>
+                        <span>
+                            ${escapeHtml(item.pembayar)}
+                        </span>
+                    </div>
+                `
+                : `<span class="mono-text">-</span>`;
 
-            <td>
-                <span class="transaction-name">
-                    ${item.keterangan}
-                </span>
-            </td>
+            const rowHTML = `
+                <td>
+                    <span class="mono-text">
+                        ${escapeHtml(item.tanggal)}
+                    </span>
 
-            <td>
-                <span class="transaction-nominal ${nominalClass}">
-                    ${prefix}${formatRupiah(item.nominal)}
-                </span>
-            </td>
-        `;
+                    ${item.waktu
+                        ? `<div class="mono-text">${escapeHtml(item.waktu)} WIB</div>`
+                        : ""}
+                </td>
 
+                <td>
+                    <span>
+                        ${escapeHtml(item.keterangan || "-")}
+                    </span>
 
-        classTableBody.appendChild(row);
+                    <div class="mono-text">
+                        ${escapeHtml(item.kategori)}${item.jumlahRincian > 1
+                            ? ` • ${item.jumlahRincian} iuran`
+                            : ""}
+                    </div>
+                </td>
 
-    });
+                <td>
+                    <span class="status-pill ${typeClass}">
+                        <span class="status-dot"></span>
+                        ${item.jenis}
+                    </span>
+                </td>
 
+                <td>
+                    <strong class="nominal">
+                        ${prefix}${formatCurrency(item.nominal)}
+                    </strong>
+                </td>
 
-    if (classTableCount) {
-        classTableCount.textContent = data.length;
-    }
+                <td>
+                    ${pembayarCell}
+                </td>
+            `;
 
-}
+            const row = document.createElement("tr");
 
+            row.innerHTML = rowHTML;
 
-function filterClassTransactions() {
-
-    const keyword =
-        classSearchInput?.value
-            .trim()
-            .toLowerCase() || "";
-
-
-    const selectedType =
-        classTypeFilter?.value || "all";
-
-
-    const filtered =
-        classTransactions.filter((item) => {
-
-            const matchesSearch =
-                item.noBukti
-                    .toLowerCase()
-                    .includes(keyword) ||
-
-                item.kategori
-                    .toLowerCase()
-                    .includes(keyword) ||
-
-                item.keterangan
-                    .toLowerCase()
-                    .includes(keyword);
-
-
-            const matchesType =
-                selectedType === "all" ||
-                item.jenis === selectedType;
-
-
-            return matchesSearch && matchesType;
+            transaksiTableBody.appendChild(row);
 
         });
 
+        if (tableCount) {
+            tableCount.textContent = data.length;
+        }
 
-    renderClassTransactions(filtered);
-
-}
-
-
-classSearchInput?.addEventListener(
-    "input",
-    filterClassTransactions
-);
+    };
 
 
-classTypeFilter?.addEventListener(
-    "change",
-    filterClassTransactions
-);
+    /* ============================================================
+       FILTER
+    ============================================================ */
+
+    const filterData = () => {
+
+        const cari =
+            searchInput?.value.trim().toLowerCase() || "";
+
+        const jenisDipilih = statusFilter?.value || "all";
+
+        const jenisStandar =
+            jenisDipilih === "masuk" ? "Pemasukan"
+            : jenisDipilih === "keluar" ? "Pengeluaran"
+            : "all";
+
+        const hasil = grupTransaksi.filter((item) => {
+
+            const kunciCari = [
+                item.bukti,
+                item.keterangan,
+                item.pembayar,
+                item.kategori,
+                item.nominal
+            ].join(" ").toLowerCase();
+
+            const cocokCari =
+                !cari || kunciCari.includes(cari);
+
+            const cocokJenis =
+                jenisStandar === "all" ||
+                item.jenis === jenisStandar;
+
+            return cocokCari && cocokJenis;
+
+        });
+
+        renderTable(hasil);
+        isiRingkasan(hasil);
+
+    };
 
 
-renderClassTransactions(classTransactions);
+    searchInput?.addEventListener("input", filterData);
+
+    statusFilter?.addEventListener("change", filterData);
 
 
-/* ============================================================
-   PROFILE DROPDOWN
-============================================================ */
+    /* ============================================================
+       TAMBAH TRANSAKSI (FORM)
+    ============================================================ */
 
-const profileButton =
-    document.getElementById("profileButton");
+    const KATEGORI_URL = "/viewer/api/transaksi/kategori";
 
-const profileWrapper =
-    document.querySelector(".profile-wrapper");
+    /* Cadangan bila daftar kategori dari server gagal dimuat;
+       nilainya tetap dari enum resmi model Transaksi. */
+    const DAFTAR_KATEGORI = {
+        pemasukan: ["iuran", "kas", "pemasukan lainnya"],
+        pengeluaran: [
+            "kebutuhan kelas",
+            "perlengkapan kelas",
+            "kegiatan kelas",
+            "pengeluaran lainnya"
+        ]
+    };
 
+    let kategoriSumber = null;
 
-profileButton?.addEventListener(
-    "click",
-    (event) => {
+    const bacaCsrf = () =>
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") || "";
 
-        event.stopPropagation();
+    const kirimData = async (url, dataForm) => {
 
-        profileWrapper?.classList.toggle("open");
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    }
-);
+        try {
+            respons = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": bacaCsrf(),
+                    // S3-07: pembawaan kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    "X-Idempotency-Key": kunciIdempoten()
+                },
+                body: JSON.stringify(dataForm),
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
 
+        clearTimeout(timeoutId);
 
-document.addEventListener(
-    "click",
-    (event) => {
+        let hasil = {};
 
-        if (
-            profileWrapper &&
-            !profileWrapper.contains(event.target)
-        ) {
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* Respons bukan JSON. */
+        }
 
-            profileWrapper.classList.remove("open");
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            const pesanGagal = hasil?.errors
+                ? Object.values(hasil.errors).flat().join(" ")
+                : "";
+
+            throw new Error(
+                pesanGagal
+                || hasil?.message
+                || "Gagal menyimpan data."
+            );
 
         }
 
-    }
-);
+        return hasil;
 
+    };
 
-/* ============================================================
-   LOGOUT
-============================================================ */
+    const btnTambahTransaksi =
+        document.getElementById("btnTambahTransaksi");
 
-function confirmLogout() {
+    const modalFormTransaksi =
+        document.getElementById("modalFormTransaksi");
 
-    const confirmed =
-        window.confirm(
-            "Apakah kamu yakin ingin keluar dari akun Viewer?"
-        );
+    const formTransaksi =
+        document.getElementById("formTransaksi");
 
+    const formErrorTransaksi =
+        document.getElementById("formErrorTransaksi");
 
-    if (!confirmed) {
-        return;
-    }
+    const inputJenisTransaksi =
+        document.getElementById("inputJenisTransaksi");
 
+    const inputKategoriTransaksi =
+        document.getElementById("inputKategoriTransaksi");
 
-    window.location.href = "/";
+    const inputTanggalTransaksi =
+        document.getElementById("inputTanggalTransaksi");
 
-}
+    const tampilkanPesanTransaksi = (pesan, sukses = false) => {
 
+        if (!formErrorTransaksi) {
+            return;
+        }
 
-document
-    .getElementById("logoutButton")
-    ?.addEventListener(
-        "click",
-        confirmLogout
+        formErrorTransaksi.textContent = pesan;
+
+        formErrorTransaksi.classList
+            .toggle("success", sukses);
+
+        formErrorTransaksi.hidden = false;
+
+    };
+
+    const bersihkanPesanTransaksi = () => {
+
+        if (!formErrorTransaksi) {
+            return;
+        }
+
+        formErrorTransaksi.hidden = true;
+
+        formErrorTransaksi.classList.remove("success");
+
+    };
+
+    /* Isi dropdown kategori sesuai jenis transaksi. */
+    const isiKategori = () => {
+
+        if (!inputKategoriTransaksi) {
+            return;
+        }
+
+        const jenis =
+            inputJenisTransaksi?.value || "pemasukan";
+
+        const nilaiSumber =
+            jenis === "pemasukan"
+                ? kategoriSumber?.masuk
+                : kategoriSumber?.keluar;
+
+        const daftar = Array.isArray(nilaiSumber)
+            ? nilaiSumber
+            : (DAFTAR_KATEGORI[jenis] || []).map(
+                (nilai) => ({
+                    value: nilai,
+                    label: labelKategori(nilai)
+                })
+            );
+
+        inputKategoriTransaksi.innerHTML = "";
+
+        const kosong = document.createElement("option");
+        kosong.value = "";
+        kosong.textContent = "– Pilih kategori –";
+        inputKategoriTransaksi.appendChild(kosong);
+
+        daftar.forEach((item) => {
+
+            const opsi = document.createElement("option");
+
+            opsi.value = item.value;
+            opsi.textContent = item.label;
+
+            inputKategoriTransaksi.appendChild(opsi);
+
+        });
+
+    };
+
+    const muatKategori = async () => {
+
+        if (kategoriSumber) {
+            return;
+        }
+
+        try {
+
+            const hasil =
+                await permintaanAPI(KATEGORI_URL);
+
+            kategoriSumber = hasil?.data || null;
+
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat kategori:",
+                error
+            );
+
+            kategoriSumber = null;
+
+        }
+
+        isiKategori();
+
+    };
+
+    const hariIni = () => {
+
+        const sekarang = new Date();
+
+        const pad = (angka) =>
+            String(angka).padStart(2, "0");
+
+        return [
+            sekarang.getFullYear(),
+            pad(sekarang.getMonth() + 1),
+            pad(sekarang.getDate())
+        ].join("-");
+
+    };
+
+    const bukaModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        requestAnimationFrame(() => {
+            modal.classList.add("is-open");
+        });
+
+        document.body.classList.add("modal-open");
+
+    };
+
+    const tutupModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove("is-open");
+
+        window.setTimeout(() => {
+            modal.hidden = true;
+        }, 180);
+
+        window.setTimeout(() => {
+
+            if (!document.querySelector(".modal.is-open")) {
+                document.body.classList.remove("modal-open");
+            }
+
+        }, 190);
+
+    };
+
+    btnTambahTransaksi?.addEventListener("click", () => {
+
+        bukaModal(modalFormTransaksi);
+
+        bersihkanPesanTransaksi();
+
+        muatKategori();
+
+        if (inputTanggalTransaksi) {
+            inputTanggalTransaksi.value = hariIni();
+        }
+
+        inputJenisTransaksi?.focus();
+
+    });
+
+    document.querySelectorAll("[data-close-modal]")
+        .forEach((element) => {
+
+            element.addEventListener("click", () => {
+                tutupModal(element.closest(".modal"));
+            });
+
+        });
+
+    inputJenisTransaksi?.addEventListener(
+        "change",
+        isiKategori
     );
 
+    formTransaksi?.addEventListener("submit", async (event) => {
 
-document
-    .getElementById("dropdownLogout")
-    ?.addEventListener(
-        "click",
-        (event) => {
+        event.preventDefault();
+
+        const dataForm = {
+            jenis:
+                inputJenisTransaksi?.value || "pemasukan",
+            kategori:
+                inputKategoriTransaksi?.value || "",
+            tanggal:
+                inputTanggalTransaksi?.value || "",
+            nominal:
+                Number(
+                    document
+                        .getElementById("inputNominalTransaksi")
+                        ?.value
+                ) || 0,
+            nama_pembayar:
+                document
+                    .getElementById("inputPembayarTransaksi")
+                    ?.value.trim() || "",
+            metode:
+                document
+                    .getElementById("inputMetodeTransaksi")
+                    ?.value || "CH",
+            keterangan:
+                document
+                    .getElementById("inputKeteranganTransaksi")
+                    ?.value.trim() || ""
+        };
+
+        bersihkanPesanTransaksi();
+
+        if (dataForm.nominal <= 0) {
+            tampilkanPesanTransaksi(
+                "Nominal harus lebih dari 0."
+            );
+            return;
+        }
+
+        if (!dataForm.tanggal) {
+            tampilkanPesanTransaksi(
+                "Tanggal transaksi wajib diisi."
+            );
+            return;
+        }
+
+        if (!dataForm.kategori) {
+            tampilkanPesanTransaksi(
+                "Kategori wajib dipilih."
+            );
+            return;
+        }
+
+        const tombolSimpan =
+            formTransaksi.querySelector(
+                'button[type="submit"]'
+            );
+
+        // S3-07: kunci tombol saat proses (teks "Memproses...", tidak
+        // dapat diklik dua kali). null = masih diproses, boleh henti.
+        const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+        if (!pemulihanTombol) return;
+
+        try {
+
+            await kirimData(
+                "/viewer/api/transaksi",
+                dataForm
+            );
+
+            tampilkanPesanTransaksi(
+                `Transaksi ${dataForm.jenis} berhasil disimpan dengan nomor bukti baru.`,
+                true
+            );
+
+            formTransaksi.reset();
+
+            if (inputTanggalTransaksi) {
+                inputTanggalTransaksi.value = hariIni();
+            }
+
+            await muatData();
+
+            window.setTimeout(() => {
+                tutupModal(modalFormTransaksi);
+            }, 1300);
+
+        } catch (error) {
+
+            tampilkanPesanTransaksi(error.message);
+
+        } finally {
+
+            // S3-07: tombol pulih setelah proses berakhir.
+            pemulihanTombol.pulihkan();
+
+        }
+
+    });
+
+
+    /* ============================================================
+       MUAT DATA
+    ============================================================ */
+
+    const muatData = async () => {
+
+        const tbodyV = document.getElementById("transaksiTableBody");
+        if (tbodyV) {
+            tbodyV.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="7"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        let baris = [];
+
+        try {
+
+            const hasil = await permintaanAPI(API_URL);
+
+            baris = Array.isArray(hasil?.data) ? hasil.data : [];
+
+        } catch (error) {
+
+            console.error("Gagal memuat data transaksi:", error);
+
+        }
+
+        grupTransaksi = kelompokkan(baris);
+
+        filterData();
+
+    };
+
+
+    /* ============================================================
+       PROFILE DROPDOWN
+    ============================================================ */
+
+    const profileButton =
+        document.getElementById("profileButton");
+
+    const profileWrapper =
+        document.querySelector(".profile-wrapper");
+
+    const profileDropdown =
+        document.getElementById("profileDropdown");
+
+    if (profileButton && profileWrapper && profileDropdown) {
+
+        profileButton.addEventListener("click", (event) => {
 
             event.stopPropagation();
 
-            profileWrapper?.classList.remove("open");
+            profileWrapper.classList.toggle("open");
 
-            confirmLogout();
+        });
 
-        }
-    );
+        profileDropdown.addEventListener("click", (event) => {
+            event.stopPropagation();
+        });
 
+        document.addEventListener("click", () => {
+            profileWrapper.classList.remove("open");
+        });
 
-/* ============================================================
-   MOBILE SIDEBAR
-============================================================ */
-
-const sidebar =
-    document.getElementById("sidebar");
-
-const sidebarBackdrop =
-    document.getElementById("sidebarBackdrop");
-
-const menuToggle =
-    document.getElementById("menuToggle");
+    }
 
 
-function openSidebar() {
+    /* ============================================================
+       LOGOUT (konfirmasi ditangani konfirmasi-logout.js)
+    ============================================================ */
 
-    sidebar?.classList.add("open");
+    /* ============================================================
+       MOBILE SIDEBAR
+    ============================================================ */
 
-    sidebarBackdrop?.classList.add("show");
+    const sidebar =
+        document.getElementById("sidebar");
 
-    document.body.classList.add("nav-open");
+    const sidebarBackdrop =
+        document.getElementById("sidebarBackdrop");
 
-}
+    const menuToggle =
+        document.getElementById("menuToggle");
 
-
-function closeSidebar() {
-
-    sidebar?.classList.remove("open");
-
-    sidebarBackdrop?.classList.remove("show");
-
-    document.body.classList.remove("nav-open");
-
-}
+    const navLinks =
+        document.querySelectorAll(".nav-link");
 
 
-menuToggle?.addEventListener(
-    "click",
-    (event) => {
+    const openSidebar = () => {
+
+        sidebar?.classList.add("open");
+
+        sidebarBackdrop?.classList.add("show");
+
+        document.body.classList.add("nav-open");
+
+    };
+
+
+    const closeSidebar = () => {
+
+        sidebar?.classList.remove("open");
+
+        sidebarBackdrop?.classList.remove("show");
+
+        document.body.classList.remove("nav-open");
+
+    };
+
+
+    menuToggle?.addEventListener("click", (event) => {
 
         event.stopPropagation();
 
+        const terbuka = sidebar?.classList.contains("open");
 
-        const isOpen =
-            sidebar?.classList.contains("open");
-
-
-        if (isOpen) {
+        if (terbuka) {
             closeSidebar();
         } else {
             openSidebar();
         }
 
-    }
-);
+    });
 
+    sidebarBackdrop?.addEventListener("click", closeSidebar);
 
-sidebarBackdrop?.addEventListener(
-    "click",
-    closeSidebar
-);
+    navLinks.forEach((link) => {
 
+        link.addEventListener("click", () => {
 
-/* ============================================================
-   NAVIGATION MOBILE
-============================================================ */
-
-sidebar
-    ?.querySelectorAll(".nav-link")
-    .forEach((link) => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                if (window.innerWidth <= 900) {
-                    closeSidebar();
-                }
-
+            if (window.innerWidth <= 900) {
+                closeSidebar();
             }
-        );
+
+        });
 
     });
 
+    document.addEventListener("keydown", (event) => {
 
-/* ============================================================
-   ESCAPE
-============================================================ */
+        if (event.key === "Escape") {
 
-document.addEventListener(
-    "keydown",
-    (event) => {
+            document.querySelectorAll(".modal.is-open")
+                .forEach((modal) => {
+                    tutupModal(modal);
+                });
 
-        if (event.key !== "Escape") {
-            return;
+            closeSidebar();
+
+            profileWrapper?.classList.remove("open");
+
         }
 
-        closeSidebar();
+    });
 
-        profileWrapper?.classList.remove("open");
-
-    }
-);
-
-
-/* ============================================================
-   RESPONSIVE CLEANUP
-============================================================ */
-
-window.addEventListener(
-    "resize",
-    () => {
+    window.addEventListener("resize", () => {
 
         if (window.innerWidth > 900) {
             closeSidebar();
         }
 
-    }
-);
+    });
+
+
+    /* ============================================================
+       INITIAL RENDER
+    ============================================================ */
+
+    muatData();
+
+});

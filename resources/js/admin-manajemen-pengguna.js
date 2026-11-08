@@ -1,75 +1,219 @@
+// BBCASHVIA - modul bersama S3-07 (pengaman simpan ganda).
+import {
+    beriKunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
+
 document.addEventListener("DOMContentLoaded", () => {
 
+    "use strict";
+
     /* =========================================================
-       DATA DEMO
+       KONFIGURASI API
        ========================================================= */
 
-    const DATA_PENGGUNA = [
-        {
-            id: "PGN-001",
-            nama: "Azis N.",
-            email: "azinun@bbcashvia.sch.id",
-            peran: "admin",
-            login: "2026-10-03 07:12",
-            utama: true
-        },
-        {
-            id: "PGN-002",
-            nama: "Rani Puspita",
-            email: "ranipuspita06@gmail.com",
-            peran: "bendahara",
-            login: "2026-10-02 15:40",
-            utama: false
-        },
-        {
-            id: "PGN-003",
-            nama: "Bagas Wicaksono",
-            email: "bagaswicaksono.ku@gmail.com",
-            peran: "admin",
-            login: "2026-10-01 09:30",
-            utama: false
-        },
-        {
-            id: "PGN-004",
-            nama: "Kirana Maheswari",
-            email: "kiranamaheswari.dv@gmail.com",
-            peran: "bendahara",
-            login: "2026-09-30 13:18",
-            utama: false
-        },
-        {
-            id: "PGN-005",
-            nama: "Dimas Prakoso",
-            email: "dimas.prakoso12@gmail.com",
-            peran: "viewer",
-            login: "2026-09-29 10:05",
-            utama: false
-        },
-        {
-            id: "PGN-006",
-            nama: "Fajar Ramadhan",
-            email: "fajarramadhan.rl@gmail.com",
-            peran: "viewer",
-            login: "2026-09-27 16:22",
-            utama: false
-        },
-        {
-            id: "PGN-007",
-            nama: "Salsabila Putri",
-            email: "salsabilaputri.aq@gmail.com",
-            peran: "bendahara",
-            login: "2026-09-26 08:45",
-            utama: false
-        },
-        {
-            id: "PGN-008",
-            nama: "Nadia Ayu Lestari",
-            email: "nadiaayulestari99@gmail.com",
-            peran: "viewer",
-            login: "2026-09-25 11:20",
-            utama: false
+    const API_URL = "/admin/api/pengguna";
+
+
+    /* =========================================================
+       DATA PENGGUNA (BERASAL DARI DATABASE)
+       ========================================================= */
+
+    let DATA_PENGGUNA = [];
+
+
+    /* =========================================================
+       HELPER API
+       ========================================================= */
+
+    function pesanErrorAPI(data, status) {
+
+        if (data?.errors) {
+
+            const pesanValidasi =
+                Object.values(data.errors)
+                    .flat()
+                    .filter(Boolean);
+
+            if (pesanValidasi.length) {
+                return pesanValidasi.join(" ");
+            }
         }
-    ];
+
+        if (data?.message) {
+            return data.message;
+        }
+
+        if (status === 401 || status === 403) {
+            return "Akses ditolak. Pastikan kamu sudah login sebagai Admin.";
+        }
+
+        if (status === 419) {
+            return "Sesi berakhir. Muat ulang halaman lalu coba lagi.";
+        }
+
+        if (status >= 500) {
+            return "Terjadi gangguan pada server. Coba lagi beberapa saat.";
+        }
+
+        return "Terjadi kesalahan saat menghubungi server.";
+    }
+
+
+    async function ambilTokenCsrfBaru() {
+
+        try {
+
+            const respons = await fetch("/admin/api/csrf-token", {
+                headers: { Accept: "application/json" },
+                credentials: "same-origin",
+                cache: "no-store"
+            });
+
+            if (!respons.ok) {
+                return null;
+            }
+
+            const data = await respons.json();
+
+            return (
+                typeof data?.token === "string" &&
+                data.token !== ""
+            )
+                ? data.token
+                : null;
+
+        } catch {
+
+            return null;
+        }
+    }
+
+
+    async function permintaanAPI(url, opsi = {}) {
+
+        const {
+            csrfBaru = false,
+            ...opsiFetch
+        } = opsi;
+
+        const csrf = (
+            csrfBaru
+                ? await ambilTokenCsrfBaru()
+                : null
+        ) || document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
+
+        const headers = {
+            Accept: "application/json",
+            ...(opsiFetch.body
+                ? { "Content-Type": "application/json" }
+                : {}),
+            ...(csrf ? { "X-CSRF-TOKEN": csrf } : {}),
+            ...(opsiFetch.headers || {})
+        };
+
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            // S3-07: permintaan POST otomatis dibawa kunci idempotensi.
+            respons = await fetch(url, beriKunciIdempoten({
+                ...opsiFetch,
+                headers,
+                credentials: "same-origin",
+                signal: controller.signal
+            }));
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") {
+                throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            }
+            throw new Error("Tidak dapat terhubung ke server. Periksa koneksi Laravel.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            // Respons bukan JSON.
+        }
+
+        if (!respons.ok) {
+            throw new Error(
+                pesanErrorAPI(hasil, respons.status)
+            );
+        }
+
+        return hasil;
+    }
+
+
+    /* =========================================================
+       MUAT DATA DARI DATABASE
+       ========================================================= */
+
+    let sedangMemuat = false;
+
+
+    async function muatData() {
+
+        if (sedangMemuat) return;
+
+        sedangMemuat = true;
+
+        try {
+            const hasil = await permintaanAPI(API_URL);
+
+            const data =
+                Array.isArray(hasil.data)
+                    ? hasil.data
+                    : [];
+
+            DAFTAR_KELAS =
+                Array.isArray(hasil.kelas)
+                    ? hasil.kelas
+                    : [];
+
+            isiPilihanKelas();
+
+            DATA_PENGGUNA = data.map((user) => ({
+                db_id: user.db_id,
+                id: user.id,
+                nama: user.nama,
+                email: user.email,
+                peran: String(user.peran || "").toLowerCase(),
+                jenis_viewer: user.jenis_viewer ?? null,
+                jenis_viewer_label: user.jenis_viewer_label ?? null,
+                id_kelas: user.id_kelas ?? null,
+                kelas: user.kelas ?? null,
+                login: user.login || null,
+                utama: Boolean(user.utama)
+            }));
+
+            renderSummary();
+            renderTable();
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat data pengguna:",
+                error
+            );
+
+            DATA_PENGGUNA = [];
+
+            renderSummary();
+            renderTable();
+
+            showToast(error.message);
+        } finally {
+            sedangMemuat = false;
+        }
+    }
 
 
     /* =========================================================
@@ -109,6 +253,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputNama = document.getElementById("inputNama");
     const inputEmail = document.getElementById("inputEmail");
     const inputPeran = document.getElementById("inputPeran");
+    const inputKelas = document.getElementById("inputKelas");
+    const fieldKelas = document.getElementById("fieldKelas");
+    const inputJenisViewer = document.getElementById("inputJenisViewer");
+    const fieldJenisViewer = document.getElementById("fieldJenisViewer");
+    const hintJenisViewer = document.getElementById("hintJenisViewer");
     const inputPassword = document.getElementById("inputPassword");
 
     const togglePassword = document.getElementById("togglePassword");
@@ -127,6 +276,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let editId = null;
     let hapusId = null;
+
+    /* Daftar kelas dari API untuk pilihan kelas pengguna. */
+    let DAFTAR_KELAS = [];
 
 
     /* =========================================================
@@ -162,6 +314,139 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         return classes[role] || "badge--neutral";
+    }
+
+
+    /* Isi pilihan kelas pada form sesuai daftar kelas dari API. */
+    function isiPilihanKelas() {
+        if (!inputKelas) return;
+
+        const nilaiLama = inputKelas.value;
+
+        inputKelas.innerHTML = `
+            <option value="">- Semua Kelas (khusus Admin) -</option>
+            ${DAFTAR_KELAS.map((kelas) => `
+                <option value="${escapeHtml(kelas.id_kelas)}">
+                    ${escapeHtml(kelas.nama_kelas)}
+                </option>
+            `).join("")}
+        `;
+
+        const cocok = DAFTAR_KELAS.some(
+            (kelas) => String(kelas.id_kelas) === String(nilaiLama)
+        );
+
+        inputKelas.value = cocok ? nilaiLama : "";
+    }
+
+
+    /*
+     * Aturan jenis pengguna mengikuti peran:
+     *
+     *  - Admin     : tidak memiliki jenis pengguna (field disembunyikan).
+     *  - Bendahara : selalu Siswa (bendahara kelas adalah siswa).
+     *  - Viewer    : Siswa atau Wali Kelas.
+     *
+     * Aturan yang sama juga ditegakkan di backend (UserController),
+     * jadi kombinasi yang tidak sesuai tetap ditolak walau checkbox
+     * di frontend dilewati.
+     */
+    function sesuaikanFieldJenisViewer() {
+        if (!fieldJenisViewer || !inputPeran) return;
+
+        const peran = inputPeran.value;
+        const hint = document.getElementById("hintJenisViewer");
+
+        if (peran === "admin") {
+            fieldJenisViewer.style.display = "none";
+            if (inputJenisViewer) {
+                inputJenisViewer.value = "siswa";
+                inputJenisViewer.disabled = true;
+            }
+            return;
+        }
+
+        fieldJenisViewer.style.display = "";
+
+        if (peran === "bendahara") {
+            // Bendahara = siswa. Pilihan wali kelas tidak relevan
+            // sehingga dimatikan, bukan sekadar disembunyikan.
+            if (inputJenisViewer) {
+                inputJenisViewer.value = "siswa";
+                inputJenisViewer.disabled = true;
+            }
+            if (hint) {
+                hint.textContent =
+                    "Bendahara kelas merupakan siswa yang mengelola keuangan kelas.";
+            }
+            return;
+        }
+
+        // Viewer: siswa atau wali kelas.
+        if (inputJenisViewer) {
+            inputJenisViewer.disabled = false;
+        }
+        if (hint) {
+            hint.textContent =
+                "Viewer dapat berupa siswa atau wali kelas; keduanya hanya melihat data.";
+        }
+    }
+
+
+    /* Label jenis pengguna untuk tabel. */
+    function jenisPenggunaLabel(user) {
+        if (user.jenis_viewer_label) {
+            return user.jenis_viewer_label;
+        }
+
+        if (user.peran === "bendahara") {
+            return "Siswa";
+        }
+
+        if (user.peran === "admin") {
+            return "-";
+        }
+
+        return "Siswa";
+    }
+
+
+    /* Label kelas untuk tabel: admin = "Semua Kelas". */
+    function kelasLabel(user) {
+        if (user.peran === "admin") {
+            return "Semua Kelas";
+        }
+
+        return user.kelas || "Belum ditetapkan";
+    }
+
+
+    /* Admin tidak dibatasi kelas: dropdown tetap tampil tapi dimatikan
+       agar admin paham bahwa kelas hanya berlaku untuk bendahara/viewer. */
+    function sesuaikanFieldKelas() {
+        if (!fieldKelas || !inputPeran) return;
+
+        const peran = inputPeran.value;
+        const keterangan = fieldKelas.querySelector(".field__hint");
+
+        if (peran === "admin") {
+            fieldKelas.style.display = "";
+            if (inputKelas) {
+                inputKelas.value = "";
+                inputKelas.disabled = true;
+            }
+            if (keterangan) {
+                keterangan.textContent =
+                    "Admin selalu melihat semua kelas, jadi pilihan kelas tidak berlaku.";
+            }
+        } else {
+            fieldKelas.style.display = "";
+            if (inputKelas) inputKelas.disabled = false;
+            if (keterangan) {
+                keterangan.textContent =
+                    "Bendahara & viewer hanya melihat kelas ini.";
+            }
+        }
     }
 
 
@@ -457,6 +742,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                         <td>
+                            <div class="login-cell">
+                                ${escapeHtml(jenisPenggunaLabel(user))}
+                            </div>
+                        </td>
+
+
+                        <td>
+                            <div class="login-cell">
+                                ${escapeHtml(kelasLabel(user))}
+                            </div>
+                        </td>
+
+
+                        <td>
                             <span class="badge badge--success">
                                 <span class="status-dot"></span>
                                 Aktif
@@ -686,6 +985,13 @@ document.addEventListener("DOMContentLoaded", () => {
         if (inputPeran) {
             inputPeran.disabled = false;
         }
+
+        if (inputKelas) {
+            inputKelas.value = "";
+        }
+
+        sesuaikanFieldKelas();
+        sesuaikanFieldJenisViewer();
     }
 
 
@@ -716,7 +1022,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function openEdit(id) {
 
         const user = DATA_PENGGUNA.find(
-            (item) => item.id === id
+            (item) => String(item.id) === String(id)
         );
 
         if (!user) return;
@@ -734,6 +1040,21 @@ document.addEventListener("DOMContentLoaded", () => {
         inputNama.value = user.nama;
         inputEmail.value = user.email;
         inputPeran.value = user.peran;
+
+        if (inputKelas) {
+            inputKelas.value =
+                user.id_kelas !== null && user.id_kelas !== undefined
+                    ? String(user.id_kelas)
+                    : "";
+        }
+
+        if (inputJenisViewer) {
+            inputJenisViewer.value =
+                user.jenis_viewer || "siswa";
+        }
+
+        sesuaikanFieldKelas();
+        sesuaikanFieldJenisViewer();
 
 
         inputPassword.value = "";
@@ -779,7 +1100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function openDelete(id) {
 
         const user = DATA_PENGGUNA.find(
-            (item) => item.id === id
+            (item) => String(item.id) === String(id)
         );
 
         if (!user || user.utama) {
@@ -840,6 +1161,18 @@ document.addEventListener("DOMContentLoaded", () => {
        PASSWORD TOGGLE
        ========================================================= */
 
+    inputPeran?.addEventListener(
+        "change",
+        sesuaikanFieldKelas
+    );
+
+
+    inputPeran?.addEventListener(
+        "change",
+        sesuaikanFieldJenisViewer
+    );
+
+
     togglePassword?.addEventListener(
         "click",
         () => {
@@ -876,11 +1209,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     formPengguna?.addEventListener(
         "submit",
-        (event) => {
+        async (event) => {
 
             event.preventDefault();
 
             clearFormError();
+
+            // S3-07: kunci tombol simpan saat proses (teks
+            // "Memproses...", tidak dapat diklik dua kali via klik
+            // maupun Enter). null = masih diproses, boleh henti.
+            const tombolSimpanPengguna =
+                formPengguna.querySelector('button[type="submit"]');
+
+            const pemulihanTombol =
+                kunciTombolSimpan(tombolSimpanPengguna);
+
+            if (!pemulihanTombol) return;
+
+            try {
 
 
             const nama =
@@ -891,6 +1237,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const peran =
                 inputPeran.value;
+
+            const jenisPengguna =
+                peran === "viewer"
+                    ? (inputJenisViewer?.value || "siswa")
+                    : peran === "bendahara"
+                        ? "siswa"
+                        : null;
 
             const password =
                 inputPassword.value;
@@ -1033,27 +1386,48 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!user) return;
 
 
-                user.nama = nama;
-                user.email = email;
+                const payload = {
+                    nama,
+                    email,
+                    peran,
+                    jenis_viewer: jenisPengguna,
+                    id_kelas: peran === "admin"
+                        ? null
+                        : (inputKelas?.value || null)
+                };
 
 
-                if (!user.utama) {
-                    user.peran = peran;
+                if (password) {
+                    payload.password = password;
                 }
 
 
-                closeModal(modalForm);
+                try {
+                    await permintaanAPI(
+                        `${API_URL}/${encodeURIComponent(user.db_id)}`,
+                        {
+                            method: "PUT",
+                            csrfBaru: true,
+                            body: JSON.stringify(payload)
+                        }
+                    );
 
-                renderSummary();
-                renderTable();
+
+                    closeModal(modalForm);
+
+                    await muatData();
 
 
-                showToast(
-                    "Data pengguna berhasil diperbarui."
-                );
+                    showToast(
+                        "Data pengguna berhasil diperbarui."
+                    );
 
 
-                editId = null;
+                    editId = null;
+                } catch (error) {
+
+                    showFormError(error.message);
+                }
 
                 return;
             }
@@ -1063,59 +1437,43 @@ document.addEventListener("DOMContentLoaded", () => {
                TAMBAH
                ================================================= */
 
-            const maxNumber =
-                DATA_PENGGUNA.reduce(
-                    (max, user) => {
+            try {
+                await permintaanAPI(API_URL, {
+                    method: "POST",
+                    csrfBaru: true,
+                    body: JSON.stringify({
+                        nama,
+                        email,
+                        peran,
+                        jenis_viewer: jenisPengguna,
+                        id_kelas: peran === "admin"
+                            ? null
+                            : (inputKelas?.value || null),
+                        password
+                    })
+                });
 
-                        const number =
-                            parseInt(
-                                user.id.replace(
-                                    "PGN-",
-                                    ""
-                                ),
-                                10
-                            ) || 0;
 
-                        return Math.max(
-                            max,
-                            number
-                        );
+                closeModal(modalForm);
 
-                    },
-                    0
+                await muatData();
+
+
+                showToast(
+                    "Pengguna baru berhasil ditambahkan."
                 );
 
 
-            DATA_PENGGUNA.push({
+                editId = null;
+            } catch (error) {
 
-                id:
-                    `PGN-${String(
-                        maxNumber + 1
-                    ).padStart(3, "0")}`,
-
-                nama,
-                email,
-                peran,
-
-                login: null,
-
-                utama: false
-
-            });
-
-
-            closeModal(modalForm);
-
-            renderSummary();
-            renderTable();
-
-
-            showToast(
-                "Pengguna baru berhasil ditambahkan."
-            );
-
-
-            editId = null;
+                showFormError(error.message);
+            }
+            } finally {
+                // S3-07: tombol pulih setelah proses apa pun berakhir
+                // (sukses, gagal validasi, maupun galat server).
+                pemulihanTombol.pulihkan();
+            }
         }
     );
 
@@ -1126,23 +1484,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btnKonfirmasiHapus?.addEventListener(
         "click",
-        () => {
+        async () => {
 
             if (!hapusId) return;
 
 
-            const index =
-                DATA_PENGGUNA.findIndex(
+            const user =
+                DATA_PENGGUNA.find(
                     (item) =>
                         item.id === hapusId
                 );
 
 
-            if (index === -1) return;
-
-
-            const user =
-                DATA_PENGGUNA[index];
+            if (!user) return;
 
 
             if (user.utama) {
@@ -1159,24 +1513,30 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
-            DATA_PENGGUNA.splice(
-                index,
-                1
-            );
+            try {
+                await permintaanAPI(
+                    `${API_URL}/${encodeURIComponent(user.db_id)}`,
+                    { method: "DELETE", csrfBaru: true }
+                );
 
 
-            hapusId = null;
+                hapusId = null;
 
 
-            closeModal(modalHapus);
+                closeModal(modalHapus);
 
-            renderSummary();
-            renderTable();
+                await muatData();
 
 
-            showToast(
-                "Pengguna berhasil dihapus."
-            );
+                showToast(
+                    "Pengguna berhasil dihapus."
+                );
+            } catch (error) {
+
+                closeModal(modalHapus);
+
+                showToast(error.message);
+            }
         }
     );
 
@@ -1215,10 +1575,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================================
-       INITIAL RENDER
+       INITIAL LOAD (DARI DATABASE)
        ========================================================= */
 
-    renderSummary();
-    renderTable();
+    muatData();
 
 });

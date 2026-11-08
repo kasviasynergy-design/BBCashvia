@@ -6,10 +6,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Transaksi — BBCashvia</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>Transaksi - BBCashvia</title>
 
     <meta name="description"
-        content="Halaman Transaksi BBCashvia — catat pemasukan dan pengeluaran kas kelas lengkap dengan rincian tagihan, uang diterima, kembalian, dan uang yang masuk ke kas.">
+        content="Halaman Transaksi BBCashvia - catat pemasukan dan pengeluaran kas kelas lengkap dengan rincian tagihan, uang diterima, kembalian, dan uang yang masuk ke kas.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,7 +24,9 @@
 
     @vite([
         'resources/css/admin-transaksi.css',
-        'resources/js/admin-transaksi.js'
+        'resources/js/admin-transaksi.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
@@ -100,6 +104,24 @@
                 </a>
             </div>
 
+            <!-- DATA -->
+            <div class="sidebar__section">
+                <div class="sidebar__section-title">
+                    Data
+                </div>
+
+                <a
+                    href="/admin/siswa"
+                    class="side-link {{ request()->is('admin/siswa') ? 'is-active' : '' }}"
+                    @if(request()->is('admin/siswa')) aria-current="page" @endif
+                >
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                        school
+                    </span>
+                    <span class="side-link__text">Data Siswa</span>
+                </a>
+            </div>
+
             <!-- LAPORAN -->
             <div class="sidebar__section">
                 <div class="sidebar__section-title">
@@ -126,6 +148,24 @@
                         manage_search
                     </span>
                     <span class="side-link__text">Riwayat Transaksi</span>
+                </a>
+            </div>
+
+            <!-- MANAJEMEN -->
+            <div class="sidebar__section">
+                <div class="sidebar__section-title">
+                    Manajemen
+                </div>
+
+                <a
+                    href="/admin/manajemen-pengguna"
+                    class="side-link {{ request()->is('admin/manajemen-pengguna') ? 'is-active' : '' }}"
+                    @if(request()->is('admin/manajemen-pengguna')) aria-current="page" @endif
+                >
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                        admin_panel_settings
+                    </span>
+                    <span class="side-link__text">Manajemen Pengguna</span>
                 </a>
             </div>
 
@@ -181,7 +221,7 @@
 
                 <div class="topbar__title">
                     <h1>Transaksi</h1>
-                    <p id="topbarDate">—</p>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -198,10 +238,10 @@
 
                     <button type="button" class="topbar__profile" id="profileBtn" aria-haspopup="true"
                         aria-expanded="false">
-                        <span class="topbar__avatar" aria-hidden="true">AN</span>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
                         <span class="topbar__profileinfo">
-                            <span class="topbar__profilename">Azis N.</span>
-                            <span class="topbar__profilerole">Admin</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Admin • {{ auth()->user()->labelKelas() }}</span>
                         </span>
                         <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">expand_more</span>
                     </button>
@@ -209,11 +249,12 @@
                     <div class="dropdown" id="profileMenu" role="menu">
 
                         <div class="dropdown__head">
-                            <span class="dropdown__name">Azis N.</span>
-                            <span class="dropdown__mail">azinun@bbcashvia.sch.id</span>
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
-                        <a href="/" class="dropdown__item dropdown__item--danger" role="menuitem">
+                        <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
                             <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                             <span>Keluar</span>
                         </a>
@@ -232,13 +273,22 @@
             <!-- KEPALA HALAMAN -->
             <section class="page-head">
                 <div class="page-head__text">
-                    <p class="page-head__eyebrow">Panel Admin • Kas Kelas</p>
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/admin">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Transaksi</span>
+                    </nav>
                     <h2 class="page-head__title">Transaksi</h2>
                     <p class="page-head__sub">
                         Catat pemasukan dan pengeluaran kas kelas lengkap dengan rincian dan bukti.
                     </p>
                 </div>
                 <div class="page-head__actions">
+                    <button type="button" class="btn btn--secondary" id="btnTambahBanyak">
+                        <span class="material-symbols-outlined" aria-hidden="true">playlist_add</span>
+                        <span>Catat Banyak</span>
+                    </button>
+
                     <button type="button" class="btn btn--primary" id="btnTambahTransaksi">
                         <span class="material-symbols-outlined" aria-hidden="true">add</span>
                         <span>Catat Transaksi</span>
@@ -258,7 +308,7 @@
 
                     <div>
                         <p class="sum-card__label">Total Pemasukan</p>
-                        <p class="sum-card__value" id="sumMasuk">—</p>
+                        <p class="sum-card__value" id="sumMasuk">-</p>
                         <p class="sum-card__note" id="sumMasukNote">
                             sesuai filter
                         </p>
@@ -274,7 +324,7 @@
 
                     <div>
                         <p class="sum-card__label">Total Pengeluaran</p>
-                        <p class="sum-card__value" id="sumKeluar">—</p>
+                        <p class="sum-card__value" id="sumKeluar">-</p>
                         <p class="sum-card__note" id="sumKeluarNote">
                             sesuai filter
                         </p>
@@ -290,7 +340,7 @@
 
                     <div>
                         <p class="sum-card__label">Selisih Bersih</p>
-                        <p class="sum-card__value" id="sumSelisih">—</p>
+                        <p class="sum-card__value" id="sumSelisih">-</p>
                         <p class="sum-card__note" id="sumSelisihNote">
                             pemasukan − pengeluaran
                         </p>
@@ -340,9 +390,6 @@
 
                         <select id="filterBulan">
                             <option value="semua">Semua Bulan</option>
-                            <option value="2026-10">Oktober 2026</option>
-                            <option value="2026-09">September 2026</option>
-                            <option value="2026-08">Agustus 2026</option>
                         </select>
                     </label>
 
@@ -364,7 +411,7 @@
                         <p class="panel__eyebrow">BUKU KAS</p>
                         <h3 class="panel__title">Daftar Transaksi</h3>
                         <p class="panel__sub" id="tabelInfo">
-                            — transaksi ditampilkan
+                            - transaksi ditampilkan
                         </p>
                     </div>
                 </div>
@@ -378,6 +425,7 @@
                                 <th scope="col">Keterangan</th>
                                 <th scope="col">Kategori</th>
                                 <th scope="col">Tanggal</th>
+                                <th scope="col">Dicatat oleh</th>
                                 <th scope="col" class="th-r">Nominal</th>
                                 <th scope="col" class="th-c">Aksi</th>
                             </tr>
@@ -407,7 +455,7 @@
 
             <!-- FOOTER -->
             <footer class="content__foot">
-                BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
+                BBCashvia - Kas Kelas Digital • Seluruh data ditampilkan langsung dari database.
             </footer>
 
         </main>
@@ -461,20 +509,63 @@
                         <span class="field__label">
                             Kategori <b class="wajib">*</b>
                         </span>
-                        <select id="inputKategori" required></select>
+                        <!--
+                            Form menampilkan SELURUH kategori (7),
+                            dipisah per jenis ("Pemasukan" &
+                            "Pengeluaran"). JavaScript menyesuaikan
+                            jenis transaksi otomatis saat kategori
+                            dipilih. Opsi diisi di server agar tidak
+                            pernah kosong walau JS belum sempat jalan.
+                        -->
+                        <select id="inputKategori" required>
+                            <optgroup label="Pemasukan">
+                                <option value="Iuran">Iuran</option>
+                                <option value="kas">Kas</option>
+                                <option value="pemasukan lainnya">Pemasukan Lainnya</option>
+                            </optgroup>
+                            <optgroup label="Pengeluaran">
+                                <option value="kebutuhan kelas">Kebutuhan Kelas</option>
+                                <option value="perlengkapan kelas">Perlengkapan Kelas</option>
+                                <option value="kegiatan kelas">Kegiatan Kelas</option>
+                                <option value="pengeluaran lainnya">Pengeluaran Lainnya</option>
+                            </optgroup>
+                        </select>
                     </label>
 
                     <label class="field">
                         <span class="field__label">Kelas</span>
                         <select id="inputKelas">
-                            <option value="">— Pilih kelas (opsional) —</option>
-                            <option value="XI RPL 1">XI RPL 1</option>
-                            <option value="XI RPL 2">XI RPL 2</option>
-                            <option value="X TKJ 1">X TKJ 1</option>
+                            <option value="">- Pilih kelas (opsional) -</option>
                         </select>
                     </label>
 
                 </div>
+
+                <!--
+                    Pilihan iuran hanya menampilkan iuran berstatus Aktif.
+                    Saat iuran dipilih, nominal & keterangan ikut terisi
+                    dan pembayaran tersimpan dengan relasi id_iuran serta
+                    id_siswa yang benar.
+                -->
+                <div class="form-grid" id="grupPembayaranIuran">
+
+                    <label class="field">
+                        <span class="field__label">Iuran (opsional)</span>
+                        <select id="inputIuran">
+                            <option value="">- Tanpa iuran -</option>
+                        </select>
+                    </label>
+
+                    <label class="field">
+                        <span class="field__label">Siswa</span>
+                        <select id="inputSiswa">
+                            <option value="">- Pilih siswa -</option>
+                        </select>
+                    </label>
+
+                </div>
+
+                <p class="uang-box__hint" id="infoIuran" hidden></p>
 
                 <label class="field">
                     <span class="field__label">
@@ -483,7 +574,7 @@
                     <input
                         type="text"
                         id="inputKeterangan"
-                        placeholder="Contoh: Setoran kas mingguan XI RPL 1"
+                        placeholder="Contoh: Setoran kas mingguan kelas XI RPL"
                         required
                         autocomplete="off"
                     >
@@ -511,7 +602,7 @@
 
                         <p class="uang-box__note">
                             Isi <b>jumlah yang harus dibayar</b> dan
-                            <b>uang yang diterima Bendahara</b> —
+                            <b>uang yang diterima Bendahara</b> -
                             kembalian serta jumlah uang yang masuk ke kas dihitung otomatis.
                         </p>
                     </div>
@@ -592,6 +683,65 @@
                         <span class="material-symbols-outlined" aria-hidden="true">check</span>
                         <span id="btnSimpanText">Simpan Transaksi</span>
                     </button>
+
+                    <button type="button" class="btn btn--primary" id="btnSimpanDanTambah" hidden>
+                        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                        <span>Simpan &amp; Tambah Lagi</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CATAT BANYAK TRANSAKSI -->
+    <div class="modal-backdrop" id="modalFormBanyak" aria-hidden="true">
+        <div class="modal modal--lebar" role="dialog" aria-modal="true" aria-labelledby="modalBanyakTitle">
+
+            <div class="modal__head">
+                <div>
+                    <p class="modal__eyebrow" id="modalBanyakEyebrow">BANYAK TRANSAKSI</p>
+                    <h3 class="modal__title" id="modalBanyakTitle">Catat Beberapa Transaksi</h3>
+                </div>
+
+                <button
+                    type="button"
+                    class="modal__close"
+                    data-tutup-modal="modalFormBanyak"
+                    aria-label="Tutup"
+                >
+                    <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                </button>
+            </div>
+
+            <form class="modal__body" id="formTransaksiBanyak" novalidate>
+
+                <div class="field">
+                    <div class="banyak-head">
+                        <span class="field__label">
+                            Daftar Transaksi <b class="wajib">*</b>
+                        </span>
+
+                        <button type="button" class="btn btn--ghost btn--sm" id="btnTambahBaris">
+                            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+                            <span>Tambah Baris</span>
+                        </button>
+                    </div>
+
+                    <div class="banyak-body" id="isiBarisTransaksi"></div>
+                </div>
+
+                <p class="form-error" id="formBanyakError" hidden></p>
+
+                <div class="modal__foot">
+                    <button type="button" class="btn btn--ghost" data-tutup-modal="modalFormBanyak">
+                        Batal
+                    </button>
+
+                    <button type="submit" class="btn btn--primary" id="btnSimpanBanyak">
+                        <span class="material-symbols-outlined" aria-hidden="true">save</span>
+                        <span>Simpan Semua Transaksi</span>
+                    </button>
                 </div>
 
             </form>
@@ -624,27 +774,27 @@
 
                     <div class="detail-item">
                         <span class="detail-item__label">Jenis</span>
-                        <span class="detail-item__value" id="detailJenis">—</span>
+                        <span class="detail-item__value" id="detailJenis">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Kategori</span>
-                        <span class="detail-item__value" id="detailKategori">—</span>
+                        <span class="detail-item__value" id="detailKategori">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Kelas</span>
-                        <span class="detail-item__value" id="detailKelas">—</span>
+                        <span class="detail-item__value" id="detailKelas">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Tanggal</span>
-                        <span class="detail-item__value" id="detailTanggal">—</span>
+                        <span class="detail-item__value" id="detailTanggal">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Waktu</span>
-                        <span class="detail-item__value" id="detailWaktu">—</span>
+                        <span class="detail-item__value" id="detailWaktu">-</span>
                     </div>
 
                     <div class="detail-item">
@@ -654,14 +804,14 @@
 
                     <div class="detail-item">
                         <span class="detail-item__label">Dicatat oleh</span>
-                        <span class="detail-item__value" id="detailPetugas">—</span>
+                        <span class="detail-item__value" id="detailPetugas">-</span>
                     </div>
 
                 </div>
 
                 <div class="detail-keterangan">
                     <span>Keterangan</span>
-                    <p id="detailKeterangan">—</p>
+                    <p id="detailKeterangan">-</p>
                 </div>
 
                 <!-- RINCIAN UANG DETAIL -->
@@ -676,26 +826,26 @@
 
                     <div class="uang-rincian__baris">
                         <span>Jumlah yang harus dibayar</span>
-                        <b id="rincianTagihan">—</b>
+                        <b id="rincianTagihan">-</b>
                     </div>
 
                     <div class="uang-rincian__baris">
                         <span id="rincianLabelDiterima">
                             Jumlah uang yang diterima Bendahara
                         </span>
-                        <b id="rincianDiterima">—</b>
+                        <b id="rincianDiterima">-</b>
                     </div>
 
                     <div class="uang-rincian__baris">
                         <span>Jumlah kembalian</span>
-                        <b id="rincianKembalian">—</b>
+                        <b id="rincianKembalian">-</b>
                     </div>
 
                     <div class="uang-rincian__baris uang-rincian__baris--utama">
                         <span id="rincianLabelMasukKas">
                             Jumlah uang yang masuk ke kas
                         </span>
-                        <b id="rincianMasukKas">—</b>
+                        <b id="rincianMasukKas">-</b>
                     </div>
 
                 </div>
@@ -750,5 +900,6 @@
         <span id="toastText">Tersimpan</span>
     </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

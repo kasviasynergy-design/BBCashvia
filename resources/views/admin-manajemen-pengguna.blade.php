@@ -4,30 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Manajemen Pengguna — BBCashvia</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>Manajemen Pengguna - BBCashvia</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet"
     >
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,300..700,0..1,0"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
         rel="stylesheet"
     >
 
     @vite([
         'resources/css/admin-manajemen-pengguna.css',
-        'resources/js/admin-manajemen-pengguna.js'
+        'resources/js/admin-manajemen-pengguna.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
 <body>
 
 <div class="app-shell">
+
+    <!-- ===== BACKDROP SIDEBAR (MOBILE) ===== -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
     <!-- =====================================================
          SIDEBAR
@@ -56,8 +63,8 @@
                 <div class="sidebar__section-title">Menu Utama</div>
 
                 <a href="/dashboard/admin" class="side-link">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Dashboard</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                    <span class="side-link__text">Dashboard</span>
                 </a>
             </div>
 
@@ -65,13 +72,13 @@
                 <div class="sidebar__section-title">Keuangan</div>
 
                 <a href="/admin/transaksi" class="side-link">
-                    <span class="material-symbols-outlined">receipt_long</span>
-                    <span>Transaksi</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+                    <span class="side-link__text">Transaksi</span>
                 </a>
 
                 <a href="/admin/iuran" class="side-link">
-                    <span class="material-symbols-outlined">sell</span>
-                    <span>Iuran</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">sell</span>
+                    <span class="side-link__text">Iuran</span>
                 </a>
             </div>
 
@@ -79,8 +86,8 @@
                 <div class="sidebar__section-title">Data</div>
 
                 <a href="/admin/siswa" class="side-link">
-                    <span class="material-symbols-outlined">school</span>
-                    <span>Data Siswa</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">school</span>
+                    <span class="side-link__text">Data Siswa</span>
                 </a>
             </div>
 
@@ -88,22 +95,22 @@
                 <div class="sidebar__section-title">Laporan</div>
 
                 <a href="/admin/laporan-kas" class="side-link">
-                    <span class="material-symbols-outlined">monitoring</span>
-                    <span>Laporan Kas</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">monitoring</span>
+                    <span class="side-link__text">Laporan Kas</span>
                 </a>
 
                 <a href="/admin/riwayat-transaksi" class="side-link">
-                    <span class="material-symbols-outlined">manage_search</span>
-                    <span>Riwayat Transaksi</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">manage_search</span>
+                    <span class="side-link__text">Riwayat Transaksi</span>
                 </a>
             </div>
 
             <div class="sidebar__section">
                 <div class="sidebar__section-title">Manajemen</div>
 
-                <a href="/admin/manajemen-pengguna" class="side-link is-active">
-                    <span class="material-symbols-outlined">admin_panel_settings</span>
-                    <span>Manajemen Pengguna</span>
+                <a href="/admin/manajemen-pengguna" class="side-link is-active" aria-current="page">
+                    <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
+                    <span class="side-link__text">Manajemen Pengguna</span>
                 </a>
             </div>
 
@@ -112,24 +119,22 @@
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
-                <div class="sidebar__avatar">AN</div>
+                <div class="sidebar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
 
                 <div class="sidebar__userinfo">
-                    <span class="sidebar__username">Azis N.</span>
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Administrator' }}</span>
                     <span class="sidebar__userrole">Admin</span>
                 </div>
             </div>
 
-            <a href="/" class="sidebar__logout">
-                <span class="material-symbols-outlined">logout</span>
+            <a href="/logout" class="sidebar__logout">
+                <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 <span>Keluar</span>
             </a>
 
         </div>
 
     </aside>
-
-    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
 
     <!-- =====================================================
@@ -148,12 +153,12 @@
                     id="sidebarToggle"
                     aria-label="Buka navigasi"
                 >
-                    <span class="material-symbols-outlined">menu</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
                 </button>
 
                 <div class="topbar__title">
                     <h1>Manajemen Pengguna</h1>
-                    <p id="topbarDate">—</p>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -161,6 +166,7 @@
             <div class="topbar__right">
 
                 <span class="topbar__chip">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
                     TA 2026/2027 • Ganjil
                 </span>
 
@@ -173,23 +179,31 @@
                         aria-expanded="false"
                         aria-haspopup="true"
                     >
-                        <span class="topbar__avatar">AN</span>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
 
                         <span class="topbar__profileinfo">
-                            <span class="topbar__profilename">Azis N.</span>
-                            <span class="topbar__profilerole">Admin</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Admin • {{ auth()->user()->labelKelas() }}</span>
                         </span>
 
-                        <span class="material-symbols-outlined chevron">
+                        <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">
                             expand_more
                         </span>
                     </button>
 
-                    <div class="dropdown" id="profileMenu">
-                        <a href="/">
-                            <span class="material-symbols-outlined">logout</span>
+                    <div class="dropdown" id="profileMenu" role="menu">
+
+                        <div class="dropdown__head">
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
+                        </div>
+
+                        <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
+                            <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                             <span>Keluar</span>
                         </a>
+
                     </div>
 
                 </div>
@@ -207,15 +221,17 @@
             <!-- PAGE HEADER -->
             <section class="page-head">
 
-                <div class="page-head__copy">
+                <div class="page-head__text">
 
-                    <div class="page-head__eyebrow">
-                        Panel Admin • Kas Kelas
-                    </div>
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/admin">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Manajemen Pengguna</span>
+                    </nav>
 
-                    <h2>Manajemen Pengguna</h2>
+                    <h2 class="page-head__title">Manajemen Pengguna</h2>
 
-                    <p>
+                    <p class="page-head__sub">
                         Kelola akun pengguna BBCashvia dengan peran
                         Admin, Bendahara, dan Viewer. Hanya Admin yang
                         dapat membuat dan mengelola akun pengguna.
@@ -230,7 +246,7 @@
                         class="btn btn--primary"
                         id="btnTambahPengguna"
                     >
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             person_add
                         </span>
 
@@ -248,7 +264,7 @@
             <section class="aturan">
 
                 <div class="aturan__icon">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined" aria-hidden="true">
                         info
                     </span>
                 </div>
@@ -262,7 +278,7 @@
                     <ul class="aturan__list">
 
                         <li>
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 check_circle
                             </span>
 
@@ -273,7 +289,7 @@
                         </li>
 
                         <li>
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 check_circle
                             </span>
 
@@ -283,7 +299,7 @@
                         </li>
 
                         <li>
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 check_circle
                             </span>
 
@@ -314,7 +330,7 @@
                         </div>
 
                         <div class="sum-card__icon sum-card__icon--primary">
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 admin_panel_settings
                             </span>
                         </div>
@@ -336,7 +352,7 @@
                         </div>
 
                         <div class="sum-card__icon sum-card__icon--success">
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 account_balance
                             </span>
                         </div>
@@ -358,7 +374,7 @@
                         </div>
 
                         <div class="sum-card__icon sum-card__icon--neutral">
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 visibility
                             </span>
                         </div>
@@ -380,7 +396,7 @@
 
                 <div class="filterbar__search">
 
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined" aria-hidden="true">
                         search
                     </span>
 
@@ -451,7 +467,7 @@
                         class="btn btn--secondary btn-reset"
                         id="btnResetFilter"
                     >
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             restart_alt
                         </span>
 
@@ -467,17 +483,17 @@
             <!-- =================================================
                  TABLE PANEL
                  ================================================= -->
-            <section class="panel table-panel">
+            <section class="panel">
 
-                <div class="table-panel__head">
+                <div class="panel__head">
 
                     <div>
 
-                        <div class="table-panel__eyebrow">
+                        <div class="panel__eyebrow">
                             DATA PENGGUNA
                         </div>
 
-                        <div class="table-panel__title">
+                        <div class="panel__title">
                             Daftar Pengguna
                         </div>
 
@@ -505,6 +521,10 @@
 
                                 <th>Peran</th>
 
+                                <th>Jenis Pengguna</th>
+
+                                <th>Kelas</th>
+
                                 <th>Status</th>
 
                                 <th>Login Terakhir</th>
@@ -531,7 +551,7 @@
                 >
 
                     <div class="empty-state__icon">
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             group_off
                         </span>
                     </div>
@@ -613,7 +633,7 @@
                 data-close-modal
                 aria-label="Tutup"
             >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined" aria-hidden="true">
                     close
                 </span>
             </button>
@@ -697,6 +717,49 @@
                     </div>
 
 
+                    <div class="field" id="fieldJenisViewer">
+
+                        <label for="inputJenisViewer">
+                            Jenis Pengguna
+                        </label>
+
+                        <select id="inputJenisViewer">
+                            <option value="siswa">
+                                Siswa
+                            </option>
+
+                            <option value="wali_kelas">
+                                Wali Kelas
+                            </option>
+                        </select>
+
+                        <span class="field__hint" id="hintJenisViewer">
+                            Bendahara kelas adalah siswa; viewer dapat berupa
+                            siswa atau wali kelas.
+                        </span>
+
+                    </div>
+
+
+                    <div class="field field--full" id="fieldKelas">
+
+                        <label for="inputKelas">
+                            Kelas
+                        </label>
+
+                        <select id="inputKelas">
+                            <option value="">
+                                - Semua Kelas (khusus Admin) -
+                            </option>
+                        </select>
+
+                        <span class="field__hint">
+                            Bendahara &amp; viewer hanya melihat kelas ini. Admin selalu melihat semua kelas.
+                        </span>
+
+                    </div>
+
+
                     <div class="field">
 
                         <label for="inputPassword">
@@ -717,7 +780,7 @@
                                 id="togglePassword"
                                 aria-label="Tampilkan password"
                             >
-                                <span class="material-symbols-outlined">
+                                <span class="material-symbols-outlined" aria-hidden="true">
                                     visibility
                                 </span>
                             </button>
@@ -750,7 +813,7 @@
                     class="btn btn--primary"
                     id="btnSimpanPengguna"
                 >
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined" aria-hidden="true">
                         save
                     </span>
 
@@ -803,7 +866,7 @@
                 data-close-modal
                 aria-label="Tutup"
             >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined" aria-hidden="true">
                     close
                 </span>
             </button>
@@ -816,7 +879,7 @@
             <div class="delete-box">
 
                 <div class="delete-box__icon">
-                    <span class="material-symbols-outlined">
+                    <span class="material-symbols-outlined" aria-hidden="true">
                         delete
                     </span>
                 </div>
@@ -827,7 +890,7 @@
                         class="delete-box__title"
                         id="hapusNama"
                     >
-                        —
+                        -
                     </div>
 
                     <p>
@@ -858,7 +921,7 @@
                 class="btn btn--danger"
                 id="btnKonfirmasiHapus"
             >
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined" aria-hidden="true">
                     delete
                 </span>
 
@@ -883,7 +946,7 @@
 >
 
     <div class="toast__icon">
-        <span class="material-symbols-outlined">
+        <span class="material-symbols-outlined" aria-hidden="true">
             check
         </span>
     </div>
@@ -897,5 +960,6 @@
 
 </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

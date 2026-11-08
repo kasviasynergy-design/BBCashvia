@@ -5,43 +5,65 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class SiswaSeeder extends Seeder
+/**
+ * Mengisi jenis iuran contoh.
+ */
+class IuranSeeder extends Seeder
 {
     public function run(): void
     {
-        $data = [
+        // Iuran contoh untuk setiap kelas, sehingga bendahara & viewer
+        // tiap kelas melihat datanya sendiri.
+        $kelas = DB::table('kelas')->orderBy('id_kelas')->get();
+
+        // Hanya kelas nyata (tiga kelas), bukan kelas sisa pengujian.
+        $kelas = $kelas->filter(function ($k) {
+            return !str_starts_with((string) $k->nama_kelas, 'UJI');
+        });
+
+        if ($kelas->isEmpty()) {
+            throw new \RuntimeException(
+                'Jalankan KelasSeeder terlebih dahulu.'
+            );
+        }
+
+        $iuranPerKelas = [
             [
-                'nis' => '2026001',
-                'nama_siswa' => 'Andi Pratama',
-                'id_kelas' => 'X RPL 1',
-                'status' => 'Aktif',
+                'nama_iuran' => 'Kas Mingguan',
+                'keterangan' => 'Kas kelas yang dibayarkan setiap minggu.',
+                'jatuh_tempo' => '2026-10-25',
+                'kategori' => 'mingguan',
+                'nominal' => 5000,
+                'status' => 'aktif',
             ],
             [
-                'nis' => '2026002',
-                'nama_siswa' => 'Siti Aulia',
-                'id_kelas' => 'X RPL 1',
-                'status' => 'Aktif',
+                'nama_iuran' => 'Iuran Bulanan',
+                'keterangan' => 'Iuran rutin bulanan untuk kebutuhan kelas.',
+                'jatuh_tempo' => '2026-10-31',
+                'kategori' => 'bulanan',
+                'nominal' => 20000,
+                'status' => 'aktif',
             ],
             [
-                'nis' => '2026003',
-                'nama_siswa' => 'Budi Santoso',
-                'id_kelas' => 'X BR 1',
-                'status' => 'Aktif',
-            ],
-            [
-                'nis' => '2026004',
-                'nama_siswa' => 'Nadia Putri',
-                'id_kelas' => 'X DKV 1',
-                'status' => 'Aktif',
+                'nama_iuran' => 'Iuran Kegiatan',
+                'keterangan' => 'Iuran untuk kegiatan kelas (studi wisata).',
+                'jatuh_tempo' => '2026-11-15',
+                'kategori' => 'sekali bayar',
+                'nominal' => 50000,
+                'status' => 'aktif',
             ],
         ];
 
-        foreach ($data as $siswa) {
-            DB::table('siswa')->updateOrInsert(
-                ['nis' => $siswa['nis']],
-                $siswa
-            );
+        foreach ($kelas as $k) {
+            foreach ($iuranPerKelas as $iuran) {
+                DB::table('iuran')->updateOrInsert(
+                    [
+                        'nama_iuran' => $iuran['nama_iuran'],
+                        'id_kelas' => $k->id_kelas,
+                    ],
+                    $iuran + ['id_kelas' => $k->id_kelas]
+                );
+            }
         }
     }
 }
-

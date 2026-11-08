@@ -3,44 +3,37 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Riwayat Transaksi - BBCashvia</title>
+
+    <meta name="description"
+        content="Halaman Riwayat Transaksi BBCashvia - telusuri seluruh riwayat pemasukan dan pengeluaran kas kelas dengan pencarian, filter, dan detail transaksi lengkap.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
 
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0"
-        rel="stylesheet"
-    >
-
-    <title>Riwayat Transaksi | BBCashvia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
 
     @vite([
         'resources/css/bendahara-riwayat-transaksi.css',
-        'resources/js/bendahara-riwayat-transaksi.js'
+        'resources/js/bendahara-riwayat-transaksi.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
-<div class="app-shell">
+    <div class="sidebar-backdrop" id="sidebarBackdrop" aria-hidden="true"></div>
 
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
-
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar" id="sidebar" aria-label="Navigasi utama">
 
         <div class="sidebar__brand">
-
             <div class="sidebar__logo">
                 <img
                     src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
@@ -53,149 +46,95 @@
                 <span class="sidebar__brandname">BBCashvia</span>
                 <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
-
         </div>
+
 
         <nav class="sidebar__nav">
 
             <div class="sidebar__section">
-
-                <div class="sidebar__section-title">
-                    MENU UTAMA
-                </div>
+                <div class="sidebar__section-title">Menu Utama</div>
 
                 <a href="/dashboard/bendahara" class="side-link">
-                    <span class="material-symbols-outlined">dashboard</span>
-                    <span>Dashboard</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
+                    <span class="side-link__text">Dashboard</span>
                 </a>
-
             </div>
 
             <div class="sidebar__section">
-
-                <div class="sidebar__section-title">
-                    DATA &amp; IURAN
-                </div>
+                <div class="sidebar__section-title">Data & Iuran</div>
 
                 <a href="/bendahara/siswa" class="side-link">
-                    <span class="material-symbols-outlined">groups</span>
-                    <span>Siswa</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">groups</span>
+                    <span class="side-link__text">Siswa</span>
                 </a>
 
                 <a href="/bendahara/iuran" class="side-link">
-                    <span class="material-symbols-outlined">receipt_long</span>
-                    <span>Iuran</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+                    <span class="side-link__text">Iuran</span>
                 </a>
-
             </div>
 
             <div class="sidebar__section">
-
-                <div class="sidebar__section-title">
-                    TRANSAKSI
-                </div>
+                <div class="sidebar__section-title">Transaksi</div>
 
                 <a href="/bendahara/transaksi" class="side-link">
-                    <span class="material-symbols-outlined">payments</span>
-                    <span>Transaksi</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">payments</span>
+                    <span class="side-link__text">Transaksi</span>
                 </a>
-
             </div>
 
             <div class="sidebar__section">
-
-                <div class="sidebar__section-title">
-                    LAPORAN
-                </div>
+                <div class="sidebar__section-title">Laporan</div>
 
                 <a href="/bendahara/laporan-kas" class="side-link">
-                    <span class="material-symbols-outlined">account_balance</span>
-                    <span>Laporan Kas</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+                    <span class="side-link__text">Laporan Kas</span>
                 </a>
 
                 <a href="/bendahara/riwayat-transaksi" class="side-link is-active" aria-current="page">
-                    <span class="material-symbols-outlined">history</span>
-                    <span>Riwayat Transaksi</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">history</span>
+                    <span class="side-link__text">Riwayat Transaksi</span>
                 </a>
-
             </div>
 
         </nav>
+
 
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
 
-                <div class="sidebar__avatar">
-                    SN
-                </div>
+                <div class="sidebar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
 
                 <div class="sidebar__userinfo">
-
-                    <span class="sidebar__username">
-                        Siti Nurhaliza
-                    </span>
-
-                    <span class="sidebar__userrole">
-                        Bendahara • XI RPL 1
-                    </span>
-
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Pengguna' }}</span>
+                    <span class="sidebar__userrole">Bendahara • {{ auth()->user()->labelKelas() }}</span>
                 </div>
-
             </div>
 
-            <button
-                type="button"
-                class="sidebar__logout"
-                id="sidebarLogout"
-            >
-                <span class="material-symbols-outlined">logout</span>
+            <a href="/logout" class="sidebar__logout">
+                <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 <span>Keluar</span>
-            </button>
+            </a>
 
         </div>
 
     </aside>
 
-    <div
-        class="sidebar-backdrop"
-        id="sidebarBackdrop"
-    ></div>
 
-    <!-- =====================================================
-         MAIN SHELL
-    ====================================================== -->
     <div class="shell">
 
-
-        <!-- TOPBAR -->
         <header class="topbar">
 
             <div class="topbar__left">
 
-                <button
-                    type="button"
-                    class="topbar__burger"
-                    id="btnSidebar"
-                    aria-label="Buka menu"
-                    aria-expanded="false"
-                >
-                    <span class="material-symbols-outlined">
-                        menu
-                    </span>
+                <button type="button" class="topbar__burger" id="sidebarToggle" aria-label="Buka menu navigasi">
+                    <span class="material-symbols-outlined" aria-hidden="true">menu</span>
                 </button>
 
-
                 <div class="topbar__title">
-
-                    <h1>
-                        Riwayat Transaksi
-                    </h1>
-
-                    <p id="topbarDate">
-                        —
-                    </p>
-
+                    <h1>Riwayat Transaksi</h1>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -203,85 +142,41 @@
 
             <div class="topbar__right">
 
-                <div class="topbar__chip">
+                <span class="topbar__chip">
+                    <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+                    TA 2026/2027 • Ganjil
+                </span>
 
-                    <span class="material-symbols-outlined">
-                        calendar_month
-                    </span>
-
-                    <span>
-                        T.A 2026/2027
-                    </span>
-
-                </div>
-
-
-                <!-- PROFILE -->
                 <div class="topbar__profilewrap">
 
-                    <button
-                        type="button"
-                        class="topbar__profile"
-                        id="profileButton"
-                        aria-expanded="false"
-                    >
+                    <button type="button" class="topbar__profile" id="profileButton" aria-haspopup="true"
+                        aria-expanded="false">
 
-                        <div class="topbar__avatar">
-                            SN
-                        </div>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
 
-                        <div class="topbar__profileinfo">
+                        <span class="topbar__profileinfo">
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Bendahara • {{ auth()->user()->labelKelas() }}</span>
+                        </span>
 
-                            <div class="topbar__profilename">
-                                Siti Nurhaliza
-                            </div>
-
-                            <div class="topbar__profilerole">
-                                Bendahara • Kelas XI RPL 1
-                            </div>
-
-                        </div>
-
-                        <span class="material-symbols-outlined topbar__chevron">
+                        <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">
                             expand_more
                         </span>
 
                     </button>
 
-
-                    <!-- PROFILE DROPDOWN -->
-                    <div
-                        class="dropdown"
-                        id="profileDropdown"
-                    >
+                    <div class="dropdown" id="profileDropdown" role="menu">
 
                         <div class="dropdown__head">
-
-                            <div class="dropdown__name">
-                                Siti Nurhaliza
-                            </div>
-
-                            <div class="dropdown__mail">
-                                siti.nurhaliza@gmail.com
-                            </div>
-
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Bendahara • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
-
-
-                        <button
-                            type="button"
-                            class="dropdown__item dropdown__item--danger"
-                            id="btnProfileLogout"
-                        >
-                            <span class="material-symbols-outlined">
-                                logout
-                            </span>
-
-                            <span>
-                                Keluar
-                            </span>
-                        </button>
+                        <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
+                            <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                            <span>Keluar</span>
+                        </a>
 
                     </div>
 
@@ -292,30 +187,23 @@
         </header>
 
 
-        <!-- =====================================================
-             CONTENT
-        ====================================================== -->
         <main class="content">
 
+            <section class="page-head">
 
-            <!-- HERO -->
-            <section class="hero">
+                <div class="page-head__text">
 
-                <div class="hero__text">
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/bendahara">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Riwayat Transaksi</span>
+                    </nav>
 
-                    <span class="hero__eyebrow">
-                        Bendahara • XI RPL 1
-                    </span>
+                    <h2 class="page-head__title">Riwayat Transaksi</h2>
 
-                    <h2 class="hero__title">
-                        Riwayat Transaksi
-                    </h2>
-
-                    <p class="hero__sub">
-                        Telusuri seluruh riwayat pemasukan dan
-                        pengeluaran kas kelas XI RPL 1.
-                        Gunakan pencarian dan filter untuk
-                        menemukan transaksi yang dibutuhkan.
+                    <p class="page-head__sub">
+                        Telusuri seluruh riwayat pemasukan dan pengeluaran kas {{ auth()->user()->labelKelas() }} - gunakan pencarian
+                        dan filter untuk menemukan transaksi, lalu buka detailnya untuk rincian lengkap.
                     </p>
 
                 </div>
@@ -323,307 +211,142 @@
             </section>
 
 
-            <!-- =================================================
-                 SUMMARY
-            ================================================== -->
-            <section
-                class="stat-grid"
-                aria-label="Ringkasan riwayat transaksi"
-            >
+            <section class="sum-grid" aria-label="Ringkasan riwayat transaksi">
 
-                <!-- PEMASUKAN -->
-                <article class="stat-card">
+                <article class="sum-card sum-card--masuk">
 
-                    <div class="stat-card__top">
-
-                        <div>
-
-                            <div class="stat-card__label">
-                                Total Pemasukan
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="sumMasuk"
-                            >
-                                Rp 0
-                            </div>
-
-                        </div>
-
-                        <div class="stat-card__icon stat-card__icon--in">
-
-                            <span class="material-symbols-outlined">
-                                trending_up
-                            </span>
-
-                        </div>
-
+                    <div class="sum-card__iconwrap">
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            trending_up
+                        </span>
                     </div>
-
-                    <div
-                        class="stat-card__foot"
-                        id="sumMasukNote"
-                    >
-                        Sesuai filter
-                    </div>
-
-                </article>
-
-
-                <!-- PENGELUARAN -->
-                <article class="stat-card">
-
-                    <div class="stat-card__top">
-
-                        <div>
-
-                            <div class="stat-card__label">
-                                Total Pengeluaran
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="sumKeluar"
-                            >
-                                Rp 0
-                            </div>
-
-                        </div>
-
-                        <div class="stat-card__icon stat-card__icon--out">
-
-                            <span class="material-symbols-outlined">
-                                trending_down
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div
-                        class="stat-card__foot"
-                        id="sumKeluarNote"
-                    >
-                        Sesuai filter
-                    </div>
-
-                </article>
-
-
-                <!-- JUMLAH TRANSAKSI -->
-                <article class="stat-card">
-
-                    <div class="stat-card__top">
-
-                        <div>
-
-                            <div class="stat-card__label">
-                                Total Transaksi
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="sumJumlah"
-                            >
-                                0
-                            </div>
-
-                        </div>
-
-                        <div class="stat-card__icon stat-card__icon--trx">
-
-                            <span class="material-symbols-outlined">
-                                history
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                    <div
-                        class="stat-card__foot"
-                        id="sumJumlahNote"
-                    >
-                        Sesuai filter
-                    </div>
-
-                </article>
-
-            </section>
-
-
-            <!-- =================================================
-                 FILTER
-            ================================================== -->
-            <section
-                class="panel filter-panel"
-                aria-label="Filter riwayat transaksi"
-            >
-
-                <div class="panel__head">
 
                     <div>
-
-                        <div class="panel__eyebrow">
-                            FILTER RIWAYAT
-                        </div>
-
-                        <div class="panel__title">
-                            Cari dan Filter Transaksi
-                        </div>
-
-                        <div class="panel__sub">
-                            Data hanya menampilkan transaksi
-                            kelas XI RPL 1.
-                        </div>
-
+                        <p class="sum-card__label">Total Pemasukan</p>
+                        <p class="sum-card__value" id="sumMasuk">-</p>
+                        <p class="sum-card__note" id="sumMasukNote">sesuai filter</p>
                     </div>
+
+                </article>
+
+
+                <article class="sum-card sum-card--keluar">
+
+                    <div class="sum-card__iconwrap">
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            trending_down
+                        </span>
+                    </div>
+
+                    <div>
+                        <p class="sum-card__label">Total Pengeluaran</p>
+                        <p class="sum-card__value" id="sumKeluar">-</p>
+                        <p class="sum-card__note" id="sumKeluarNote">sesuai filter</p>
+                    </div>
+
+                </article>
+
+
+                <article class="sum-card sum-card--jumlah">
+
+                    <div class="sum-card__iconwrap">
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            history
+                        </span>
+                    </div>
+
+                    <div>
+                        <p class="sum-card__label">Total Transaksi</p>
+                        <p class="sum-card__value" id="sumJumlah">-</p>
+                        <p class="sum-card__note" id="sumJumlahNote">sesuai filter</p>
+                    </div>
+
+                </article>
+
+            </section>
+
+
+            <section class="panel filterbar" aria-label="Filter riwayat transaksi">
+
+                <div class="filterbar__search">
+
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                        search
+                    </span>
+
+                    <input type="search"
+                        id="cariRiwayat"
+                        placeholder="Cari ID, keterangan, kategori, atau kelas…"
+                        autocomplete="off">
 
                 </div>
 
 
-                <div class="filterbar">
+                <div class="filterbar__selects">
 
+                    <label class="field-select">
 
-                    <!-- SEARCH -->
-                    <div class="filterbar__search">
-
-                        <span class="material-symbols-outlined">
-                            search
-                        </span>
-
-                        <input
-                            type="search"
-                            id="cariRiwayat"
-                            placeholder="Cari ID, keterangan, kategori..."
-                            autocomplete="off"
-                        >
-
-                    </div>
-
-
-                    <!-- JENIS -->
-                    <div class="field">
-
-                        <label for="filterJenis">
-                            Jenis
-                        </label>
+                        <span class="field-select__label">Jenis</span>
 
                         <select id="filterJenis">
-
-                            <option value="semua">
-                                Semua Jenis
-                            </option>
-
-                            <option value="masuk">
-                                Pemasukan
-                            </option>
-
-                            <option value="keluar">
-                                Pengeluaran
-                            </option>
-
+                            <option value="semua">Semua Jenis</option>
+                            <option value="masuk">Pemasukan</option>
+                            <option value="keluar">Pengeluaran</option>
                         </select>
 
-                    </div>
+                    </label>
 
 
-                    <!-- KATEGORI -->
-                    <div class="field">
+                    <label class="field-select">
 
-                        <label for="filterKategori">
-                            Kategori
-                        </label>
+                        <span class="field-select__label">Kategori</span>
 
                         <select id="filterKategori">
-
-                            <option value="semua">
-                                Semua Kategori
-                            </option>
-
+                            <option value="semua">Semua Kategori</option>
                         </select>
 
-                    </div>
+                    </label>
 
 
-                    <!-- BULAN -->
-                    <div class="field">
+                    <label class="field-select">
 
-                        <label for="filterBulan">
-                            Bulan
-                        </label>
+                        <span class="field-select__label">Bulan</span>
 
                         <select id="filterBulan">
-
-                            <option value="semua">
-                                Semua Bulan
-                            </option>
-
-                            <option value="2026-10">
-                                Oktober 2026
-                            </option>
-
-                            <option value="2026-09">
-                                September 2026
-                            </option>
-
-                            <option value="2026-08">
-                                Agustus 2026
-                            </option>
-
+                            <option value="semua">Semua Bulan</option>
                         </select>
 
-                    </div>
+                    </label>
 
 
-                    <!-- RESET -->
-                    <div class="filter-actions">
+                    <button type="button" class="btn btn--ghost btn--sm" id="btnResetFilter">
 
-                        <button
-                            type="button"
-                            class="btn btn--ghost"
-                            id="btnResetFilter"
-                        >
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            restart_alt
+                        </span>
 
-                            <span class="material-symbols-outlined">
-                                restart_alt
-                            </span>
+                        <span>Reset</span>
 
-                            Reset
-
-                        </button>
-
-                    </div>
+                    </button>
 
                 </div>
 
             </section>
 
 
-            <!-- =================================================
-                 TABLE
-            ================================================== -->
             <section class="panel">
 
                 <div class="panel__head">
 
                     <div>
 
-                        <div class="panel__eyebrow">
-                            ARSIP KAS
-                        </div>
+                        <p class="panel__eyebrow">ARSIP KAS</p>
 
-                        <div class="panel__title">
-                            Riwayat Lengkap
-                        </div>
+                        <h3 class="panel__title">Riwayat Lengkap</h3>
 
-                        <div
-                            class="panel__sub"
-                            id="tabelInfo"
-                        >
-                            0 transaksi ditampilkan
-                        </div>
+                        <p class="panel__sub" id="tabelInfo">
+                            - transaksi ditampilkan
+                        </p>
 
                     </div>
 
@@ -637,70 +360,35 @@
                         <thead>
 
                             <tr>
-
-                                <th>
-                                    ID Transaksi
-                                </th>
-
-                                <th>
-                                    Keterangan
-                                </th>
-
-                                <th>
-                                    Kategori
-                                </th>
-
-                                <th>
-                                    Tanggal
-                                </th>
-
-                                <th class="th-r">
-                                    Nominal
-                                </th>
-
-                                <th>
-                                    Petugas
-                                </th>
-
-                                <th class="th-c">
-                                    Aksi
-                                </th>
-
+                                <th scope="col">ID Transaksi</th>
+                                <th scope="col">Keterangan</th>
+                                <th scope="col">Kategori</th>
+                                <th scope="col">Tanggal</th>
+                                <th scope="col" class="th-r">Nominal</th>
+                                <th scope="col">Dicatat oleh</th>
+                                <th scope="col" class="th-c">Aksi</th>
                             </tr>
 
                         </thead>
-
 
                         <tbody id="isiTabelRiwayat"></tbody>
 
                     </table>
 
 
-                    <!-- EMPTY STATE -->
-                    <div
-                        class="empty-state"
-                        id="emptyState"
-                        hidden
-                    >
+                    <div class="empty-state" id="emptyState" hidden>
 
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             search_off
                         </span>
 
                         <p>
-                            Tidak ada riwayat transaksi yang
-                            cocok dengan pencarian atau filter.
+                            Tidak ada riwayat transaksi yang cocok dengan pencarian atau filter.
                         </p>
 
-                        <button
-                            type="button"
-                            class="btn btn--ghost"
-                            id="btnKosongkanFilter"
-                        >
-                            <span class="material-symbols-outlined">
-                                restart_alt
-                            </span>
-
+                        <button type="button"
+                            class="btn btn--ghost btn--sm"
+                            id="btnKosongkanFilter">
                             Reset Filter
                         </button>
 
@@ -710,275 +398,193 @@
 
             </section>
 
-
-            <!-- FOOTER -->
-            <div class="content__foot">
-
-                Riwayat transaksi Bendahara •
-                Kelas XI RPL 1 •
-                Tahun Ajaran 2026/2027
-
-            </div>
+            <footer class="content__foot">
+                BBCashvia - Kas Kelas Digital • Seluruh data ditampilkan langsung dari database.
+            </footer>
 
         </main>
 
     </div>
 
-</div>
 
+    <div class="modal-backdrop" id="modalDetail" aria-hidden="true">
 
-<!-- =========================================================
-     MODAL DETAIL TRANSAKSI
-========================================================= -->
-<div
-    class="modal-backdrop"
-    id="modalDetail"
-    aria-hidden="true"
->
+        <div class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalDetailTitle">
 
-    <div
-        class="modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modalDetailTitle"
-    >
+            <div class="modal__head">
 
-        <div class="modal__head">
+                <div>
 
-            <div>
+                    <p class="modal__eyebrow">DETAIL TRANSAKSI</p>
 
-                <div class="modal__eyebrow">
-                    DETAIL TRANSAKSI
-                </div>
+                    <h3 class="modal__title" id="modalDetailTitle">
+                        TRX-0000
+                    </h3>
 
-                <h3
-                    class="modal__title"
-                    id="modalDetailTitle"
-                >
-                    TRX-0000
-                </h3>
-
-            </div>
-
-
-            <button
-                type="button"
-                class="modal__close"
-                data-tutup-modal="modalDetail"
-                aria-label="Tutup"
-            >
-
-                <span class="material-symbols-outlined">
-                    close
-                </span>
-
-            </button>
-
-        </div>
-
-
-        <div class="modal__body">
-
-
-            <div class="detail-grid">
-
-                <div class="detail-item">
-                    <span class="detail-item__label">
-                        Jenis
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailJenis"
-                    >
-                        —
-                    </span>
-                </div>
-
-
-                <div class="detail-item">
-                    <span class="detail-item__label">
-                        Kategori
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailKategori"
-                    >
-                        —
-                    </span>
-                </div>
-
-
-                <div class="detail-item">
-                    <span class="detail-item__label">
-                        Kelas
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailKelas"
-                    >
-                        XI RPL 1
-                    </span>
-                </div>
-
-
-                <div class="detail-item">
-                    <span class="detail-item__label">
-                        Tanggal
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailTanggal"
-                    >
-                        —
-                    </span>
-                </div>
-
-
-                <div class="detail-item">
-                    <span class="detail-item__label">
-                        Waktu
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailWaktu"
-                    >
-                        —
-                    </span>
-                </div>
-
-
-                <div class="detail-item">
-
-                    <span class="detail-item__label">
-                        Metode
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailMetode"
-                    >
-                        —
-                    </span>
+                    <!--
+                        Status pembayaran (hasil hitungan backend dari
+                        akumulasi pembayaran iuran, bukan kolom database).
+                        Tersembunyi untuk transaksi non-iuran.
+                    -->
+                    <span class="badge badge--ok" id="detailStatusBayar" hidden></span>
 
                 </div>
 
-
-                <div class="detail-item">
-
-                    <span class="detail-item__label">
-                        Dicatat oleh
-                    </span>
-
-                    <span
-                        class="detail-item__value"
-                        id="detailPetugas"
-                    >
-                        —
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="detail-keterangan">
-
-                <span>
-                    Keterangan
-                </span>
-
-                <p id="detailKeterangan">
-                    —
-                </p>
-
-            </div>
-
-
-            <!-- RINCIAN UANG -->
-            <div
-                class="uang-rincian"
-                id="uangRincian"
-            >
-
-                <p class="uang-rincian__title">
-
-                    <span class="material-symbols-outlined">
-                        payments
-                    </span>
-
-                    Rincian Uang
-
-                </p>
-
-
-                <div class="uang-rincian__baris">
-
-                    <span>
-                        Jumlah yang harus dibayar
-                    </span>
-
-                    <b id="rincianTagihan">
-                        —
-                    </b>
-
-                </div>
-
-
-                <div class="uang-rincian__baris">
-
-                    <span id="rincianLabelDiterima">
-                        Jumlah uang yang diterima Bendahara
-                    </span>
-
-                    <b id="rincianDiterima">
-                        —
-                    </b>
-
-                </div>
-
-
-                <div class="uang-rincian__baris">
-
-                    <span>
-                        Jumlah kembalian
-                    </span>
-
-                    <b id="rincianKembalian">
-                        —
-                    </b>
-
-                </div>
-
-
-                <div class="uang-rincian__baris uang-rincian__baris--utama">
-
-                    <span id="rincianLabelMasukKas">
-                        Jumlah uang yang masuk ke kas
-                    </span>
-
-                    <b id="rincianMasukKas">
-                        —
-                    </b>
-
-                </div>
-
-            </div>
-
-
-            <div class="modal__foot">
-
-                <button
-                    type="button"
-                    class="btn btn--ghost"
+                <button type="button"
+                    class="modal__close"
                     data-tutup-modal="modalDetail"
-                >
-                    Tutup
+                    aria-label="Tutup">
+
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                        close
+                    </span>
+
                 </button>
+
+            </div>
+
+
+            <div class="modal__body">
+
+                <div class="detail-grid">
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Jenis</span>
+                        <span class="detail-item__value" id="detailJenis">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Kategori</span>
+                        <span class="detail-item__value" id="detailKategori">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Kelas</span>
+                        <span class="detail-item__value" id="detailKelas">{{ auth()->user()->labelKelas() }}</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Tanggal</span>
+                        <span class="detail-item__value" id="detailTanggal">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Waktu</span>
+                        <span class="detail-item__value" id="detailWaktu">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Metode</span>
+                        <span class="detail-item__value" id="detailMetode">-</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="detail-item__label">Dicatat oleh</span>
+                        <span class="detail-item__value" id="detailPetugas">-</span>
+                    </div>
+
+                </div>
+
+
+                <div class="detail-keterangan">
+
+                    <span>Keterangan</span>
+
+                    <p id="detailKeterangan">-</p>
+
+                </div>
+
+
+                <div class="detail-rincian" id="detailRincian" hidden>
+
+                    <p class="detail-rincian__title">
+
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            receipt_long
+                        </span>
+
+                        Rincian Transaksi
+
+                    </p>
+
+                    <div class="detail-rincian__list" id="detailRincianList"></div>
+
+                    <div class="detail-rincian__total">
+
+                        <span>Total rincian</span>
+
+                        <b id="detailRincianTotal">-</b>
+
+                    </div>
+
+                </div>
+
+
+                <div class="uang-rincian" id="uangRincian">
+
+                    <p class="uang-rincian__title">
+
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            payments
+                        </span>
+
+                        Rincian Uang
+
+                    </p>
+
+
+                    <div class="uang-rincian__baris">
+
+                        <span>Jumlah yang harus dibayar</span>
+                        <b id="rincianTagihan">-</b>
+
+                    </div>
+
+
+                    <div class="uang-rincian__baris">
+
+                        <span id="rincianLabelDiterima">
+                            Jumlah uang yang diterima Bendahara
+                        </span>
+
+                        <b id="rincianDiterima">-</b>
+
+                    </div>
+
+
+                    <div class="uang-rincian__baris">
+
+                        <span>Jumlah kembalian</span>
+                        <b id="rincianKembalian">-</b>
+
+                    </div>
+
+
+                    <div class="uang-rincian__baris uang-rincian__baris--utama">
+
+                        <span id="rincianLabelMasukKas">
+                            Jumlah uang yang masuk ke kas
+                        </span>
+
+                        <b id="rincianMasukKas">-</b>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal__foot">
+
+                    <button type="button"
+                        class="btn btn--ghost"
+                        data-tutup-modal="modalDetail">
+                        Tutup
+                    </button>
+
+                </div>
 
             </div>
 
@@ -986,26 +592,7 @@
 
     </div>
 
-</div>
-
-
-<!-- TOAST -->
-<div
-    class="toast"
-    id="toast"
-    role="status"
-    aria-live="polite"
->
-
-    <span class="material-symbols-outlined">
-        check_circle
-    </span>
-
-    <span id="toastText">
-        Berhasil
-    </span>
-
-</div>
-
+    @include('partials.konfirmasi-logout')
 </body>
+
 </html>

@@ -7,15 +7,15 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Masuk — BBCashvia | KASVIA Synergy</title>
+    <title>Masuk - BBCashvia - KASVIA Synergy</title>
 
     <meta name="description"
-        content="Gerbang autentikasi terpadu BBCashvia — sistem kas kelas digital SMK Budi Bakti Ciwidey.">
+        content="Gerbang autentikasi terpadu BBCashvia - sistem kas kelas digital SMK Budi Bakti Ciwidey.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
@@ -232,6 +232,14 @@
 
                     </div>
 
+                    <p
+                        class="field__error"
+                        id="roleError"
+                        aria-live="polite"
+                        hidden
+                        style="margin-top: 8px;">
+                    </p>
+
                     <div
                         class="role-note"
                         id="rolePanel"
@@ -298,7 +306,7 @@
                                 type="email"
                                 id="identity"
                                 name="email"
-                                placeholder="contoh: admin.utama@sekolah.sch.id"
+                                placeholder="contoh: asepbetmen@gmail.com"
                                 autocomplete="username"
                                 value="{{ old('email') }}"
                                 required
@@ -364,6 +372,13 @@
 
                         </div>
 
+                        <p
+                            class="field__error"
+                            id="passwordError"
+                            aria-live="polite"
+                            hidden>
+                        </p>
+
                         <!-- Password policy -->
                         <div
                             class="pw-policy"
@@ -421,13 +436,6 @@
                             </ul>
 
                         </div>
-
-                        <p
-                            class="field__error"
-                            id="passwordError"
-                            aria-live="polite"
-                            hidden>
-                        </p>
 
                     </div>
 
@@ -610,8 +618,7 @@
 
                     <p>
                         Sampaikan permintaan reset kepada Admin BBCashvia
-                        (Tim KASVIA Synergy) melalui guru pembimbing
-                        atau kanal resmi sekolah.
+                        (Tim KASVIA Synergy)
                     </p>
 
                 </li>
@@ -659,6 +666,26 @@
                 </p>
 
             </div>
+
+            <!-- Hubungi Admin via WhatsApp -->
+            <a
+                class="btn-primary btn-primary--block"
+                href="https://wa.me/+6287749797136"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+
+                <span class="btn-primary__label">
+                    Hubungi Admin via WhatsApp
+                </span>
+
+                <span
+                    class="material-symbols-outlined btn-primary__arrow"
+                    aria-hidden="true">
+                    phone
+                </span>
+
+            </a>
 
             <button
                 type="button"

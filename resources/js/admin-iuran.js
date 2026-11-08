@@ -1,4 +1,10 @@
 
+// BBCASHVIA - modul bersama S3-07 (pengaman simpan ganda).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
@@ -14,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let deletingId = null;
     let toastTimer = null;
 
-    const FREKUENSI = {
+    const KATEGORI_IURAN = {
         "sekali bayar": "Sekali Bayar",
         mingguan: "Mingguan",
         bulanan: "Bulanan",
@@ -32,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const modalIuran = document.getElementById("modalIuran");
     const modalDetail = document.getElementById("modalDetailIuran");
-    const modalPembayaran = document.getElementById("modalPembayaran");
     const modalHapus = document.getElementById("modalHapusIuran");
 
     const formIuran = document.getElementById("formIuran");
@@ -52,12 +57,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatTanggal(value) {
-        if (!value) return "—";
+        if (!value) return "-";
 
         const tanggal = String(value).slice(0, 10);
         const date = new Date(`${tanggal}T00:00:00`);
 
-        if (Number.isNaN(date.getTime())) return "—";
+        if (Number.isNaN(date.getTime())) return "-";
 
         return date.toLocaleDateString("id-ID", {
             day: "2-digit",
@@ -75,17 +80,81 @@ document.addEventListener("DOMContentLoaded", () => {
             .replaceAll("'", "&#039;");
     }
 
+    /* Daftar kelas nyata dari database (untuk pilihan kelas iuran). */
+    let daftarKelasIuran = [];
+
+    /* Nama kelas dari id, untuk ditampilkan di tabel & filter. */
+    function namaKelasDariId(id) {
+        if (id === null || id === undefined || id === "") return "Semua Kelas";
+        const kelas = daftarKelasIuran.find(
+            k => String(k.id_kelas) === String(id)
+        );
+        return kelas ? kelas.nama_kelas : "Semua Kelas";
+    }
+
+    /* Persentase iuran terkumpul terhadap target (nominal x siswa). */
+    function persenIuran(item) {
+        if (!item.target || item.target <= 0) return 0;
+        const persen = Math.round((item.terkumpul / item.target) * 100);
+        return Math.max(0, Math.min(100, persen));
+    }
+
+    /* Muat daftar kelas dari API admin dan isi select kelas. */
+    async function muatKelasIuran() {
+        if (daftarKelasIuran.length) return;
+
+        try {
+            const hasil = await requestAPI("/admin/api/kelas");
+            daftarKelasIuran = Array.isArray(hasil.data)
+                ? hasil.data
+                : [];
+            isiPilihanKelasIuran();
+        } catch {
+            daftarKelasIuran = [];
+        }
+    }
+
+    /* Isi select kelas iuran dengan kelas nyata. */
+    function isiPilihanKelasIuran() {
+        const select = document.getElementById("inputKelasIuran");
+        if (!select) return;
+
+        const nilaiLama = select.value;
+
+        select.innerHTML = `
+            <option value="">
+                - Semua Kelas (khusus Admin) -
+            </option>
+            ${daftarKelasIuran.map(k => `
+                <option value="${escapeHTML(k.id_kelas)}">
+                    ${escapeHTML(k.nama_kelas)}
+                </option>
+            `).join("")}
+        `;
+
+        select.value = daftarKelasIuran.some(
+            k => String(k.id_kelas) === String(nilaiLama)
+        ) ? nilaiLama : "";
+    }
+
     function normalisasiIuran(item) {
         return {
             id: Number(item.id_iuran),
+            id_kelas: item.id_kelas ?? "",
             nama_iuran: item.nama_iuran ?? "",
             keterangan: item.keterangan ?? "",
             jatuh_tempo: item.jatuh_tempo
                 ? String(item.jatuh_tempo).slice(0, 10)
                 : "",
-            frekuensi: item.kategori ?? "",
+            /* Kategori dari database dipertahankan apa adanya - dipakai
+               tabel (badge), form edit, modal detail, dan filter. */
+            kategori: item.kategori ?? "",
             nominal: Number(item.nominal) || 0,
-            status: item.status ?? "aktif"
+            status: item.status ?? "aktif",
+            jumlah_siswa: Number(item.jumlah_siswa) || 0,
+            target: Number(item.target) || 0,
+            terkumpul: Number(item.terkumpul) || 0,
+            peserta: Array.isArray(item.peserta) ? item.peserta : []
         };
     }
 
@@ -105,6 +174,26 @@ document.addEventListener("DOMContentLoaded", () => {
             "X-Requested-With": "XMLHttpRequest"
         };
 
+        // S3-07: permintaan POST dibawa kunci idempotensi bagi
+        // pengaman simpan ganda di backend.
+        if (method === "POST") {
+            headers["X-Idempotency-Key"] = kunciIdempoten();
+        }
+
+        // Token CSRF wajib dikirim untuk SEMUA metode tulis (POST, PUT,
+        // DELETE) - bukan hanya request yang bermuatan. Tanpa ini,
+        // hapus iuran (DELETE tanpa badan request) ditolak middleware
+        // sebagai "CSRF token mismatch" (419).
+        if (method !== "GET") {
+            const csrfToken = document.querySelector(
+                'meta[name="csrf-token"]'
+            )?.content;
+
+            if (csrfToken) {
+                headers["X-CSRF-TOKEN"] = csrfToken;
+            }
+        }
+
         const options = {
             method,
             headers,
@@ -113,15 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (payload !== null) {
             headers["Content-Type"] = "application/json";
-
-            const csrfToken = document.querySelector(
-                'meta[name="csrf-token"]'
-            )?.content;
-
-            if (csrfToken) {
-                headers["X-CSRF-TOKEN"] = csrfToken;
-            }
-
             options.body = JSON.stringify(payload);
         }
 
@@ -179,6 +259,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (response.status === 401 || response.status === 403) {
                 throw new Error(
                     "Kamu tidak memiliki akses atau sesi login telah berakhir."
+                );
+            }
+
+            if (response.status >= 500) {
+                throw new Error(
+                    "Terjadi gangguan pada server. Coba lagi beberapa saat."
                 );
             }
 
@@ -357,12 +443,17 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("sumTagihan").textContent =
             formatRupiah(totalNominalIuran);
 
-        // Pembayaran belum dihitung karena endpoint transaksi
-        // belum dihubungkan ke halaman ini.
-        document.getElementById("sumTerkumpul").textContent = "—";
+        // Total nominal yang sudah dibayarkan siswa (transaksi iuran).
+        const totalTerkumpul = iuranData.reduce(
+            (total, item) => total + item.terkumpul,
+            0
+        );
+
+        document.getElementById("sumTerkumpul").textContent =
+            formatRupiah(totalTerkumpul);
 
         document.getElementById("sumTerkumpulNote").textContent =
-            "Menunggu integrasi transaksi";
+            "Dari pembayaran siswa";
 
         document.getElementById("sumTagihanNote").textContent =
             "Jumlah nominal per iuran";
@@ -382,21 +473,21 @@ document.addEventListener("DOMContentLoaded", () => {
         const search = document.getElementById("cariIuran")
             .value.trim().toLowerCase();
 
-        const frekuensi = document.getElementById("filterFrekuensi").value;
+        const frekuensi = document.getElementById("filterKategori").value;
         const status = document.getElementById("filterStatusIuran").value;
 
         const filtered = iuranData.filter(item => {
             const matchSearch =
                 item.nama_iuran.toLowerCase().includes(search) ||
-                item.keterangan.toLowerCase().includes(search);
+                (item.keterangan || "").toLowerCase().includes(search);
 
-            const matchFrekuensi =
-                !frekuensi || item.frekuensi === frekuensi;
+            const matchKategori =
+                !frekuensi || item.kategori === frekuensi;
 
             const matchStatus =
                 !status || item.status === status;
 
-            return matchSearch && matchFrekuensi && matchStatus;
+            return matchSearch && matchKategori && matchStatus;
         });
 
         tbody.innerHTML = "";
@@ -406,8 +497,8 @@ document.addEventListener("DOMContentLoaded", () => {
         filtered.forEach(item => {
             const tr = document.createElement("tr");
 
-            const namaFrekuensi =
-                FREKUENSI[item.frekuensi] || item.frekuensi || "—";
+            const namaKategori =
+                KATEGORI_IURAN[item.kategori] || item.kategori || "-";
 
             tr.innerHTML = `
                 <td>
@@ -415,13 +506,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${escapeHTML(item.nama_iuran)}
                     </div>
                     <div class="table-secondary">
-                        ${escapeHTML(item.keterangan || "—")}
+                        ${escapeHTML(item.keterangan || "-")}
                     </div>
                 </td>
 
                 <td>
                     <span class="frequency-badge">
-                        ${escapeHTML(namaFrekuensi)}
+                        ${escapeHTML(namaKelasDariId(item.id_kelas))}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="frequency-badge">
+                        ${escapeHTML(namaKategori)}
                     </span>
                 </td>
 
@@ -434,15 +531,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
 
                 <td>
-                    <strong class="money">—</strong>
+                    <strong class="money">
+                        ${formatRupiah(item.terkumpul)}
+                    </strong>
                 </td>
 
                 <td>
                     <div class="progress-cell">
                         <div class="progress-track">
-                            <span style="width:0%"></span>
+                            <span style="width:${persenIuran(item)}%"></span>
                         </div>
-                        <small>—</small>
+                        <small>${persenIuran(item)}% • ${item.jumlah_siswa} siswa</small>
                     </div>
                 </td>
 
@@ -500,15 +599,13 @@ document.addEventListener("DOMContentLoaded", () => {
     async function muatIuran() {
         const tbody = document.getElementById("isiTabelIuran");
 
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align:center;padding:24px">
-                    Memuat data iuran...
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML = Array.from({ length: 5 })
+            .map(() => `<tr class="skeleton-row"><td colspan="9"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+            .join("");
 
         try {
+            await muatKelasIuran();
+
             const response = await requestAPI(API_IURAN);
 
             iuranData = Array.isArray(response.data)
@@ -522,7 +619,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" style="text-align:center;padding:24px">
+                    <td colspan="9" style="text-align:center;padding:24px">
                         ${escapeHTML(error.message)}
                     </td>
                 </tr>
@@ -581,8 +678,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("inputNamaIuran").value =
             item.nama_iuran;
 
-        document.getElementById("inputFrekuensi").value =
-            item.frekuensi;
+        document.getElementById("inputKategori").value =
+            item.kategori;
 
         document.getElementById("inputJatuhTempo").value =
             item.jatuh_tempo;
@@ -595,6 +692,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         document.getElementById("inputKeteranganIuran").value =
             item.keterangan;
+
+        document.getElementById("inputKelasIuran").value =
+            item.id_kelas != null ? String(item.id_kelas) : "";
 
         formErrorIuran.textContent = "";
         formErrorIuran.hidden = true;
@@ -612,7 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nama = document.getElementById("inputNamaIuran")
             .value.trim();
 
-        const kategori = document.getElementById("inputFrekuensi").value;
+        const kategori = document.getElementById("inputKategori").value;
         const jatuhTempo = document.getElementById("inputJatuhTempo").value;
         const nominal = Number(
             document.getElementById("inputNominalIuran").value
@@ -620,6 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const status = document.getElementById("inputStatusIuran").value;
         const keterangan = document.getElementById("inputKeteranganIuran")
             .value.trim();
+        const idKelas = document.getElementById("inputKelasIuran").value;
 
         if (
             !nama ||
@@ -641,6 +742,7 @@ document.addEventListener("DOMContentLoaded", () => {
             jatuh_tempo: jatuhTempo,
             nominal,
             status,
+            id_kelas: idKelas ? Number(idKelas) : null,
             keterangan: keterangan || null
         };
 
@@ -648,7 +750,10 @@ document.addEventListener("DOMContentLoaded", () => {
             'button[type="submit"]'
         );
 
-        if (tombolSubmit) tombolSubmit.disabled = true;
+        // S3-07: kunci tombol saat proses (teks "Memproses...", tidak
+        // dapat diklik dua kali). null = masih diproses, boleh henti.
+        const pemulihanTombol = kunciTombolSimpan(tombolSubmit);
+        if (!pemulihanTombol) return;
 
         try {
             if (editingId !== null) {
@@ -673,13 +778,14 @@ document.addEventListener("DOMContentLoaded", () => {
             formErrorIuran.textContent = error.message;
             formErrorIuran.hidden = false;
         } finally {
-            if (tombolSubmit) tombolSubmit.disabled = false;
+            // S3-07: tombol pulih setelah proses selesai.
+            pemulihanTombol.pulihkan();
         }
     });
 
     /* =========================================================
        DETAIL IURAN
-       Pembayaran siswa belum dihubungkan ke API transaksi.
+       Daftar peserta + status bayar diambil dari transaksi nyata.
        ========================================================= */
 
     function openDetail(id) {
@@ -694,8 +800,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("detailIuranSub").textContent =
             item.keterangan || "Tidak ada keterangan.";
 
-        document.getElementById("detailFrekuensi").textContent =
-            FREKUENSI[item.frekuensi] || item.frekuensi || "—";
+        document.getElementById("detailKategori").textContent =
+            KATEGORI_IURAN[item.kategori] || item.kategori || "-";
 
         document.getElementById("detailJatuhTempo").textContent =
             formatTanggal(item.jatuh_tempo);
@@ -704,7 +810,7 @@ document.addEventListener("DOMContentLoaded", () => {
             formatRupiah(item.nominal);
 
         document.getElementById("detailTerkumpul").textContent =
-            "Belum tersedia";
+            formatRupiah(item.terkumpul);
 
         document.getElementById("cariDetailSiswa").value = "";
         document.getElementById("filterDetailStatus").value = "";
@@ -717,17 +823,70 @@ document.addEventListener("DOMContentLoaded", () => {
         const tbody = document.getElementById("isiTabelDetail");
         const emptyDetail = document.getElementById("emptyDetail");
 
-        // Tidak menggunakan data siswa atau pembayaran palsu.
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align:center;padding:24px">
-                    Data siswa dan status pembayaran belum dihubungkan
-                    ke database transaksi.
-                </td>
-            </tr>
-        `;
+        const item = cariIuran(selectedIuranId);
 
-        emptyDetail.hidden = true;
+        const search = document
+            .getElementById("cariDetailSiswa")
+            .value.trim().toLowerCase();
+
+        const filter = document.getElementById("filterDetailStatus").value;
+
+        const peserta = item ? item.peserta : [];
+
+        const filtered = peserta.filter(row => {
+            const nama = String(row.nama_siswa ?? "").toLowerCase();
+            const nis = String(row.nis ?? "").toLowerCase();
+
+            const matchSearch =
+                !search || nama.includes(search) || nis.includes(search);
+
+            const matchStatus =
+                !filter ||
+                (filter === "lunas" && row.lunas) ||
+                (filter === "belum" && !row.lunas);
+
+            return matchSearch && matchStatus;
+        });
+
+        tbody.innerHTML = "";
+
+        emptyDetail.hidden = filtered.length !== 0;
+
+        filtered.forEach((row, index) => {
+            const tr = document.createElement("tr");
+
+            const namaKelas = namaKelasDariId(item ? item.id_kelas : "");
+
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+
+                <td>
+                    <div class="table-primary">
+                        ${escapeHTML(row.nama_siswa)}
+                    </div>
+                </td>
+
+                <td>${escapeHTML(row.nis ?? "-")}</td>
+
+                <td>${escapeHTML(namaKelas)}</td>
+
+                <td>
+                    <strong class="money">
+                        ${formatRupiah(row.nominal)}
+                    </strong>
+                </td>
+
+                <td>
+                    <span class="status-badge status-badge--${
+                        row.lunas ? "lunas" : "belum"
+                    }">
+                        ${row.lunas ? "Lunas" : "Belum Bayar"}
+                    </span>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
     }
 
     document.getElementById("cariDetailSiswa")
@@ -735,25 +894,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.getElementById("filterDetailStatus")
         ?.addEventListener("change", renderDetailSiswa);
-
-    /* =========================================================
-       FORM PEMBAYARAN
-       Jangan menyimpan pembayaran ke JavaScript saja.
-       ========================================================= */
-
-    document.getElementById("formPembayaran")
-        ?.addEventListener("submit", event => {
-            event.preventDefault();
-
-            const error = document.getElementById(
-                "formErrorPembayaran"
-            );
-
-            error.textContent =
-                "Pencatatan pembayaran belum dihubungkan ke API transaksi. Pembayaran belum disimpan.";
-
-            error.hidden = false;
-        });
 
     /* =========================================================
        AKSI TABEL IURAN
@@ -820,7 +960,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("cariIuran")
         ?.addEventListener("input", renderIuran);
 
-    document.getElementById("filterFrekuensi")
+    document.getElementById("filterKategori")
         ?.addEventListener("change", renderIuran);
 
     document.getElementById("filterStatusIuran")
@@ -829,7 +969,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btnResetFilter")
         ?.addEventListener("click", () => {
             document.getElementById("cariIuran").value = "";
-            document.getElementById("filterFrekuensi").value = "";
+            document.getElementById("filterKategori").value = "";
             document.getElementById("filterStatusIuran").value = "";
 
             renderIuran();

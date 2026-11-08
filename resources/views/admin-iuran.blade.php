@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Iuran — BBCashvia</title>
+    <title>Iuran - BBCashvia</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,9 @@
 
     @vite([
         'resources/css/admin-iuran.css',
-        'resources/js/admin-iuran.js'
+        'resources/js/admin-iuran.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
@@ -107,15 +109,15 @@
     <div class="sidebar__foot">
 
         <div class="sidebar__user">
-            <div class="sidebar__avatar">AN</div>
+            <div class="sidebar__avatar">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
 
             <div class="sidebar__userinfo">
-                <span class="sidebar__username">Azis N.</span>
+                <span class="sidebar__username">{{ auth()->user()->name ?? 'Administrator' }}</span>
                 <span class="sidebar__userrole">Admin</span>
             </div>
         </div>
 
-        <a href="/" class="sidebar__logout">
+        <a href="/logout" class="sidebar__logout">
             <span class="material-symbols-outlined">logout</span>
             <span>Keluar</span>
         </a>
@@ -142,7 +144,7 @@
 
             <div class="topbar__title">
                 <h1>Iuran</h1>
-                <p id="topbarDate">—</p>
+                <p id="topbarDate">-</p>
             </div>
 
         </div>
@@ -161,11 +163,11 @@
                     id="profileBtn"
                     aria-expanded="false"
                 >
-                    <span class="topbar__avatar">AN</span>
+                    <span class="topbar__avatar">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
 
                     <span class="topbar__profileinfo">
-                        <strong>Azis N.</strong>
-                        <small>Admin</small>
+                        <strong>{{ auth()->user()->name ?? 'Administrator' }}</strong>
+                        <small>Admin • {{ auth()->user()->labelKelas() }}</small>
                     </span>
 
                     <span class="material-symbols-outlined topbar__chevron">
@@ -174,10 +176,18 @@
                 </button>
 
                 <div class="dropdown" id="profileMenu">
-                    <a href="/">
-                        <span class="material-symbols-outlined">logout</span>
-                        Keluar
+
+                    <div class="dropdown__head">
+                        <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                        <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                        <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
+                    </div>
+
+                    <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
+                        <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+                        <span>Keluar</span>
                     </a>
+
                 </div>
 
             </div>
@@ -192,14 +202,16 @@
         <section class="page-head">
 
             <div>
-                <div class="page-head__eyebrow">
-                    Panel Admin • Kas Kelas
-                </div>
+                <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                    <a class="breadcrumb__link" href="/dashboard/admin">Beranda</a>
+                    <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                    <span aria-current="page">Iuran</span>
+                </nav>
 
-                <h2>Iuran</h2>
+                <h2 class="page-head__title">Iuran</h2>
 
-                <p>
-                    Kelola daftar iuran kelas, tentukan frekuensi dan nominal,
+                <p class="page-head__sub">
+                    Kelola daftar iuran kelas, tentukan kategori dan nominal,
                     lalu pantau pembayaran siswa.
                 </p>
             </div>
@@ -272,9 +284,9 @@
                         DAFTAR IURAN
                     </div>
 
-                    <h3>Iuran Kelas</h3>
+                    <h3 class="panel__title">Iuran Kelas</h3>
 
-                    <p>
+                    <p class="panel__sub">
                         Semua iuran yang sedang dan pernah dikelola.
                     </p>
                 </div>
@@ -300,8 +312,8 @@
 
 
 
-                <select id="filterFrekuensi">
-                <option value="">Semua Frekuensi</option>
+                <select id="filterKategori">
+                <option value="">Semua Kategori</option>
                 <option value="sekali bayar">Sekali Bayar</option>
                 <option value="mingguan">Mingguan</option>
                 <option value="bulanan">Bulanan</option>
@@ -336,7 +348,8 @@
                     <thead>
                         <tr>
                             <th>Nama Iuran</th>
-                            <th>Frekuensi</th>
+                            <th>Kelas</th>
+                            <th>Kategori</th>
                             <th>Jatuh Tempo</th>
                             <th>Nominal</th>
                             <th>Terkumpul</th>
@@ -448,13 +461,13 @@
 
                     <div class="field">
 
-                        <label for="inputFrekuensi">
-                            Frekuensi
+                        <label for="inputKategori">
+                            Kategori
                         </label>
 
 
-                    <select id="inputFrekuensi" required>
-                        <option value="">Pilih frekuensi</option>
+                    <select id="inputKategori" required>
+                        <option value="">Pilih kategori</option>
                         <option value="sekali bayar">Sekali Bayar</option>
                         <option value="mingguan">Mingguan</option>
                         <option value="bulanan">Bulanan</option>
@@ -513,6 +526,21 @@
                         <select id="inputStatusIuran" required>
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="field" id="fieldKelasIuran">
+
+                        <label for="inputKelasIuran">
+                            Kelas
+                        </label>
+
+                        <select id="inputKelasIuran">
+                            <option value="">
+                                - Semua Kelas (khusus Admin) -
+                            </option>
                         </select>
 
                     </div>
@@ -593,11 +621,11 @@
                 </div>
 
                 <h3 id="detailIuranTitle">
-                    —
+                    -
                 </h3>
 
                 <p id="detailIuranSub">
-                    —
+                    -
                 </p>
             </div>
 
@@ -617,23 +645,23 @@
             <div class="detail-summary">
 
                 <div class="detail-stat">
-                    <span>Frekuensi</span>
-                    <strong id="detailFrekuensi">—</strong>
+                    <span>Kategori</span>
+                    <strong id="detailKategori">-</strong>
                 </div>
 
                 <div class="detail-stat">
                     <span>Jatuh Tempo</span>
-                    <strong id="detailJatuhTempo">—</strong>
+                    <strong id="detailJatuhTempo">-</strong>
                 </div>
 
                 <div class="detail-stat">
                     <span>Nominal</span>
-                    <strong id="detailNominal">—</strong>
+                    <strong id="detailNominal">-</strong>
                 </div>
 
                 <div class="detail-stat">
                     <span>Terkumpul</span>
-                    <strong id="detailTerkumpul">—</strong>
+                    <strong id="detailTerkumpul">-</strong>
                 </div>
 
             </div>
@@ -677,7 +705,6 @@
                             <th>Kelas</th>
                             <th>Nominal</th>
                             <th>Status</th>
-                            <th>Aksi</th>
                         </tr>
                     </thead>
 
@@ -705,184 +732,6 @@
             </div>
 
         </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     MODAL PEMBAYARAN
-     ========================================================= -->
-
-<div class="modal" id="modalPembayaran" hidden>
-
-    <div class="modal__backdrop" data-close-modal></div>
-
-    <div class="modal__dialog">
-
-        <div class="modal__head">
-
-            <div>
-                <div class="modal__eyebrow">
-                    CATAT PEMBAYARAN
-                </div>
-
-                <h3>Pembayaran Iuran</h3>
-
-                <p id="pembayaranIuranSub">
-                    —
-                </p>
-            </div>
-
-            <button
-                type="button"
-                class="modal__close"
-                data-close-modal
-            >
-                <span class="material-symbols-outlined">close</span>
-            </button>
-
-        </div>
-
-
-        <form id="formPembayaran">
-
-            <div class="modal__body">
-
-                <div class="field">
-
-                    <label>Siswa</label>
-
-                    <input
-                        type="text"
-                        id="inputPembayaranSiswa"
-                        readonly
-                    >
-
-                </div>
-
-
-                <div class="uang-box">
-
-                    <div class="uang-box__title">
-                        Rincian Pembayaran
-                    </div>
-
-
-                    <div class="uang-grid">
-
-                        <div class="uang-item">
-
-                            <span class="uang-item__label">
-                                Sisa Tagihan
-                            </span>
-
-                            <strong
-                                class="uang-item__value"
-                                id="pembayaranTagihan"
-                            >
-                                Rp0
-                            </strong>
-
-                        </div>
-
-
-                        <div class="uang-item">
-
-                            <span class="uang-item__label">
-                                Uang Diterima
-                            </span>
-
-                            <div class="input-money input-money--small">
-
-                                <span>Rp</span>
-
-                                <input
-                                    type="number"
-                                    id="inputPembayaranDiterima"
-                                    min="0"
-                                    step="500"
-                                    placeholder="0"
-                                    required
-                                >
-
-                            </div>
-
-                        </div>
-
-
-                        <div class="uang-item uang-item--warning">
-
-                            <span class="uang-item__label">
-                                Kembalian
-                            </span>
-
-                            <strong
-                                class="uang-item__value"
-                                id="hasilKembalian"
-                            >
-                                Rp0
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="uang-masuk">
-
-                        <span>
-                            Uang masuk ke kas
-                        </span>
-
-                        <strong id="hasilMasukKas">
-                            Rp0
-                        </strong>
-
-                    </div>
-
-
-                    <p class="uang-hint" id="uangHint">
-                        Masukkan jumlah uang yang diterima dari siswa.
-                    </p>
-
-                </div>
-
-
-                <div
-                    class="form-error"
-                    id="formErrorPembayaran"
-                    hidden
-                ></div>
-
-            </div>
-
-
-            <div class="modal__foot">
-
-                <button
-                    type="button"
-                    class="btn btn--ghost"
-                    data-close-modal
-                >
-                    Batal
-                </button>
-
-                <button
-                    type="submit"
-                    class="btn btn--primary"
-                    id="btnSimpanPembayaran"
-                >
-                    <span class="material-symbols-outlined">
-                        payments
-                    </span>
-                    Simpan Pembayaran
-                </button>
-
-            </div>
-
-        </form>
 
     </div>
 
@@ -935,7 +784,7 @@
                 </div>
 
                 <h4 id="hapusIuranNama">
-                    —
+                    -
                 </h4>
 
                 <p>
@@ -990,5 +839,6 @@
 
 </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

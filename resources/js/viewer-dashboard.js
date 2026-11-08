@@ -1,162 +1,47 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     /* ============================================================
-       BBCASHVIA — VIEWER DASHBOARD
-       Data dummy + interaksi UI
+       BBCASHVIA - VIEWER DASHBOARD
+       Data berasal dari database (endpoint /data/dashboard*).
+       Tidak menggunakan data dummy.
        Read-only dashboard
     ============================================================ */
 
 
     /* ============================================================
-       DATA DUMMY
+       ENDPOINT
     ============================================================ */
 
-    const dataKas = {
-
-        saldoAwal: 3000000,
-
-        totalPemasukan: 12450000,
-
-        totalPengeluaran: 7200000,
-
-        totalIuran: 10800000,
-
-        totalSiswa: 36,
-
-        siswaLunas: 28,
-
-        siswaBelumLunas: 8,
-
-        totalTransaksi: 124,
-
-        transaksiHariIni: 6
-
+    const API = {
+        ringkasan: "/data/dashboard",
+        chart: "/data/dashboard/chart",
+        recent: "/data/dashboard/recent"
     };
 
 
-    const arusBulanan = [
+    /* ============================================================
+       STATE (diisi dari server)
+    ============================================================ */
 
-        {
-            bulan: "Apr",
-            masuk: 1450000,
-            keluar: 850000
-        },
-
-        {
-            bulan: "Mei",
-            masuk: 1800000,
-            keluar: 950000
-        },
-
-        {
-            bulan: "Jun",
-            masuk: 1250000,
-            keluar: 700000
-        },
-
-        {
-            bulan: "Jul",
-            masuk: 2100000,
-            keluar: 1250000
-        },
-
-        {
-            bulan: "Agu",
-            masuk: 1850000,
-            keluar: 1100000
-        },
-
-        {
-            bulan: "Sep",
-            masuk: 2200000,
-            keluar: 1350000
-        },
-
-        {
-            bulan: "Okt",
-            masuk: 1800000,
-            keluar: 1000000
-        }
-
-    ];
+    let dataKas = {
+        totalPemasukan: 0,
+        totalPengeluaran: 0,
+        totalIuran: 0,
+        totalSiswa: 0,
+        siswaLunas: 0,
+        siswaBelumLunas: 0,
+        totalTransaksi: 0,
+        transaksiHariIni: 0
+    };
 
 
-    const saldoBulanan = [
-
-        3600000,
-        4450000,
-        5000000,
-        5850000,
-        6600000,
-        7450000,
-        8250000
-
-    ];
+    let arusBulanan = [];
 
 
-    const transaksiTerbaru = [
+    let saldoBulanan = [];
 
-        {
-            bukti: "TRX-2026-00124",
-            siswa: "Nadia Putri",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Tunai",
-            tanggal: "05 Okt 2026",
-            status: "Lunas"
-        },
 
-        {
-            bukti: "TRX-2026-00123",
-            siswa: "Rizky Maulana",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Transfer",
-            tanggal: "05 Okt 2026",
-            status: "Lunas"
-        },
-
-        {
-            bukti: "TRX-2026-00122",
-            siswa: "Salsabila Putri",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Tunai",
-            tanggal: "04 Okt 2026",
-            status: "Lunas"
-        },
-
-        {
-            bukti: "TRX-2026-00121",
-            siswa: "Fajar Nugraha",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Transfer",
-            tanggal: "04 Okt 2026",
-            status: "Lunas"
-        },
-
-        {
-            bukti: "TRX-2026-00120",
-            siswa: "Aulia Rahma",
-            iuran: "Kas September",
-            nominal: 25000,
-            metode: "Tunai",
-            tanggal: "03 Okt 2026",
-            status: "Lunas"
-        },
-
-        {
-            bukti: "TRX-2026-00119",
-            siswa: "Dimas Pratama",
-            iuran: "Kas September",
-            nominal: 25000,
-            metode: "Transfer",
-            tanggal: "02 Okt 2026",
-            status: "Lunas"
-        }
-
-    ];
+    let transaksiTerbaru = [];
 
 
     /* ============================================================
@@ -169,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
             style: "currency",
             currency: "IDR",
             minimumFractionDigits: 0
-        }).format(value);
+        }).format(Number(value) || 0);
 
     };
 
@@ -205,10 +90,65 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
-    const saldoSaatIni =
-        dataKas.saldoAwal +
+    const hitungSaldoSaatIni = () =>
         dataKas.totalPemasukan -
         dataKas.totalPengeluaran;
+
+
+    const ambilJSON = async (url) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+
+                credentials: "same-origin"
+
+            });
+
+        } catch {
+
+            throw new Error(
+                "Tidak dapat terhubung ke server."
+            );
+
+        }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* respons bukan JSON */
+        }
+
+        if (!respons.ok) {
+
+            throw new Error(
+                hasil?.message ||
+                "Gagal mengambil data dari server."
+            );
+
+        }
+
+        return hasil;
+
+    };
+
+
+    const escapeHtml = (value) =>
+        String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
 
     /* ============================================================
@@ -236,9 +176,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const statHariIni =
         document.getElementById("statHariIni");
 
-
-    const kasSaldoAwal =
-        document.getElementById("kasSaldoAwal");
 
     const kasPemasukan =
         document.getElementById("kasPemasukan");
@@ -273,124 +210,122 @@ document.addEventListener("DOMContentLoaded", () => {
        RENDER STATISTICS
     ============================================================ */
 
-    if (statSaldo) {
-        statSaldo.textContent =
-            formatRupiah(saldoSaatIni);
-    }
+    const renderStatistik = () => {
+
+        const saldoSaatIni =
+            hitungSaldoSaatIni();
 
 
-    if (statPemasukan) {
-        statPemasukan.textContent =
-            formatRupiah(dataKas.totalPemasukan);
-    }
+        if (statSaldo) {
+            statSaldo.textContent =
+                formatRupiah(saldoSaatIni);
+        }
 
 
-    if (statIuran) {
-        statIuran.textContent =
-            formatRupiah(dataKas.totalIuran);
-    }
+        if (statPemasukan) {
+            statPemasukan.textContent =
+                formatRupiah(dataKas.totalPemasukan);
+        }
 
 
-    if (statIuranMeta) {
-
-        statIuranMeta.textContent =
-            `${dataKas.siswaLunas} dari ${dataKas.totalSiswa} siswa lunas`;
-
-    }
+        if (statIuran) {
+            statIuran.textContent =
+                formatRupiah(dataKas.totalIuran);
+        }
 
 
-    if (statBelumLunas) {
-        statBelumLunas.textContent =
-            dataKas.siswaBelumLunas;
-    }
+        if (statIuranMeta) {
+
+            statIuranMeta.textContent =
+                `${dataKas.siswaLunas} dari ${dataKas.totalSiswa} siswa lunas`;
+
+        }
 
 
-    if (statTransaksi) {
-        statTransaksi.textContent =
-            dataKas.totalTransaksi;
-    }
+        if (statBelumLunas) {
+            statBelumLunas.textContent =
+                dataKas.siswaBelumLunas;
+        }
 
 
-    if (statHariIni) {
-        statHariIni.textContent =
-            dataKas.transaksiHariIni;
-    }
+        if (statTransaksi) {
+            statTransaksi.textContent =
+                dataKas.totalTransaksi;
+        }
 
 
-    /* ============================================================
-       RENDER RINGKASAN KAS
-    ============================================================ */
-
-    if (kasSaldoAwal) {
-        kasSaldoAwal.textContent =
-            formatRupiah(dataKas.saldoAwal);
-    }
+        if (statHariIni) {
+            statHariIni.textContent =
+                dataKas.transaksiHariIni;
+        }
 
 
-    if (kasPemasukan) {
-        kasPemasukan.textContent =
-            formatRupiah(dataKas.totalPemasukan);
-    }
+        /* RINGKASAN KAS */
+
+        if (kasPemasukan) {
+            kasPemasukan.textContent =
+                formatRupiah(dataKas.totalPemasukan);
+        }
 
 
-    if (kasPengeluaran) {
-        kasPengeluaran.textContent =
-            formatRupiah(dataKas.totalPengeluaran);
-    }
+        if (kasPengeluaran) {
+            kasPengeluaran.textContent =
+                formatRupiah(dataKas.totalPengeluaran);
+        }
 
 
-    if (kasSaldoSaatIni) {
-        kasSaldoSaatIni.textContent =
-            formatRupiah(saldoSaatIni);
-    }
+        if (kasSaldoSaatIni) {
+            kasSaldoSaatIni.textContent =
+                formatRupiah(saldoSaatIni);
+        }
 
 
-    /* ============================================================
-       RENDER MONITORING IURAN
-    ============================================================ */
+        /* MONITORING IURAN */
 
-    const persentaseLunas =
-        Math.round(
-            (dataKas.siswaLunas / dataKas.totalSiswa) * 100
-        );
-
-
-    if (iuranPercent) {
-        iuranPercent.textContent =
-            `${persentaseLunas}%`;
-    }
+        const persentaseLunas =
+            dataKas.totalSiswa > 0
+                ? Math.round(
+                    (dataKas.siswaLunas / dataKas.totalSiswa) * 100
+                )
+                : 0;
 
 
-    if (iuranLunas) {
-        iuranLunas.textContent =
-            dataKas.siswaLunas;
-    }
+        if (iuranPercent) {
+            iuranPercent.textContent =
+                `${persentaseLunas}%`;
+        }
 
 
-    if (iuranTotal) {
-        iuranTotal.textContent =
-            dataKas.totalSiswa;
-    }
+        if (iuranLunas) {
+            iuranLunas.textContent =
+                dataKas.siswaLunas;
+        }
 
 
-    if (iuranProgress) {
-
-        iuranProgress.style.width =
-            `${persentaseLunas}%`;
-
-    }
+        if (iuranTotal) {
+            iuranTotal.textContent =
+                dataKas.totalSiswa;
+        }
 
 
-    if (iuranLunasDetail) {
-        iuranLunasDetail.textContent =
-            dataKas.siswaLunas;
-    }
+        if (iuranProgress) {
+            iuranProgress.style.width =
+                `${persentaseLunas}%`;
+        }
 
 
-    if (iuranBelumLunasDetail) {
-        iuranBelumLunasDetail.textContent =
-            dataKas.siswaBelumLunas;
-    }
+        if (iuranLunasDetail) {
+            iuranLunasDetail.textContent =
+                dataKas.siswaLunas;
+        }
+
+
+        if (iuranBelumLunasDetail) {
+            iuranBelumLunasDetail.textContent =
+                dataKas.siswaBelumLunas;
+        }
+
+    };
 
 
     /* ============================================================
@@ -399,7 +334,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function getInitials(name) {
 
-        return name
+        return String(name || "-")
             .split(" ")
             .slice(0, 2)
             .map(word => word.charAt(0))
@@ -417,7 +352,27 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("transactionTableBody");
 
 
-    if (transactionTableBody) {
+    const renderTransaksi = () => {
+
+        if (!transactionTableBody) {
+            return;
+        }
+
+
+        if (!transaksiTerbaru.length) {
+
+            transactionTableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:24px; color:#64748b;">
+                        Belum ada transaksi.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
 
         transactionTableBody.innerHTML =
             transaksiTerbaru
@@ -428,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             <td>
                                 <span class="mono-text">
-                                    ${trx.bukti}
+                                    ${escapeHtml(trx.bukti)}
                                 </span>
                             </td>
 
@@ -439,13 +394,13 @@ document.addEventListener("DOMContentLoaded", () => {
                                     </div>
 
                                     <span>
-                                        ${trx.siswa}
+                                        ${escapeHtml(trx.siswa)}
                                     </span>
                                 </div>
                             </td>
 
                             <td>
-                                ${trx.iuran}
+                                ${escapeHtml(trx.iuran)}
                             </td>
 
                             <td>
@@ -456,18 +411,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
                             <td>
                                 <span class="method-text">
-                                    ${trx.metode}
+                                    ${escapeHtml(trx.metode)}
                                 </span>
                             </td>
 
                             <td>
-                                ${trx.tanggal}
+                                ${escapeHtml(trx.tanggal)}
                             </td>
 
                             <td>
                                 <span class="status-pill success">
                                     <span class="status-dot"></span>
-                                    ${trx.status}
+                                    ${escapeHtml(trx.status)}
                                 </span>
                             </td>
 
@@ -477,7 +432,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 })
                 .join("");
 
-    }
+    };
 
 
     /* ============================================================
@@ -521,8 +476,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        if (!arusBulanan.length) {
+
+            barChart.innerHTML =
+                `<p class="chart-empty">Belum ada data grafik.</p>`;
+
+            return;
+
+        }
+
+
         const maxValue =
             Math.max(
+                1,
                 ...arusBulanan.flatMap(item => [
                     item.masuk,
                     item.keluar
@@ -686,9 +652,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    renderBarChart();
-
-
     /* ============================================================
        LINE CHART
     ============================================================ */
@@ -701,6 +664,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!lineChart) {
             return;
+        }
+
+
+        if (!saldoBulanan.length) {
+
+            lineChart.innerHTML =
+                `<p class="chart-empty">Belum ada data saldo.</p>`;
+
+            return;
+
         }
 
 
@@ -730,7 +703,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         const maxValue =
-            Math.max(...saldoBulanan);
+            Math.max(1, ...saldoBulanan);
+
+
+        const pembagi =
+            saldoBulanan.length > 1
+                ? saldoBulanan.length - 1
+                : 1;
 
 
         const points =
@@ -738,7 +717,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 const x =
                     leftPadding +
-                    (usableWidth / (saldoBulanan.length - 1)) *
+                    (usableWidth / pembagi) *
                     index;
 
 
@@ -828,6 +807,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         points.forEach((point, index) => {
 
+            const label =
+                arusBulanan[index]?.bulan ?? "";
+
+
             svg += `
 
                 <circle
@@ -843,7 +826,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     text-anchor="middle"
                     class="chart-axis-label"
                 >
-                    ${arusBulanan[index].bulan}
+                    ${label}
                 </text>
 
             `;
@@ -857,9 +840,6 @@ document.addEventListener("DOMContentLoaded", () => {
         lineChart.innerHTML = svg;
 
     }
-
-
-    renderLineChart();
 
 
     /* ============================================================
@@ -904,6 +884,152 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
     });
+
+
+    /* ============================================================
+       MUAT DATA DARI DATABASE
+    ============================================================ */
+
+    const muatRingkasan = async () => {
+
+        const hasil = await ambilJSON(API.ringkasan);
+
+        const kpi = hasil?.data?.kpi ?? {};
+        const ring = hasil?.data?.ringkasan ?? {};
+
+
+        const belumLunas =
+            Number(kpi.siswa_belum_lunas) || 0;
+
+
+        dataKas = {
+            totalPemasukan: Number(kpi.total_pemasukan) || 0,
+            totalPengeluaran: Number(kpi.total_pengeluaran) || 0,
+            totalIuran: Number(kpi.total_iuran) || 0,
+            totalSiswa: Number(kpi.jumlah_siswa) || 0,
+            siswaLunas: Math.max(
+                0,
+                (Number(kpi.jumlah_siswa) || 0) - belumLunas
+            ),
+            siswaBelumLunas: belumLunas,
+            totalTransaksi: Number(kpi.total_transaksi) || 0,
+            transaksiHariIni: 0
+        };
+
+    };
+
+
+    const muatGrafik = async () => {
+
+        const hasil = await ambilJSON(API.chart);
+
+        const baris =
+            Array.isArray(hasil?.data) ? hasil.data : [];
+
+
+        arusBulanan = baris.map((item) => ({
+            bulan: item.bulan ?? "-",
+            masuk: Number(item.masuk) || 0,
+            keluar: Number(item.keluar) || 0
+        }));
+
+
+        /* Saldo kumulatif per bulan (untuk grafik garis). */
+
+        let jalan = 0;
+
+        saldoBulanan = arusBulanan.map((item) => {
+
+            jalan += item.masuk - item.keluar;
+
+            return jalan;
+
+        });
+
+    };
+
+
+    const muatTerbaru = async () => {
+
+        const hasil = await ambilJSON(API.recent);
+
+        const baris =
+            Array.isArray(hasil?.data) ? hasil.data : [];
+
+
+        transaksiTerbaru = baris.map((t) => {
+
+            const arah =
+                String(t.arah || "").toLowerCase();
+
+
+            return {
+                bukti: t.id ?? "-",
+                siswa: t.unit ?? "-",
+                iuran: t.ket ?? "-",
+                nominal: Number(t.nominal) || 0,
+                metode: arah === "pemasukan"
+                    ? "Masuk"
+                    : (arah === "pengeluaran" ? "Keluar" : "-"),
+                tanggal: t.tanggal ?? "-",
+                tanggalIso: t.tanggal_iso ?? null,
+                status: t.status ?? "-"
+            };
+
+        });
+
+
+        const hariIni = (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        })();
+
+
+        dataKas.transaksiHariIni =
+            transaksiTerbaru.filter(
+                (t) => t.tanggalIso === hariIni
+            ).length;
+
+    };
+
+
+    const muatSemua = async () => {
+
+        try {
+
+            await Promise.all([
+                muatRingkasan(),
+                muatGrafik(),
+                muatTerbaru()
+            ]);
+
+        } catch (err) {
+
+            /* Tetap render nilai nol / kosong agar UI tidak rusak. */
+
+            console.error(err);
+
+        }
+
+
+        renderStatistik();
+
+        renderTransaksi();
+
+        renderBarChart();
+
+        renderLineChart();
+
+    };
+
+
+    /* Render awal (kosong), lalu isi dari database. */
+
+    renderBarChart();
+
+    renderLineChart();
+
+    muatSemua();
 
 
     /* ============================================================
@@ -1143,7 +1269,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        window.location.href = "/";
+        window.location.href = "/logout";
 
     }
 
@@ -1206,7 +1332,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* ============================================================
-       CLOSE SIDEBAR AFTER NAVIGATION — MOBILE
+       CLOSE SIDEBAR AFTER NAVIGATION - MOBILE
     ============================================================ */
 
     document

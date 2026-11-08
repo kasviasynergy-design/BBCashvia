@@ -1,31 +1,100 @@
 /* ============================================================
-   BBCASHVIA — HALAMAN TRANSAKSI (ADMIN)
+   BBCASHVIA - HALAMAN TRANSAKSI (ADMIN)
    Data transaksi berasal dari API Laravel (database sungguhan).
    Tidak menggunakan data dummy.
    ============================================================ */
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    beriKunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
 (function () {
     "use strict";
 
     const API_URL = "/admin/api/transaksi";
+    const API_KATEGORI = "/admin/api/transaksi/kategori";
 
     const $ = (id) => document.getElementById(id);
 
     /* ============================================================
-       OPSI KATEGORI (konfigurasi UI, bukan data dummy tampilan)
+       OPSI KATEGORI (SATU SUMBER DARI BACKEND)
        ============================================================ */
-    const KATEGORI_MASUK = [
-        "Iuran",
-        "Kas",
-        "Pemasukan lainnya"
-    ];
+    /*
+     * Daftar kategori TIDAK lagi ditulis dua kali di JavaScript.
+     * Halaman mengambilnya dari endpoint /admin/api/transaksi/kategori
+     * yang bersumber dari model Transaksi::KATEGORI, sehingga pilihan
+     * di form Tambah Transaksi, form banyak baris, dan dropdown filter
+     * SELALU sama persis dengan yang diterima server.
+     *
+     * Cadangan di bawah hanya dipakai bila pengambilan gagal, supaya
+     * form tidak pernah kosong.
+     */
+    const KATEGORI_CADANGAN = {
+        masuk: ["Iuran", "kas", "pemasukan lainnya"],
+        keluar: [
+            "kebutuhan kelas",
+            "perlengkapan kelas",
+            "kegiatan kelas",
+            "pengeluaran lainnya"
+        ]
+    };
 
-    const KATEGORI_KELUAR = [
-        "Kebutuhan kelas",
-        "Perlengkapan kelas",
-        "Kegiatan kelas",
-        "Pengeluaran lainnya"
-    ];
+    let KATEGORI_MASUK = [...KATEGORI_CADANGAN.masuk];
+    let KATEGORI_KELUAR = [...KATEGORI_CADANGAN.keluar];
+
+    /* Label tampilan (Iuran, Kas, dst.) dari backend bila ada. */
+    const LABEL_KATEGORI = new Map();
+
+    /* Ambil kategori dari backend sekali, lalu pakai di semua tempat. */
+    const muatKategori = async () => {
+        try {
+            const hasil = await permintaanAPI(API_KATEGORI);
+            const data = hasil?.data;
+
+            if (!data) return;
+
+            const masuk = Array.isArray(data.masuk) ? data.masuk : [];
+            const keluar = Array.isArray(data.keluar) ? data.keluar : [];
+
+            const nilaiMasuk = masuk.map((k) => k.value).filter(Boolean);
+            const nilaiKeluar = keluar.map((k) => k.value).filter(Boolean);
+
+            if (nilaiMasuk.length) KATEGORI_MASUK = nilaiMasuk;
+            if (nilaiKeluar.length) KATEGORI_KELUAR = nilaiKeluar;
+
+            [...masuk, ...keluar].forEach((k) => {
+                if (k?.value) LABEL_KATEGORI.set(k.value, k.label ?? k.value);
+            });
+
+            // Isi ulang pilihan yang mungkin sudah terlanjur dibuat
+            // dengan daftar cadangan.
+            isiKategoriForm();
+            isiPilihanKategori();
+            document
+                .querySelectorAll(".baris-transaksi")
+                .forEach((baris) => {
+                    if (baris.querySelector(".baris-kategori")) {
+                        isiKategoriBaris(baris);
+                    }
+                });
+        } catch {
+            /* Diamkan; cadangan sudah terpasang. */
+        }
+    };
+
+    /* Ubah nilai kategori menjadi label yang enak dibaca. */
+    const labelKategori = (nilai) => {
+        const teks = String(nilai ?? "");
+
+        if (LABEL_KATEGORI.has(teks)) {
+            return LABEL_KATEGORI.get(teks);
+        }
+
+        // Cadangan: kapitalkan setiap kata (kecuali yang sudah rapi).
+        return teks.replace(/\b\w/g, (c) => c.toUpperCase());
+    };
 
     /* ============================================================
        STATE
@@ -34,6 +103,270 @@
     let modeForm = "tambah";
     let idSedangDiubah = null;
     let idSedangDihapus = null;
+
+    /* Daftar kelas dari database (untuk pilihan kelas transaksi). */
+    let DAFTAR_KELAS = [];
+
+    /* Master iuran aktif & siswa untuk pembayaran iuran. */
+    let DAFTAR_IURAN = [];
+    let DAFTAR_SISWA = [];
+
+    const kelasDariId = (id) => {
+        if (id === null || id === undefined || id === "") return "";
+        const kelas = DAFTAR_KELAS.find(
+            (k) => String(k.id_kelas) === String(id)
+        );
+        return kelas ? kelas.nama_kelas : "";
+    };
+
+    /* Ambil daftar kelas dari API admin. */
+    const muatKelas = async () => {
+        if (DAFTAR_KELAS.length) return;
+
+        try {
+            const hasil = await permintaanAPI("/admin/api/kelas");
+            DAFTAR_KELAS = Array.isArray(hasil.data) ? hasil.data : [];
+            isiPilihanKelas();
+        } catch {
+            DAFTAR_KELAS = [];
+        }
+    };
+
+    /* Isi select kelas pada form dengan data kelas nyata. */
+    const isiPilihanKelas = () => {
+        const select = $("inputKelas");
+        if (!select) return;
+
+        const nilaiLama = select.value;
+
+        select.innerHTML = `
+            <option value="">- Pilih kelas (opsional) -</option>
+            ${DAFTAR_KELAS.map((k) => `
+                <option value="${escapeHtml(k.id_kelas)}">
+                    ${escapeHtml(k.nama_kelas)}
+                </option>
+            `).join("")}
+        `;
+
+        select.value = DAFTAR_KELAS.some(
+            (k) => String(k.id_kelas) === String(nilaiLama)
+        ) ? nilaiLama : "";
+    };
+
+    /* ============================================================
+       PILIHAN IURAN & SISWA (PEMBAYARAN)
+       ============================================================ */
+
+    const iuranAktif = (iuran) =>
+        String(iuran?.status ?? "").toLowerCase() === "aktif";
+
+    const cariIuran = (id) =>
+        DAFTAR_IURAN.find(
+            (iuran) => String(iuran.id_iuran) === String(id)
+        );
+
+    const cariSiswa = (id) =>
+        DAFTAR_SISWA.find(
+            (siswa) => String(siswa.id_siswa) === String(id)
+        );
+
+    /* Ambil master iuran & siswa dari API admin. */
+    const muatPilihanPembayaran = async () => {
+        try {
+            const [hasilIuran, hasilSiswa] = await Promise.all([
+                permintaanAPI("/admin/api/iuran"),
+                permintaanAPI("/admin/api/siswa")
+            ]);
+
+            DAFTAR_IURAN = Array.isArray(hasilIuran?.data)
+                ? hasilIuran.data
+                : [];
+            DAFTAR_SISWA = Array.isArray(hasilSiswa?.data)
+                ? hasilSiswa.data
+                : [];
+
+            isiPilihanIuran($("inputIuran")?.value || "");
+            isiPilihanSiswa($("inputSiswa")?.value || "");
+        } catch (error) {
+            // Form tetap dapat dipakai untuk pemasukan non-iuran.
+            console.error("Gagal memuat pilihan iuran/siswa:", error);
+        }
+    };
+
+    /* Hanya iuran Aktif yang boleh dipilih untuk pembayaran baru. */
+    const isiPilihanIuran = (
+        nilaiTerpilih = "",
+        idKelas = null
+    ) => {
+        const select = $("inputIuran");
+        if (!select) return;
+
+        const nilaiLama = nilaiTerpilih || select.value;
+        const kelas = idKelas === null
+            ? String($("inputKelas")?.value || "")
+            : String(idKelas || "");
+
+        let daftar = DAFTAR_IURAN.filter(
+            (iuran) =>
+                iuranAktif(iuran) &&
+                (!kelas || String(iuran.id_kelas) === kelas)
+        );
+
+        // Saat mengubah transaksi lama, sertakan iuran yang sudah
+        // Selesai agar relasi lamanya tidak hilang tanpa sengaja.
+        if (
+            nilaiLama &&
+            !daftar.some(
+                (iuran) => String(iuran.id_iuran) === String(nilaiLama)
+            )
+        ) {
+            const lama = cariIuran(nilaiLama);
+            if (lama) daftar = [lama, ...daftar];
+        }
+
+        select.innerHTML =
+            `<option value="">- Tanpa iuran -</option>` +
+            daftar.map((iuran) => `
+                <option value="${escapeHtml(iuran.id_iuran)}">
+                    ${escapeHtml(iuran.nama_iuran)}
+                    - Rp ${escapeHtml(
+                        Number(iuran.nominal || 0).toLocaleString("id-ID")
+                    )}
+                    ${iuranAktif(iuran) ? "" : " (Selesai)"}
+                </option>
+            `).join("");
+
+        select.value = daftar.some(
+            (iuran) => String(iuran.id_iuran) === String(nilaiLama)
+        ) ? String(nilaiLama) : "";
+    };
+
+    /* Siswa mengikuti kelas iuran/kelas transaksi yang dipilih. */
+    const isiPilihanSiswa = (
+        nilaiTerpilih = "",
+        idKelas = null
+    ) => {
+        const select = $("inputSiswa");
+        if (!select) return;
+
+        const nilaiLama = nilaiTerpilih || select.value;
+        const kelas = idKelas === null
+            ? String($("inputKelas")?.value || "")
+            : String(idKelas || "");
+
+        let daftar = DAFTAR_SISWA.filter(
+            (siswa) =>
+                !kelas || String(siswa.id_kelas) === kelas
+        );
+
+        if (
+            nilaiLama &&
+            !daftar.some(
+                (siswa) => String(siswa.id_siswa) === String(nilaiLama)
+            )
+        ) {
+            const lama = cariSiswa(nilaiLama);
+            if (lama) daftar = [lama, ...daftar];
+        }
+
+        select.innerHTML =
+            `<option value="">- Pilih siswa -</option>` +
+            daftar.map((siswa) => `
+                <option value="${escapeHtml(siswa.id_siswa)}">
+                    ${escapeHtml(siswa.nama)}
+                    - ${escapeHtml(siswa.nis || "-")}
+                </option>
+            `).join("");
+
+        select.value = daftar.some(
+            (siswa) => String(siswa.id_siswa) === String(nilaiLama)
+        ) ? String(nilaiLama) : "";
+    };
+
+    /* Terapkan informasi iuran: nominal, keterangan, kelas, siswa. */
+    const terapkanPilihanIuran = (otomatis = true) => {
+        const iuran = cariIuran($("inputIuran")?.value || "");
+        const info = $("infoIuran");
+
+        if (!iuran) {
+            if (info) {
+                info.hidden = true;
+                info.textContent = "";
+            }
+
+            if (otomatis) {
+                isiPilihanSiswa($("inputSiswa")?.value || "", "");
+            }
+
+            return;
+        }
+
+        if (otomatis) {
+            const radioMasuk = document.querySelector(
+                'input[name="jenisTransaksi"][value="masuk"]'
+            );
+            if (radioMasuk) radioMasuk.checked = true;
+
+            if ($("inputKategori")) $("inputKategori").value = "Iuran";
+            if ($("inputKelas")) $("inputKelas").value = iuran.id_kelas ?? "";
+            if ($("inputTagihan")) {
+                $("inputTagihan").value = Number(iuran.nominal || 0)
+                    .toLocaleString("id-ID");
+            }
+            if ($("inputDiterima")) {
+                const diterimaLama = parseAngka($("inputDiterima").value);
+                if (diterimaLama < Number(iuran.nominal || 0)) {
+                    $("inputDiterima").value = Number(iuran.nominal || 0)
+                        .toLocaleString("id-ID");
+                }
+            }
+            if (
+                $("inputKeterangan") &&
+                !$("inputKeterangan").value.trim()
+            ) {
+                $("inputKeterangan").value =
+                    `Pembayaran ${iuran.nama_iuran}`;
+            }
+
+            isiPilihanSiswa(
+                "",
+                iuran.id_kelas || $("inputKelas")?.value || ""
+            );
+        } else {
+            isiPilihanSiswa(
+                $("inputSiswa")?.value || "",
+                iuran.id_kelas || $("inputKelas")?.value || ""
+            );
+        }
+
+        if (info) {
+            info.textContent =
+                `${iuran.nama_iuran} - Tagihan Rp ` +
+                `${Number(iuran.nominal || 0).toLocaleString("id-ID")}` +
+                (iuran.keterangan ? ` - ${iuran.keterangan}` : "") +
+                (iuranAktif(iuran) ? "" : " (Selesai)");
+            info.hidden = false;
+        }
+
+        hitungUangLive();
+    };
+
+    /* Tampilkan pilihan iuran hanya untuk transaksi pemasukan. */
+    const perbaruiVisibilitasPembayaran = () => {
+        const grup = $("grupPembayaranIuran");
+        const masuk = jenisTerpilih() === "masuk";
+
+        if (grup) grup.hidden = !masuk;
+
+        if (!masuk) {
+            if ($("inputIuran")) $("inputIuran").value = "";
+            if ($("inputSiswa")) $("inputSiswa").value = "";
+            if ($("infoIuran")) {
+                $("infoIuran").hidden = true;
+                $("infoIuran").textContent = "";
+            }
+        }
+    };
 
     /* ============================================================
        UTILITAS
@@ -59,9 +392,19 @@
     };
 
     const formatTanggal = (iso) => {
-        if (!iso) return "—";
-        const d = new Date(iso + "T00:00:00");
-        if (Number.isNaN(d.getTime())) return iso;
+        // Terima "2026-10-19", "2026-10-19 00:00:00", atau ISO penuh.
+        const bagian = String(iso ?? "").slice(0, 10).split("-");
+
+        if (bagian.length !== 3 || !bagian[0]) return "-";
+
+        const d = new Date(
+            Number(bagian[0]),
+            Number(bagian[1]) - 1,
+            Number(bagian[2])
+        );
+
+        if (Number.isNaN(d.getTime())) return String(iso);
+
         return d.toLocaleDateString("id-ID", {
             day: "2-digit",
             month: "short",
@@ -93,15 +436,26 @@
         };
 
         let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
         try {
-            respons = await fetch(url, {
+            // S3-07: permintaan POST otomatis dibawa kunci
+            // idempotensi untuk pengaman di backend.
+            respons = await fetch(url, beriKunciIdempoten({
                 ...opsi,
                 headers,
-                credentials: "same-origin"
-            });
-        } catch {
+                credentials: "same-origin",
+                signal: controller.signal
+            }));
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") {
+                throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            }
             throw new Error("Tidak dapat terhubung ke server. Periksa koneksi Laravel.");
         }
+        clearTimeout(timeoutId);
 
         let hasil = {};
         try {
@@ -116,6 +470,9 @@
                 const pesan = Object.values(hasil.errors).flat().filter(Boolean);
                 if (pesan.length) throw new Error(pesan.join(" "));
             }
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
             throw new Error("Terjadi kesalahan saat menghubungi server.");
         }
 
@@ -123,14 +480,23 @@
     };
 
     const muatData = async () => {
+        const tbodyTx = $("isiTabelTransaksi");
+        if (tbodyTx) {
+            tbodyTx.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="7"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
         try {
+            await muatKelas();
+            await muatPilihanPembayaran();
+
             const hasil = await permintaanAPI(API_URL);
 
             const data = Array.isArray(hasil.data) ? hasil.data : [];
 
             TRANSAKSI = data.map((t) => {
                 const jenisDb = String(t.jenis ?? "").toUpperCase();
-                const jenis = jenisDb === "M" ? "masuk" : jenisDb === "K" ? "keluar" : String(t.jenis ?? "masuk").toLowerCase();
+                const jenis = (jenisDb === "PEMASUKAN" || jenisDb === "M") ? "masuk" : (jenisDb === "PENGELUARAN" || jenisDb === "K") ? "keluar" : String(t.jenis ?? "masuk").toLowerCase();
 
                 return {
                     id: t.id_transaksi ?? t.id ?? "",
@@ -138,17 +504,28 @@
                     jenis: jenis,
                     kategori: t.kategori ?? "",
                     keterangan: t.keterangan ?? "",
-                    kelas: t.nama_siswa ?? t.pic ?? t.id_siswa ?? "",
-                    tanggal: t.tanggal ?? "",
-                    waktu: "",
+                    id_kelas: t.id_kelas ?? "",
+                    id_siswa: t.id_siswa ?? "",
+                    id_iuran: t.id_iuran ?? "",
+                    nama_siswa: t.siswa?.nama_siswa ?? t.nama_siswa ?? "",
+                    kelas: kelasDariId(t.id_kelas) || (t.siswa?.nama_kelas ?? t.nama_siswa ?? ""),
+                    tanggal: String(t.tanggal_format ?? t.tanggal ?? "").slice(0, 10),
+                    waktu: t.waktu ?? "",
                     tagihan: (floatval(t.nominal ?? 0)),
                     diterima: (floatval(t.uang_diterima ?? 0)),
-                    petugas: t.pic ?? "",
+                    petugas: t.dicatat_oleh ?? t.pic ?? "",
                     metode: t.metode ?? "",
                     detail: t.Detail ?? "",
-                    bukti_file: t.bukti_file ?? ""
+                    bukti_transaksi: t.bukti_transaksi ?? ""
                 };
             });
+
+            // Isi dropdown filter Kategori & Bulan lebih dulu agar
+            // pilihannya tersedia sejak halaman dibuka (sebelumnya
+            // baru terisi setelah filter Jenis diubah atau Reset
+            // diklik).
+            isiPilihanKategori();
+            isiPilihanBulan();
 
             terapkanFilter();
         } catch (error) {
@@ -168,14 +545,18 @@
        CHIP KATEGORI
        ============================================================ */
     const CHIP_KATEGORI = {
-        "Iuran": "chip--iuran",
-        "Kas": "chip--kas",
-        "Pemasukan lainnya": "chip--masuk-lain",
-        "Kebutuhan kelas": "chip--butuh",
-        "Perlengkapan kelas": "chip--perlengkapan",
-        "Kegiatan kelas": "chip--kegiatan",
-        "Pengeluaran lainnya": "chip--keluar-lain"
+        "iuran": "chip--iuran",
+        "kas": "chip--kas",
+        "pemasukan lainnya": "chip--masuk-lain",
+        "kebutuhan kelas": "chip--butuh",
+        "perlengkapan kelas": "chip--perlengkapan",
+        "kegiatan kelas": "chip--kegiatan",
+        "pengeluaran lainnya": "chip--keluar-lain"
     };
+
+    /* Cari kelas warna chip tanpa terpengaruh huruf besar/kecil. */
+    const chipKategori = (nilai) =>
+        CHIP_KATEGORI[String(nilai ?? "").toLowerCase()] || "chip--keluar-lain";
 
     /* ============================================================
        RENDER TABEL
@@ -183,7 +564,7 @@
     const barisTabel = (t) => {
         const nominal = hitungNilaiKas(t.tagihan, t.diterima);
         const tanda = t.jenis === "masuk" ? "+" : "−";
-        const chip = CHIP_KATEGORI[t.kategori] || "chip--keluar-lain";
+        const chip = chipKategori(t.kategori);
 
         return `
             <tr>
@@ -195,11 +576,14 @@
                     ${t.kelas ? `<span class="cell-keterangan__sub">${escapeHtml(t.kelas)}</span>` : ""}
                 </td>
                 <td>
-                    <span class="chip ${chip}">${escapeHtml(t.kategori)}</span>
+                    <span class="chip ${chip}">${escapeHtml(labelKategori(t.kategori))}</span>
                 </td>
                 <td class="cell-tanggal">
                     <div class="cell-tanggal__utama">${formatTanggal(t.tanggal)}</div>
-                    <div class="cell-tanggal__sub">${escapeHtml(t.waktu || "—")} WIB</div>
+                    <div class="cell-tanggal__sub">${escapeHtml(t.waktu || "-")} WIB</div>
+                </td>
+                <td class="cell-petugas">
+                    ${escapeHtml(t.petugas || "-")}
                 </td>
                 <td class="td-r">
                     <span class="cell-nominal cell-nominal--${escapeHtml(t.jenis)}">
@@ -266,7 +650,7 @@
     };
 
     /* ============================================================
-       FILTER — KATEGORI
+       FILTER - KATEGORI
        ============================================================ */
     const isiPilihanKategori = () => {
         const pilihJenis = $("filterJenis");
@@ -282,10 +666,46 @@
         else daftar = [...KATEGORI_MASUK, ...KATEGORI_KELUAR];
 
         pilihKategori.innerHTML = `<option value="semua">Semua Kategori</option>` +
-            daftar.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+            daftar.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`).join("");
 
         const masihAda = [...pilihKategori.options].some(o => o.value === nilaiLama);
         if (masihAda) pilihKategori.value = nilaiLama;
+    };
+
+    /* ============================================================
+       FILTER - BULAN
+       ============================================================ */
+    /*
+     * Daftar bulan diambil dari data nyata (bukan hardcode), sehingga
+     * isinya selalu sesuai transaksi yang tersimpan.
+     */
+    const NAMA_BULAN = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    const isiPilihanBulan = () => {
+        const pilih = $("filterBulan");
+        if (!pilih) return;
+
+        const nilaiLama = pilih.value;
+
+        const daftar = [...new Set(
+            TRANSAKSI
+                .map(t => String(t.tanggal ?? "").slice(0, 7))
+                .filter(b => /^\d{4}-\d{2}$/.test(b))
+        )].sort().reverse();
+
+        pilih.innerHTML = `<option value="semua">Semua Bulan</option>` +
+            daftar.map(b => {
+                const [th, bl] = b.split("-");
+                const nama = NAMA_BULAN[Number(bl) - 1] ?? bl;
+                return `<option value="${b}">${nama} ${th}</option>`;
+            }).join("");
+
+        if ([...pilih.options].some(o => o.value === nilaiLama)) {
+            pilih.value = nilaiLama;
+        }
     };
 
     /* ============================================================
@@ -305,8 +725,15 @@
 
         const hasil = TRANSAKSI.filter(t => {
             if (jenis !== "semua" && t.jenis !== jenis) return false;
-            if (kategori !== "semua" && t.kategori !== kategori) return false;
-            if (bulan !== "semua" && !t.tanggal.startsWith(bulan)) return false;
+            if (
+                kategori !== "semua" &&
+                String(t.kategori ?? "").toLowerCase() !==
+                    String(kategori).toLowerCase()
+            ) return false;
+            if (
+                bulan !== "semua" &&
+                !String(t.tanggal ?? "").startsWith(bulan)
+            ) return false;
             if (kata) {
                 const gabung = `${t.id} ${t.keterangan} ${t.kategori} ${t.kelas} ${t.petugas}`.toLowerCase();
                 if (!gabung.includes(kata)) return false;
@@ -321,9 +748,10 @@
     const resetFilter = () => {
         if ($("cariTransaksi")) $("cariTransaksi").value = "";
         if ($("filterJenis")) $("filterJenis").value = "semua";
-        if ($("filterBulan")) $("filterBulan").value = "semua";
         isiPilihanKategori();
+        isiPilihanBulan();
         if ($("filterKategori")) $("filterKategori").value = "semua";
+        if ($("filterBulan")) $("filterBulan").value = "semua";
         terapkanFilter();
     };
 
@@ -364,7 +792,7 @@
     };
 
     /* ============================================================
-       FORM — JENIS & KATEGORI
+       FORM - JENIS & KATEGORI
        ============================================================ */
     const jenisTerpilih = () => {
         const radio = document.querySelector('input[name="jenisTransaksi"]:checked');
@@ -374,12 +802,54 @@
     const isiKategoriForm = () => {
         const pilih = $("inputKategori");
         if (!pilih) return;
-        const jenis = jenisTerpilih();
+
         const nilaiLama = pilih.value;
-        const daftar = jenis === "masuk" ? KATEGORI_MASUK : KATEGORI_KELUAR;
-        pilih.innerHTML = daftar.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+
+        /*
+         * Form menampilkan SELURUH kategori (7) dipisah per jenis:
+         * kelompok "Pemasukan" dan "Pengeluaran". Saat pengguna
+         * memilih kategori, jenis transaksi menyesuaikan otomatis
+         * (lihat pasangEvent) sehingga server tidak pernah menerima
+         * kategori yang salah jenis.
+         */
+        const opsi = (k) =>
+            `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`;
+
+        pilih.innerHTML =
+            `<optgroup label="Pemasukan">${KATEGORI_MASUK.map(opsi).join("")}</optgroup>` +
+            `<optgroup label="Pengeluaran">${KATEGORI_KELUAR.map(opsi).join("")}</optgroup>`;
+
         const masihAda = [...pilih.options].some(o => o.value === nilaiLama);
-        if (masihAda) pilih.value = nilaiLama;
+        if (masihAda) {
+            pilih.value = nilaiLama;
+        } else if (pilih.options.length) {
+            pilih.selectedIndex = 0;
+        }
+    };
+
+    /**
+     * Kategori menentukan jenis transaksi.
+     *
+     * Kategori pengeluaran hanya sah bila jenis = Pengeluaran
+     * (aturan server), jadi saat pengguna memilih kategori dari
+     * kelompok pengeluaran, radio jenis otomatis dipindah.
+     */
+    const sesuaikanJenisKeKategori = () => {
+        const pilih = $("inputKategori");
+        if (!pilih) return;
+
+        const kategori = pilih.value;
+        const jenisKategori = KATEGORI_MASUK.includes(kategori) ? "masuk" : "keluar";
+        const radio = document.querySelector(
+            `input[name="jenisTransaksi"][value="${jenisKategori}"]`
+        );
+
+        if (radio && !radio.checked) {
+            radio.checked = true;
+            sesuaikanLabelJenis();
+        }
+
+        perbaruiVisibilitasPembayaran();
     };
 
     const sesuaikanLabelJenis = () => {
@@ -409,6 +879,7 @@
         const hasilMasukKas = $("hasilMasukKas");
         if (!inputTagihan || !inputDiterima || !hasilKembalian || !hasilMasukKas) return;
 
+        const jenis = jenisTerpilih();
         const tagihan = parseAngka(inputTagihan.value);
         const diterima = parseAngka(inputDiterima.value);
         const kembalian = hitungKembalian(tagihan, diterima);
@@ -423,7 +894,7 @@
         if (diterima > 0 && diterima < tagihan) {
             const kekurangan = tagihan - diterima;
             hint.classList.add("is-peringatan");
-            hint.innerHTML = `<span class="material-symbols-outlined">info</span>Uang ${jenis === "masuk" ? "yang diterima" : "yang dibayarkan"} lebih kecil dari nilai transaksi — masih kurang Rp ${kekurangan.toLocaleString("id-ID")}.`;
+            hint.innerHTML = `<span class="material-symbols-outlined">info</span>Uang ${jenis === "masuk" ? "yang diterima" : "yang dibayarkan"} lebih kecil dari nilai transaksi - masih kurang Rp ${kekurangan.toLocaleString("id-ID")}.`;
             return;
         }
         if (diterima > tagihan && tagihan > 0) {
@@ -436,18 +907,21 @@
     };
 
     /* ============================================================
-       FORM — BUKA TAMBAH (Langsung Tambahkan)
+       FORM - BUKA TAMBAH (Langsung Tambahkan)
        ============================================================ */
-    const bukaFormTambah = () => {
+    const bukaFormTambah = async () => {
         const form = $("formTransaksi");
         if (!form) return;
 
         modeForm = "tambah";
         idSedangDiubah = null;
 
+        await muatPilihanPembayaran();
+
         if ($("modalFormEyebrow")) $("modalFormEyebrow").textContent = "TRANSAKSI BARU";
         if ($("modalFormTitle")) $("modalFormTitle").textContent = "Catat Transaksi";
         if ($("btnSimpanText")) $("btnSimpanText").textContent = "Simpan Transaksi";
+        if ($("btnSimpanDanTambah")) $("btnSimpanDanTambah").hidden = false;
 
         form.reset();
         if ($("formError")) $("formError").hidden = true;
@@ -456,13 +930,20 @@
         if (radioMasuk) radioMasuk.checked = true;
 
         isiKategoriForm();
+        isiPilihanIuran();
+        isiPilihanSiswa();
 
         const hariIni = new Date();
         const iso = `${hariIni.getFullYear()}-${String(hariIni.getMonth() + 1).padStart(2, "0")}-${String(hariIni.getDate()).padStart(2, "0")}`;
         if ($("inputTanggal")) $("inputTanggal").value = iso;
         if ($("hasilKembalian")) $("hasilKembalian").textContent = "0";
         if ($("hasilMasukKas")) $("hasilMasukKas").textContent = "0";
+        if ($("infoIuran")) {
+            $("infoIuran").hidden = true;
+            $("infoIuran").textContent = "";
+        }
 
+        perbaruiVisibilitasPembayaran();
         sesuaikanLabelJenis();
         bukaModal("modalForm");
 
@@ -470,10 +951,10 @@
     };
 
     /* ============================================================
-       FORM — BUKA UBAH
+       FORM - BUKA UBAH
        ============================================================ */
     const bukaFormUbah = async (id) => {
-        const t = TRANSAKSI.find(item => item.id === id);
+        const t = TRANSAKSI.find(item => String(item.id) === String(id));
         if (!t) return;
 
         const form = $("formTransaksi");
@@ -482,25 +963,53 @@
         modeForm = "ubah";
         idSedangDiubah = id;
 
+        await muatPilihanPembayaran();
+
         if ($("modalFormEyebrow")) $("modalFormEyebrow").textContent = "UBAH TRANSAKSI";
         if ($("modalFormTitle")) $("modalFormTitle").textContent = `Ubah ${t.id}`;
         if ($("btnSimpanText")) $("btnSimpanText").textContent = "Perbarui Transaksi";
+        if ($("btnSimpanDanTambah")) $("btnSimpanDanTambah").hidden = true;
 
         form.reset();
         if ($("formError")) $("formError").hidden = true;
 
-        const radio = document.querySelector(`input[name="jenisTransaksi"][value="${t.jenis}"]`);
+        const nilaiJenis = t.jenis === "masuk" ? "masuk" : "keluar";
+        const radio = document.querySelector(`input[name="jenisTransaksi"][value="${nilaiJenis}"]`);
         if (radio) radio.checked = true;
 
+        // Isi daftar kategori lengkap (7 pilihan), lalu pilih kategori
+        // transaksi yang sedang diubah. Sesudah itu jenis disamakan
+        // dengan kategori tersebut agar kombinasi tetap valid.
         isiKategoriForm();
         if ($("inputKategori")) $("inputKategori").value = t.kategori;
-        if ($("inputKelas")) $("inputKelas").value = t.kelas || "";
+        sesuaikanJenisKeKategori();
+        if ($("inputKelas")) $("inputKelas").value = t.id_kelas != null ? String(t.id_kelas) : "";
         if ($("inputKeterangan")) $("inputKeterangan").value = t.keterangan || "";
         if ($("inputTanggal")) $("inputTanggal").value = t.tanggal || "";
+
+        isiPilihanIuran(
+            t.id_iuran != null ? t.id_iuran : "",
+            t.id_kelas != null ? t.id_kelas : null
+        );
+        if ($("inputIuran")) {
+            $("inputIuran").value =
+                t.id_iuran != null ? String(t.id_iuran) : "";
+        }
+        terapkanPilihanIuran(false);
+
+        isiPilihanSiswa(
+            t.id_siswa != null ? t.id_siswa : "",
+            t.id_kelas != null ? t.id_kelas : null
+        );
+        if ($("inputSiswa")) {
+            $("inputSiswa").value =
+                t.id_siswa != null ? String(t.id_siswa) : "";
+        }
 
         if ($("inputTagihan")) $("inputTagihan").value = Number(t.tagihan || 0).toLocaleString("id-ID");
         if ($("inputDiterima")) $("inputDiterima").value = Number(t.diterima || 0).toLocaleString("id-ID");
 
+        perbaruiVisibilitasPembayaran();
         sesuaikanLabelJenis();
         bukaModal("modalForm");
 
@@ -508,10 +1017,21 @@
     };
 
     /* ============================================================
-       FORM — SIMPAN TRANSAKSI
+       FORM - SIMPAN TRANSAKSI
        ============================================================ */
     const simpanTransaksi = async (e) => {
         e.preventDefault();
+        await simpanTransaksiBaruDariForm(false);
+    };
+
+    /**
+     * Menyimpan transaksi dari form modal.
+     *
+     * @param {boolean} lanjutTambah Bila true, form dibuka kembali
+     *        dalam keadaan kosong agar admin dapat langsung mencatat
+     *        transaksi berikutnya.
+     */
+    const simpanTransaksiBaruDariForm = async (lanjutTambah = false) => {
 
         const kategori = $("inputKategori") ? $("inputKategori").value : "";
         const keterangan = $("inputKeterangan") ? $("inputKeterangan").value.trim() : "";
@@ -520,6 +1040,25 @@
         const jenis = jenisTerpilih();
         const tagihan = $("inputTagihan") ? parseAngka($("inputTagihan").value) : 0;
         const diterima = $("inputDiterima") ? parseAngka($("inputDiterima").value) : 0;
+        const idIuran = $("inputIuran") ? $("inputIuran").value : "";
+        const idSiswa = $("inputSiswa") ? $("inputSiswa").value : "";
+        const iuranDipilih = cariIuran(idIuran);
+        const siswaDipilih = cariSiswa(idSiswa);
+
+        const transaksiLama =
+            modeForm === "ubah"
+                ? TRANSAKSI.find(
+                    (item) =>
+                        String(item.id) === String(idSedangDiubah)
+                )
+                : null;
+
+        // Iuran Selesai hanya boleh dipertahankan pada transaksi lama
+        // yang nominalnya tidak dinaikkan; pembayaran baru ditolak.
+        const iuranLamaTidakBerubah =
+            transaksiLama &&
+            String(transaksiLama.id_iuran) === String(idIuran) &&
+            tagihan <= Number(transaksiLama.tagihan || 0) + 0.009;
 
         const galat = [];
         if (!keterangan) galat.push("Keterangan wajib diisi");
@@ -527,6 +1066,21 @@
         if (!kategori) galat.push("Kategori wajib dipilih");
         if (tagihan <= 0) galat.push("Jumlah transaksi wajib lebih dari 0");
         if (diterima <= 0) galat.push("Jumlah uang wajib lebih dari 0");
+
+        if (idIuran) {
+            if (jenis !== "masuk") {
+                galat.push("Pembayaran iuran hanya untuk transaksi pemasukan");
+            }
+            if (!idSiswa) {
+                galat.push("Siswa wajib dipilih untuk pembayaran iuran");
+            }
+            if (
+                !iuranAktif(iuranDipilih) &&
+                !iuranLamaTidakBerubah
+            ) {
+                galat.push("Iuran sudah berstatus Selesai dan tidak dapat menerima pembayaran baru");
+            }
+        }
 
         const kotakGalat = $("formError");
         if (galat.length) {
@@ -541,7 +1095,17 @@
         const jam = new Date();
         const waktu = `${String(jam.getHours()).padStart(2, "0")}:${String(jam.getMinutes()).padStart(2, "0")}`;
 
-        const jenisDb = jenis === "masuk" ? "M" : "K";
+        const jenisDb = jenis === "masuk" ? "pemasukan" : "pengeluaran";
+
+        let idKelasPayload = kelas ? Number(kelas) : null;
+
+        if (!idKelasPayload && iuranDipilih?.id_kelas) {
+            idKelasPayload = Number(iuranDipilih.id_kelas);
+        }
+
+        if (!idKelasPayload && siswaDipilih?.id_kelas) {
+            idKelasPayload = Number(siswaDipilih.id_kelas);
+        }
 
         const payload = {
             jenis: jenisDb,
@@ -550,13 +1114,24 @@
             tanggal: tanggal,
             nominal: tagihan,
             uang_diterima: diterima,
-            keterangan_detail: keterangan,
-            metode: "Tunai",
-            pic: "Admin"
+            metode: "CH",
+            id_kelas: idKelasPayload
         };
 
+        if (idIuran) {
+            payload.id_iuran = Number(idIuran);
+            payload.id_siswa = Number(idSiswa);
+            payload.nama_pembayar = siswaDipilih?.nama ?? "";
+        } else if (idSiswa) {
+            payload.id_siswa = Number(idSiswa);
+        }
+
         const tombolSimpan = $("btnSimpanTransaksi");
-        if (tombolSimpan) tombolSimpan.disabled = true;
+
+        // S3-07: kunci tombol saat proses (teks "Memproses...", tidak
+        // dapat diklik dua kali). null = masih diproses, boleh henti.
+        const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+        if (!pemulihanTombol) return;
 
         try {
             if (modeForm === "ubah" && idSedangDiubah) {
@@ -565,21 +1140,30 @@
                     body: JSON.stringify(payload)
                 });
                 tampilkanToast(`Transaksi ${idSedangDiubah} berhasil diperbarui`);
+                tutupModal("modalForm");
             } else {
                 const hasil = await permintaanAPI(API_URL, {
                     method: "POST",
                     body: JSON.stringify(payload)
                 });
-                const idBaru = hasil.data?.id_transaksi ?? hasil.data?.id ?? "";
+                const idBaru = hasil.data?.no_bukti ?? hasil.data?.id_transaksi ?? hasil.data?.id ?? "";
                 tampilkanToast(`Transaksi ${idBaru} berhasil dicatat`);
+
+                if (lanjutTambah) {
+                    // Kosongkan form untuk transaksi berikutnya.
+                    bukaFormTambah();
+                } else {
+                    tutupModal("modalForm");
+                }
             }
 
-            tutupModal("modalForm");
             await muatData();
         } catch (error) {
             tampilkanToast(error.message || "Gagal menyimpan transaksi.");
         } finally {
-            if (tombolSimpan) tombolSimpan.disabled = false;
+            // S3-07: teks & tombol pulih kembali setelah proses gagal
+            // maupun sukses.
+            pemulihanTombol.pulihkan();
         }
     };
 
@@ -587,7 +1171,7 @@
        DETAIL TRANSAKSI
        ============================================================ */
     const bukaDetail = (id) => {
-        const t = TRANSAKSI.find(item => item.id === id);
+        const t = TRANSAKSI.find(item => String(item.id) === String(id));
         if (!t) return;
 
         const nilaiKas = hitungNilaiKas(t.tagihan, t.diterima);
@@ -595,12 +1179,12 @@
 
         if ($("modalDetailTitle")) $("modalDetailTitle").textContent = t.id;
         if ($("detailJenis")) $("detailJenis").textContent = t.jenis === "masuk" ? "Pemasukan" : "Pengeluaran";
-        if ($("detailKategori")) $("detailKategori").textContent = t.kategori;
-        if ($("detailKelas")) $("detailKelas").textContent = t.kelas || "—";
+        if ($("detailKategori")) $("detailKategori").textContent = labelKategori(t.kategori);
+        if ($("detailKelas")) $("detailKelas").textContent = t.kelas || "-";
         if ($("detailTanggal")) $("detailTanggal").textContent = formatTanggal(t.tanggal);
-        if ($("detailWaktu")) $("detailWaktu").textContent = `${t.waktu || "—"} WIB`;
-        if ($("detailPetugas")) $("detailPetugas").textContent = t.petugas || "—";
-        if ($("detailKeterangan")) $("detailKeterangan").textContent = t.keterangan || "—";
+        if ($("detailWaktu")) $("detailWaktu").textContent = `${t.waktu || "-"} WIB`;
+        if ($("detailPetugas")) $("detailPetugas").textContent = t.petugas || "-";
+        if ($("detailKeterangan")) $("detailKeterangan").textContent = t.keterangan || "-";
 
         if ($("rincianLabelDiterima")) $("rincianLabelDiterima").textContent = t.jenis === "masuk"
             ? "Jumlah uang yang diterima Bendahara"
@@ -620,7 +1204,7 @@
        HAPUS TRANSAKSI
        ============================================================ */
     const bukaHapus = (id) => {
-        const transaksi = TRANSAKSI.find(item => item.id === id);
+        const transaksi = TRANSAKSI.find(item => String(item.id) === String(id));
         if (!transaksi) return;
         idSedangDihapus = id;
         if ($("hapusText")) $("hapusText").textContent = `Transaksi ${id} akan dihapus dari daftar. Tindakan ini tidak dapat dibatalkan.`;
@@ -642,6 +1226,238 @@
             tampilkanToast(error.message || "Gagal menghapus transaksi.");
         } finally {
             if (tombol) tombol.disabled = false;
+        }
+    };
+
+    /* ============================================================
+       FORM BANYAK TRANSAKSI
+       ============================================================ */
+
+    let nomorBaris = 0;
+
+    const barisBanyakHtml = (index) => `
+        <div class="baris-transaksi" data-baris="${index}">
+            <div class="baris-transaksi__head">
+                <span class="baris-transaksi__nomor">Baris ${index + 1}</span>
+
+                <button type="button" class="icon-btn icon-btn--hapus" data-hapus-baris
+                    aria-label="Hapus baris ${index + 1}" title="Hapus baris">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+            </div>
+
+            <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Jenis <b class="wajib">*</b></span>
+                    <select class="baris-jenis">
+                        <option value="masuk">Pemasukan</option>
+                        <option value="keluar">Pengeluaran</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Kategori <b class="wajib">*</b></span>
+                    <select class="baris-kategori"></select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Tanggal <b class="wajib">*</b></span>
+                    <input type="date" class="baris-tanggal">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Nominal <b class="wajib">*</b></span>
+                    <span class="input-uang">
+                        <span class="input-uang__pre" aria-hidden="true">Rp</span>
+                        <input type="text" class="baris-nominal" inputmode="numeric" placeholder="0" autocomplete="off">
+                    </span>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Kelas</span>
+                    <select class="baris-kelas">
+                        <option value="">- Pilih kelas (opsional) -</option>
+                    </select>
+                </label>
+
+                <label class="field field--full">
+                    <span class="field__label">Keterangan <b class="wajib">*</b></span>
+                    <input type="text" class="baris-keterangan" placeholder="Contoh: setoran kas kelas" autocomplete="off">
+                </label>
+            </div>
+        </div>
+    `;
+
+    const isiKategoriBaris = (baris) => {
+        const jenis = baris.querySelector(".baris-jenis")?.value || "masuk";
+        const pilih = baris.querySelector(".baris-kategori");
+        if (!pilih) return;
+
+        const daftar = jenis === "masuk" ? KATEGORI_MASUK : KATEGORI_KELUAR;
+        const nilaiLama = pilih.value;
+
+        pilih.innerHTML = daftar
+            .map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`)
+            .join("");
+
+        if ([...pilih.options].some((o) => o.value === nilaiLama)) {
+            pilih.value = nilaiLama;
+        }
+    };
+
+    const isiKelasBaris = (baris) => {
+        const pilih = baris.querySelector(".baris-kelas");
+        if (!pilih) return;
+
+        pilih.innerHTML = `
+            <option value="">- Pilih kelas (opsional) -</option>
+            ${DAFTAR_KELAS.map((k) => `
+                <option value="${escapeHtml(k.id_kelas)}">${escapeHtml(k.nama_kelas)}</option>
+            `).join("")}
+        `;
+    };
+
+    const tanggalHariIni = () => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+
+    const tambahBarisTransaksi = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return;
+
+        const index = nomorBaris++;
+        wadah.insertAdjacentHTML("beforeend", barisBanyakHtml(index));
+
+        const baris = wadah.querySelector(`[data-baris="${index}"]`);
+        if (!baris) return;
+
+        isiKategoriBaris(baris);
+        isiKelasBaris(baris);
+
+        const tanggal = baris.querySelector(".baris-tanggal");
+        if (tanggal) tanggal.value = tanggalHariIni();
+
+        const nominal = baris.querySelector(".baris-nominal");
+        nominal?.addEventListener("input", (e) => {
+            e.target.value = e.target.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        });
+
+        const jenis = baris.querySelector(".baris-jenis");
+        jenis?.addEventListener("change", () => isiKategoriBaris(baris));
+
+        const keterangan = baris.querySelector(".baris-keterangan");
+        if (keterangan) keterangan.focus();
+    };
+
+    /* Nomor baris ditampilkan ulang agar selalu berurutan. */
+    const perbaruiNomorBaris = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return;
+
+        wadah.querySelectorAll(".baris-transaksi").forEach((baris, i) => {
+            const label = baris.querySelector(".baris-transaksi__nomor");
+            if (label) label.textContent = `Baris ${i + 1}`;
+        });
+    };
+
+    const bukaFormBanyak = () => {
+        const form = $("formTransaksiBanyak");
+        const wadah = $("isiBarisTransaksi");
+        if (!form || !wadah) return;
+
+        wadah.innerHTML = "";
+        nomorBaris = 0;
+
+        const kotakGalat = $("formBanyakError");
+        if (kotakGalat) kotakGalat.hidden = true;
+
+        tambahBarisTransaksi();
+        bukaModal("modalFormBanyak");
+    };
+
+    const kumpulkanBaris = () => {
+        const wadah = $("isiBarisTransaksi");
+        if (!wadah) return { galat: ["Form tidak ditemukan"], data: [] };
+
+        const galat = [];
+        const data = [];
+
+        wadah.querySelectorAll(".baris-transaksi").forEach((baris, i) => {
+            const nomor = i + 1;
+            const jenis = baris.querySelector(".baris-jenis")?.value || "masuk";
+            const kategori = baris.querySelector(".baris-kategori")?.value || "";
+            const tanggal = baris.querySelector(".baris-tanggal")?.value || "";
+            const nominal = parseAngka(baris.querySelector(".baris-nominal")?.value || "");
+            const keterangan = (baris.querySelector(".baris-keterangan")?.value || "").trim();
+            const kelas = baris.querySelector(".baris-kelas")?.value || "";
+
+            if (!tanggal) galat.push(`Baris ${nomor}: tanggal wajib diisi`);
+            if (!kategori) galat.push(`Baris ${nomor}: kategori wajib dipilih`);
+            if (nominal <= 0) galat.push(`Baris ${nomor}: nominal wajib lebih dari 0`);
+            if (!keterangan) galat.push(`Baris ${nomor}: keterangan wajib diisi`);
+
+            if (tanggal && kategori && nominal > 0 && keterangan) {
+                data.push({
+                    tanggal,
+                    jenis: jenis === "masuk" ? "pemasukan" : "pengeluaran",
+                    kategori,
+                    nominal,
+                    uang_diterima: nominal,
+                    keterangan,
+                    metode: "CH",
+                    id_kelas: kelas ? Number(kelas) : null
+                });
+            }
+        });
+
+        if (!data.length && !galat.length) {
+            galat.push("Tambahkan minimal satu baris transaksi.");
+        }
+
+        return { galat, data };
+    };
+
+    const simpanBanyakTransaksi = async (e) => {
+        e.preventDefault();
+
+        const kotakGalat = $("formBanyakError");
+        const { galat, data } = kumpulkanBaris();
+
+        if (galat.length) {
+            if (kotakGalat) {
+                kotakGalat.textContent = galat.join(" • ");
+                kotakGalat.hidden = false;
+            }
+            return;
+        }
+
+        if (kotakGalat) kotakGalat.hidden = true;
+
+        const tombol = $("btnSimpanBanyak");
+
+        // S3-07: kunci tombol saat proses (tidak dapat diklik dua kali).
+        const pemulihanTombol = kunciTombolSimpan(tombol);
+        if (!pemulihanTombol) return;
+
+        try {
+            const hasil = await permintaanAPI(API_URL, {
+                method: "POST",
+                body: JSON.stringify({ transaksi: data })
+            });
+
+            const jumlah = hasil.jumlah ?? data.length;
+            tutupModal("modalFormBanyak");
+            tampilkanToast(`${jumlah} transaksi berhasil dicatat`);
+            await muatData();
+        } catch (error) {
+            if (kotakGalat) {
+                kotakGalat.textContent = error.message || "Gagal menyimpan transaksi.";
+                kotakGalat.hidden = false;
+            }
+        } finally {
+            // S3-07: tombol pulih setelah proses selesai.
+            pemulihanTombol.pulihkan();
         }
     };
 
@@ -700,6 +1516,38 @@
 
         $("btnTambahTransaksi")?.addEventListener("click", bukaFormTambah);
 
+        /* Form banyak transaksi sekaligus. */
+        $("btnTambahBanyak")?.addEventListener("click", bukaFormBanyak);
+        $("btnTambahBaris")?.addEventListener("click", tambahBarisTransaksi);
+
+        $("isiBarisTransaksi")?.addEventListener("click", (e) => {
+            const tombol = e.target.closest("[data-hapus-baris]");
+            if (!tombol) return;
+
+            const baris = tombol.closest(".baris-transaksi");
+            if (!baris) return;
+
+            const jumlah = $("isiBarisTransaksi")?.querySelectorAll(".baris-transaksi").length || 0;
+            if (jumlah <= 1) {
+                tampilkanToast("Minimal satu baris transaksi harus ada.");
+                return;
+            }
+
+            baris.remove();
+            perbaruiNomorBaris();
+        });
+
+        $("formTransaksiBanyak")?.addEventListener("submit", simpanBanyakTransaksi);
+
+        /*
+         * "Simpan & Tambah Lagi": simpan transaksi lalu buka kembali
+         * form kosong supaya admin bisa mencatat transaksi berikutnya
+         * tanpa mengulang dari awal.
+         */
+        $("btnSimpanDanTambah")?.addEventListener("click", async () => {
+            await simpanTransaksiBaruDariForm(true);
+        });
+
         $("inputTanggal")?.addEventListener("input", hitungUangLive);
         $("inputTagihan")?.addEventListener("input", (e) => {
             e.target.value = e.target.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -708,6 +1556,35 @@
         $("inputDiterima")?.addEventListener("input", (e) => {
             e.target.value = e.target.value.replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             hitungUangLive();
+        });
+
+        $("inputIuran")?.addEventListener("change", () => {
+            terapkanPilihanIuran(true);
+        });
+
+        $("inputSiswa")?.addEventListener("change", () => {
+            const siswa = cariSiswa($("inputSiswa")?.value || "");
+            if (siswa?.id_kelas && !$("inputKelas")?.value) {
+                if ($("inputKelas")) {
+                    $("inputKelas").value = String(siswa.id_kelas);
+                }
+                isiPilihanIuran(
+                    $("inputIuran")?.value || "",
+                    siswa.id_kelas
+                );
+            }
+        });
+
+        $("inputKelas")?.addEventListener("change", () => {
+            const kelas = $("inputKelas")?.value || "";
+            const iuranLama = $("inputIuran")?.value || "";
+            const siswaLama = $("inputSiswa")?.value || "";
+
+            isiPilihanIuran(iuranLama, kelas);
+            isiPilihanSiswa(
+                siswaLama,
+                cariIuran($("inputIuran")?.value)?.id_kelas || kelas
+            );
         });
 
         $("formTransaksi")?.addEventListener("submit", simpanTransaksi);
@@ -735,8 +1612,34 @@
 
         const radioJenis = document.querySelectorAll('input[name="jenisTransaksi"]');
         radioJenis.forEach(radio => {
-            radio.addEventListener("change", sesuaikanLabelJenis);
+            radio.addEventListener("change", () => {
+                // Saat jenis diganti, kategori otomatis dipindah ke
+                // kategori pertama yang sah untuk jenis itu supaya
+                // kombinasi jenis + kategori selalu valid di server.
+                pilihKategoriPertamaSesuaiJenis();
+                sesuaikanLabelJenis();
+                perbaruiVisibilitasPembayaran();
+            });
         });
+
+        // Saat pengguna memilih kategori, jenis ikut menyesuaikan.
+        $("inputKategori")?.addEventListener("change", sesuaikanJenisKeKategori);
+    };
+
+    /**
+     * Pindahkan pilihan kategori ke kategori pertama yang sah untuk
+     * jenis yang sedang aktif (mencegah kombinasi tidak valid).
+     */
+    const pilihKategoriPertamaSesuaiJenis = () => {
+        const pilih = $("inputKategori");
+        if (!pilih) return;
+
+        const daftar = jenisTerpilih() === "masuk" ? KATEGORI_MASUK : KATEGORI_KELUAR;
+        const pertama = daftar[0];
+
+        if (pertama && [...pilih.options].some(o => o.value === pertama)) {
+            pilih.value = pertama;
+        }
     };
 
     /* ============================================================
@@ -744,6 +1647,9 @@
        ============================================================ */
     pasangInteraksiUmum();
     pasangEvent();
-    muatData();
+
+    // Kategori diambil lebih dulu supaya form & filter memakai daftar
+    // yang sama dengan server sejak halaman dibuka.
+    muatKategori().finally(muatData);
 
 })();

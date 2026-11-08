@@ -15,7 +15,7 @@ class RoleMiddleware
     public function handle(
         Request $request,
         Closure $next,
-        string $role
+        string ...$roles
     ): Response {
         // Verifikasi apakah pengguna sudah login
         if (!Auth::check()) {
@@ -24,10 +24,16 @@ class RoleMiddleware
 
         // Ambil role pengguna yang sedang login
         $userRole = strtolower(trim((string) Auth::user()->role));
-        $requiredRole = strtolower(trim($role));
+
+        // Dukung beberapa role sekaligus, mis. "role:admin,bendahara,viewer".
+        // Laravel memisahkan parameter middleware berdasarkan koma.
+        $requiredRoles = array_map(
+            static fn (string $item): string => strtolower(trim($item)),
+            $roles
+        );
 
         // Verifikasi kesesuaian hak akses
-        if ($userRole !== $requiredRole) {
+        if (!in_array($userRole, $requiredRoles, true)) {
             abort(
                 403,
                 'Akses Ditolak: Anda tidak memiliki wewenang untuk membuka halaman ini.'

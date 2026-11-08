@@ -1,303 +1,162 @@
+// BBCASHVIA - modul bersama S3-07 (pengaman simpan ganda).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     /* =========================================================
-       BBCASHVIA — BENDAHARA DATA SISWA
-       FRONTEND SIMULATION
+       BBCASHVIA - BENDAHARA DATA SISWA
+       Data berasal dari database (endpoint /bendahara/api/*).
+       Tidak menggunakan data dummy.
        ========================================================= */
 
     /* =========================================================
-       DATA SISWA
+       ENDPOINT + STATE
        ========================================================= */
 
-    let students = [
-        {
-            nis: "24001",
-            name: "Ahmad Fauzan",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24002",
-            name: "Aisyah Putri",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24003",
-            name: "Bagas Pratama",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24004",
-            name: "Citra Lestari",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24005",
-            name: "Dimas Saputra",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24006",
-            name: "Eka Ramadhan",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24007",
-            name: "Fajar Nugraha",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24008",
-            name: "Gina Maharani",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24009",
-            name: "Hafiz Ramadhan",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24010",
-            name: "Intan Permata",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24011",
-            name: "Joko Prasetyo",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24012",
-            name: "Kania Safitri",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24013",
-            name: "Luthfi Maulana",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24014",
-            name: "Maya Sari",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24015",
-            name: "Nanda Akbar",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24016",
-            name: "Olivia Maharani",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24017",
-            name: "Putra Wijaya",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24018",
-            name: "Qori Aulia",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24019",
-            name: "Raka Firmansyah",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24020",
-            name: "Salsa Nabila",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24021",
-            name: "Taufik Hidayat",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24022",
-            name: "Ulya Ramadhani",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24023",
-            name: "Vino Saputra",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24024",
-            name: "Wulan Anggraini",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24025",
-            name: "Yoga Pratama",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24026",
-            name: "Zahra Aulia",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24027",
-            name: "Aditya Nugroho",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24028",
-            name: "Bella Safira",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24029",
-            name: "Cahya Ramadhan",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24030",
-            name: "Dewi Lestari",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24031",
-            name: "Fikri Akmal",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24032",
-            name: "Gita Permata",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24033",
-            name: "Hendra Wijaya",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24034",
-            name: "Indah Sari",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
-        },
-        {
-            nis: "24035",
-            name: "Rizky Maulana",
-            className: "XI RPL 1",
-            status: "lunas",
-            bill: 150000,
-            paid: 150000
-        },
-        {
-            nis: "24036",
-            name: "Nadia Putri",
-            className: "XI RPL 1",
-            status: "belum",
-            bill: 150000,
-            paid: 0
+    const API_SISWA = "/bendahara/api/siswa";
+    const API_KELAS = "/bendahara/api/kelas";
+
+    let students = [];
+    let daftarKelas = [];
+
+    let csrfToken = "";
+
+    const bacaCsrf = () => {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+
+        return meta ? meta.getAttribute("content") : "";
+    };
+
+    const ambilJSON = async (url) => {
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
         }
-    ];
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal mengambil data dari server.");
+        }
+
+        return hasil;
+    };
+
+    const kirimJSON = async (url, method, payload) => {
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                method,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                    // S3-07: POST dibawa kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    ...(String(method).toUpperCase() === "POST"
+                        ? { "X-Idempotency-Key": kunciIdempoten() }
+                        : {}),
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            if (hasil?.errors) {
+                const pesan = Object.values(hasil.errors).flat().filter(Boolean);
+                if (pesan.length) throw new Error(pesan.join(" "));
+            }
+            throw new Error(hasil?.message || "Terjadi kesalahan saat menyimpan.");
+        }
+
+        return hasil;
+    };
+
+    const hapusData = async (url) => {
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                method: "DELETE",
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal menghapus data.");
+        }
+
+        return hasil;
+    };
 
 
     /* =========================================================
@@ -333,6 +192,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const studentName = document.getElementById("studentName");
     const studentClass = document.getElementById("studentClass");
     const studentStatus = document.getElementById("studentStatus");
+    const studentStatusAktif = document.getElementById("studentStatusAktif");
+    const studentJenisKelamin = document.getElementById("studentJenisKelamin");
+    const studentNoHp = document.getElementById("studentNoHp");
     const studentBill = document.getElementById("studentBill");
     const studentPaid = document.getElementById("studentPaid");
 
@@ -455,8 +317,10 @@ document.addEventListener("DOMContentLoaded", () => {
             student => student.status === "lunas"
         ).length;
 
+        // "Belum Lunas" mencakup siswa yang belum membayar sama sekali
+        // maupun yang baru membayar sebagian.
         const unpaid = students.filter(
-            student => student.status === "belum"
+            student => student.status !== "lunas"
         ).length;
 
         if (totalStudents) {
@@ -569,12 +433,16 @@ document.addEventListener("DOMContentLoaded", () => {
             const statusClass =
                 student.status === "lunas"
                     ? "status-badge status-badge--success"
-                    : "status-badge status-badge--warning";
+                    : student.status === "sebagian"
+                        ? "status-badge status-badge--warning"
+                        : "status-badge status-badge--danger";
 
             const statusText =
                 student.status === "lunas"
-                    ? "Lunas"
-                    : "Belum Lunas";
+                    ? "Sudah Bayar"
+                    : student.status === "sebagian"
+                        ? "Sebagian"
+                        : "Belum Bayar";
 
             const remaining =
                 Math.max(
@@ -795,7 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (student) {
             if (editingNis) {
-                editingNis.value = student.nis;
+                editingNis.value = student.id_siswa; // Simpan id_siswa (PK) untuk URL API PUT
             }
 
             if (studentNis) {
@@ -812,15 +680,27 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (studentStatus) {
-                studentStatus.value = student.status;
+                studentStatus.value = student.status === "lunas" ? "lunas" : "belum";
+            }
+
+            if (studentStatusAktif) {
+                studentStatusAktif.value = student.status_aktif || "Aktif";
+            }
+
+            if (studentJenisKelamin) {
+                studentJenisKelamin.value = student.jenis_kelamin || "";
+            }
+
+            if (studentNoHp) {
+                studentNoHp.value = student.no_hp || "";
             }
 
             if (studentBill) {
-                studentBill.value = student.bill;
+                studentBill.value = student.bill || 0;
             }
 
             if (studentPaid) {
-                studentPaid.value = student.paid;
+                studentPaid.value = student.paid || 0;
             }
         } else {
             if (studentForm) {
@@ -836,15 +716,24 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             if (studentClass) {
-                studentClass.value = "XI RPL 1";
+                isiPilihanKelas();
+                studentClass.value = "";
             }
 
-            if (studentStatus) {
-                studentStatus.value = "belum";
+            if (studentStatusAktif) {
+                studentStatusAktif.value = "Aktif";
+            }
+
+            if (studentJenisKelamin) {
+                studentJenisKelamin.value = "";
+            }
+
+            if (studentNoHp) {
+                studentNoHp.value = "";
             }
 
             if (studentBill) {
-                studentBill.value = 150000;
+                studentBill.value = 0;
             }
 
             if (studentPaid) {
@@ -917,10 +806,23 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================= */
 
     if (studentForm) {
-        studentForm.addEventListener("submit", event => {
+        studentForm.addEventListener("submit", async event => {
             event.preventDefault();
 
             clearFormErrors();
+
+            // S3-07: kunci tombol simpan saat proses (teks
+            // "Memproses...", tidak dapat diklik dua kali via klik
+            // maupun Enter). null = masih diproses, boleh henti.
+            const tombolSimpan = studentForm.querySelector(
+                'button[type="submit"]'
+            );
+
+            const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+
+            if (!pemulihanTombol) return;
+
+            try {
 
             const nis = studentNis
                 ? studentNis.value.trim()
@@ -932,19 +834,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const className = studentClass
                 ? studentClass.value.trim()
-                : "XI RPL 1";
+                : "";
 
-            const status = studentStatus
-                ? studentStatus.value
-                : "belum";
-
-            const bill = studentBill
-                ? Number(studentBill.value) || 0
-                : 0;
-
-            const paid = studentPaid
-                ? Number(studentPaid.value) || 0
-                : 0;
+            const statusAktif = studentStatusAktif
+                ? studentStatusAktif.value
+                : "Aktif";
 
             let valid = true;
 
@@ -956,7 +850,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const duplicateNis = students.some(student => {
                 return (
                     student.nis === nis &&
-                    student.nis !== editingId
+                    String(student.id_siswa) !== editingId
                 );
             });
 
@@ -989,51 +883,61 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            const normalizedPaid =
-                Math.min(Math.max(paid, 0), bill);
+            const kelasCocok = daftarKelas.find(
+                (k) =>
+                    String(k.nama_kelas).toLowerCase() ===
+                    className.toLowerCase()
+            );
 
-            const normalizedStatus =
-                normalizedPaid >= bill && bill > 0
-                    ? "lunas"
-                    : "belum";
+            const payload = {
+                nis,
+                nama: name,
+                id_kelas: kelasCocok
+                    ? Number(kelasCocok.id_kelas)
+                    : null,
+                jenis_kelamin: studentJenisKelamin ? studentJenisKelamin.value : "",
+                no_hp: studentNoHp ? studentNoHp.value.trim() : "",
+                status: statusAktif
+            };
 
-            if (editingId) {
-                const index = students.findIndex(
-                    student => student.nis === editingId
-                );
+            const siswaLama = editingId
+                ? students.find((s) => String(s.id_siswa) === String(editingId))
+                : null;
 
-                if (index !== -1) {
-                    students[index] = {
-                        nis,
-                        name,
-                        className,
-                        status: normalizedStatus,
-                        bill,
-                        paid: normalizedPaid
-                    };
+            try {
+
+                if (siswaLama) {
+
+                    await kirimJSON(
+                        `${API_SISWA}/${siswaLama.id_siswa}`,
+                        "PUT",
+                        payload
+                    );
+
+                    showToast("Data siswa berhasil diperbarui.");
+
+                } else {
+
+                    await kirimJSON(API_SISWA, "POST", payload);
+
+                    showToast("Siswa berhasil ditambahkan.");
                 }
 
-                showToast("Data siswa berhasil diperbarui.");
-            } else {
-                students.push({
-                    nis,
-                    name,
-                    className,
-                    status: normalizedStatus,
-                    bill,
-                    paid: normalizedPaid
-                });
+            } catch (err) {
 
-                showToast("Siswa berhasil ditambahkan.");
+                showFormError(nisError, err.message);
+
+                return;
             }
 
-            updateStats();
-
-            currentPage = 1;
-
-            renderTable();
+            await muatData();
 
             closeStudentModal();
+            } finally {
+                // S3-07: tombol pulih setelah proses apa pun berakhir
+                // (sukses, gagal validasi, maupun galat server).
+                pemulihanTombol.pulihkan();
+            }
         });
     }
 
@@ -1082,13 +986,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (modalStatus) {
             modalStatus.textContent =
                 student.status === "lunas"
-                    ? "Lunas"
-                    : "Belum Lunas";
+                    ? "Sudah Bayar"
+                    : student.status === "sebagian"
+                        ? "Sebagian"
+                        : "Belum Bayar";
 
             modalStatus.className =
                 student.status === "lunas"
                     ? "status-badge status-badge--success"
-                    : "status-badge status-badge--warning";
+                    : student.status === "sebagian"
+                        ? "status-badge status-badge--warning"
+                        : "status-badge status-badge--danger";
         }
 
         if (modalTagihan) {
@@ -1110,7 +1018,9 @@ document.addEventListener("DOMContentLoaded", () => {
             detailMessage.textContent =
                 student.status === "lunas"
                     ? "Iuran siswa sudah lunas."
-                    : "Siswa masih memiliki tagihan yang belum lunas.";
+                    : student.status === "sebagian"
+                        ? "Siswa sudah membayar sebagian, tetapi masih memiliki sisa tagihan."
+                        : "Siswa masih memiliki tagihan yang belum dibayar.";
         }
 
         detailModal.classList.add("is-open");
@@ -1149,7 +1059,7 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================= */
 
     if (tableBody) {
-        tableBody.addEventListener("click", event => {
+        tableBody.addEventListener("click", async event => {
             const button =
                 event.target.closest("[data-action]");
 
@@ -1191,29 +1101,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     return;
                 }
 
-                students = students.filter(
-                    item => item.nis !== nis
-                );
+                try {
 
-                updateStats();
-
-                const filteredStudents =
-                    getFilteredStudents();
-
-                const totalPages =
-                    Math.max(
-                        1,
-                        Math.ceil(
-                            filteredStudents.length /
-                            perPage
-                        )
+                    await hapusData(
+                        `${API_SISWA}/${student.id_siswa}`
                     );
 
-                if (currentPage > totalPages) {
-                    currentPage = totalPages;
+                } catch (err) {
+
+                    showToast(err.message);
+
+                    return;
                 }
 
-                renderTable();
+                await muatData();
 
                 showToast(
                     "Data siswa berhasil dihapus."
@@ -1287,7 +1188,7 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================= */
 
     function handleLogout() {
-        window.location.href = "/";
+        window.location.href = "/logout";
     }
 
 
@@ -1357,10 +1258,103 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================================
+       MUAT DATA DARI DATABASE
+       ========================================================= */
+
+    const muatData = async () => {
+
+        const tbodyBend = document.getElementById("studentTableBody");
+        if (tbodyBend) {
+            tbodyBend.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="7"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        let hasilSiswa = { data: [], kelas: [] };
+
+        try {
+
+            hasilSiswa = await ambilJSON(API_SISWA);
+
+        } catch (err) {
+
+            console.error(err);
+
+            showToast(err.message);
+        }
+
+        daftarKelas = Array.isArray(hasilSiswa?.kelas)
+            ? hasilSiswa.kelas
+            : [];
+
+        isiPilihanKelas();
+
+        // Status, tagihan, dan pembayaran dihitung di server dari
+        // pembayaran iuran yang benar-benar tercatat.
+        students = (Array.isArray(hasilSiswa?.data)
+            ? hasilSiswa.data
+            : []
+        ).map((s) => {
+
+            const statusIuran = ["lunas", "sebagian", "belum"].includes(
+                s.status_iuran
+            )
+                ? s.status_iuran
+                : "belum";
+
+            return {
+                id_siswa: s.id_siswa,
+                nis: s.nis ?? "-",
+                name: s.nama ?? "-",
+                className: s.kelas || "-",
+                status: statusIuran,
+                status_aktif: s.status ?? "Aktif",
+                jenis_kelamin: s.jenis_kelamin ?? "",
+                no_hp: s.no_hp ?? "",
+                bill: Number(s.tagihan_iuran) || 0,
+                paid: Number(s.terbayar_iuran) || 0,
+                sisa: Number(s.sisa_iuran) || 0
+            };
+        });
+
+        currentPage = 1;
+
+        updateStats();
+
+        renderTable();
+    };
+
+
+    const isiPilihanKelas = () => {
+
+        if (!studentClass || studentClass.tagName !== "SELECT") {
+            return;
+        }
+
+        const nilaiLama = studentClass.value;
+
+        studentClass.innerHTML =
+            `<option value="">- Pilih Kelas -</option>` +
+            daftarKelas
+                .map(
+                    (k) =>
+                        `<option value="${escapeHTML(k.nama_kelas)}">${escapeHTML(k.nama_kelas)}</option>`
+                )
+                .join("");
+
+        studentClass.value = nilaiLama;
+    };
+
+
+    /* =========================================================
        INITIALIZE
        ========================================================= */
 
+    csrfToken = bacaCsrf();
+
     updateDate();
-    updateStats();
+
     renderTable();
+
+    muatData();
 });

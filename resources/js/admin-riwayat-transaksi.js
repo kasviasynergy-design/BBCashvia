@@ -1,6 +1,6 @@
 /* ============================================================
-   BBCASHVIA — HALAMAN RIWAYAT TRANSAKSI (ADMIN)
-   Data dummy + interaksi UI
+   BBCASHVIA - HALAMAN RIWAYAT TRANSAKSI (ADMIN)
+   Data transaksi berasal dari API Laravel (database).
    Tanpa fitur verifikasi
    ============================================================ */
 
@@ -9,48 +9,225 @@
 
 
     /* ============================================================
-       DATA DUMMY
+       KONFIGURASI API
     ============================================================ */
+
+    const API_URL = "/admin/api/transaksi";
+
+
+    /* ============================================================
+       DAFTAR KATEGORI (UNTUK FILTER)
+    ============================================================ */
+
+    /*
+     * Nilai kategori mengikuti isi database (huruf kecil),
+     * sedangkan "label" dipakai untuk tampilan agar tetap rapi.
+     * Ini mencegah filter kosong karena beda huruf besar/kecil.
+     */
+    const KATEGORI = [
+        { value: "Iuran", label: "Iuran" },
+        { value: "kas", label: "Kas" },
+        { value: "pemasukan lainnya", label: "Pemasukan Lainnya" },
+        { value: "kebutuhan kelas", label: "Kebutuhan Kelas" },
+        { value: "perlengkapan kelas", label: "Perlengkapan Kelas" },
+        { value: "kegiatan kelas", label: "Kegiatan Kelas" },
+        { value: "pengeluaran lainnya", label: "Pengeluaran Lainnya" }
+    ];
 
     const KATEGORI_MASUK = [
         "Iuran",
-        "Kas",
-        "Pemasukan lainnya"
+        "kas",
+        "pemasukan lainnya"
     ];
 
     const KATEGORI_KELUAR = [
-        "Kebutuhan kelas",
-        "Perlengkapan kelas",
-        "Kegiatan kelas",
-        "Pengeluaran lainnya"
+        "kebutuhan kelas",
+        "perlengkapan kelas",
+        "kegiatan kelas",
+        "pengeluaran lainnya"
     ];
 
+    /* Ubah nilai kategori menjadi label yang enak dibaca. */
+    const labelKategori = (nilai) => {
+        const cocok = KATEGORI.find(
+            (k) => k.value.toLowerCase() === String(nilai ?? "").toLowerCase()
+        );
 
-    const DATA_TRANSAKSI = [
-        { id: "TRX-0102", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas awal tahun ajaran", kelas: "XI RPL 1", tanggal: "2026-08-11", waktu: "08:40", tagihan: 350000, diterima: 400000, petugas: "Azis N." },
-        { id: "TRX-0103", jenis: "keluar", kategori: "Kegiatan kelas", keterangan: "Dekorasi kelas menyambut tahun ajaran", kelas: "XI RPL 2", tanggal: "2026-08-14", waktu: "13:25", tagihan: 130000, diterima: 150000, petugas: "Azis N." },
-        { id: "TRX-0104", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "X TKJ 1", tanggal: "2026-08-18", waktu: "09:10", tagihan: 260000, diterima: 300000, petugas: "Azis N." },
-        { id: "TRX-0105", jenis: "masuk", kategori: "Kas", keterangan: "Sisa dana orientasi kelas", kelas: "XI RPL 1", tanggal: "2026-08-20", waktu: "14:35", tagihan: 175000, diterima: 175000, petugas: "Azis N." },
-        { id: "TRX-0106", jenis: "keluar", kategori: "Perlengkapan kelas", keterangan: "Pembelian sapu dan penghapus papan", kelas: "X TKJ 1", tanggal: "2026-08-21", waktu: "10:50", tagihan: 75000, diterima: 75000, petugas: "Azis N." },
-        { id: "TRX-0107", jenis: "masuk", kategori: "Iuran", keterangan: "Iuran seragam olahraga", kelas: "XI RPL 2", tanggal: "2026-08-25", waktu: "11:05", tagihan: 450000, diterima: 500000, petugas: "Azis N." },
-        { id: "TRX-0108", jenis: "keluar", kategori: "Kebutuhan kelas", keterangan: "Belanja alat kebersihan awal tahun", kelas: "XI RPL 1", tanggal: "2026-08-27", waktu: "15:40", tagihan: 90000, diterima: 100000, petugas: "Azis N." },
-        { id: "TRX-0109", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "XI RPL 1", tanggal: "2026-08-28", waktu: "08:20", tagihan: 300000, diterima: 300000, petugas: "Azis N." },
-        { id: "TRX-0110", jenis: "masuk", kategori: "Kas", keterangan: "Sisa kas kegiatan lomba kelas", kelas: "XI RPL 2", tanggal: "2026-09-15", waktu: "10:10", tagihan: 250000, diterima: 250000, petugas: "Azis N." },
-        { id: "TRX-0111", jenis: "keluar", kategori: "Perlengkapan kelas", keterangan: "Pembelian kipas untuk kelas", kelas: "XI RPL 1", tanggal: "2026-09-16", waktu: "09:50", tagihan: 145000, diterima: 145000, petugas: "Azis N." },
-        { id: "TRX-0112", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "X TKJ 1", tanggal: "2026-09-18", waktu: "15:00", tagihan: 280000, diterima: 300000, petugas: "Azis N." },
-        { id: "TRX-0113", jenis: "keluar", kategori: "Kebutuhan kelas", keterangan: "Biaya fotokopi modul latihan", kelas: "XI RPL 1", tanggal: "2026-09-19", waktu: "11:15", tagihan: 75000, diterima: 80000, petugas: "Azis N." },
-        { id: "TRX-0114", jenis: "masuk", kategori: "Iuran", keterangan: "Iuran study tour tahap 1", kelas: "XI RPL 2", tanggal: "2026-09-22", waktu: "08:30", tagihan: 1500000, diterima: 1500000, petugas: "Azis N." },
-        { id: "TRX-0115", jenis: "masuk", kategori: "Pemasukan lainnya", keterangan: "Sumbangan alumni untuk rak buku", kelas: "XI RPL 1", tanggal: "2026-09-24", waktu: "14:55", tagihan: 400000, diterima: 400000, petugas: "Azis N." },
-        { id: "TRX-0116", jenis: "keluar", kategori: "Perlengkapan kelas", keterangan: "Pembelian papan data kelas", kelas: "X TKJ 1", tanggal: "2026-09-25", waktu: "10:40", tagihan: 120000, diterima: 150000, petugas: "Azis N." },
-        { id: "TRX-0117", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "XI RPL 2", tanggal: "2026-09-26", waktu: "09:20", tagihan: 300000, diterima: 350000, petugas: "Azis N." },
-        { id: "TRX-0118", jenis: "keluar", kategori: "Kebutuhan kelas", keterangan: "Belanja tisu, sabun, dan pembersih kelas", kelas: "XI RPL 1", tanggal: "2026-09-27", waktu: "13:05", tagihan: 65000, diterima: 65000, petugas: "Azis N." },
-        { id: "TRX-0119", jenis: "keluar", kategori: "Kegiatan kelas", keterangan: "Konsumsi rapat class meeting", kelas: "XI RPL 2", tanggal: "2026-09-28", waktu: "11:30", tagihan: 95000, diterima: 100000, petugas: "Azis N." },
-        { id: "TRX-0120", jenis: "masuk", kategori: "Pemasukan lainnya", keterangan: "Refund dekorasi ruang kelas", kelas: "XI RPL 1", tanggal: "2026-09-29", waktu: "14:20", tagihan: 150000, diterima: 150000, petugas: "Azis N." },
-        { id: "TRX-0121", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "X TKJ 1", tanggal: "2026-09-30", waktu: "08:55", tagihan: 280000, diterima: 300000, petugas: "Azis N." },
-        { id: "TRX-0122", jenis: "masuk", kategori: "Iuran", keterangan: "Iuran study tour tahap 2", kelas: "XI RPL 2", tanggal: "2026-10-01", waktu: "10:05", tagihan: 1500000, diterima: 1500000, petugas: "Azis N." },
-        { id: "TRX-0123", jenis: "keluar", kategori: "Kegiatan kelas", keterangan: "Pembelian tinta printer rapat", kelas: "XI RPL 1", tanggal: "2026-10-02", waktu: "15:12", tagihan: 85000, diterima: 100000, petugas: "Azis N." },
-        { id: "TRX-0124", jenis: "masuk", kategori: "Iuran", keterangan: "Setoran kas mingguan", kelas: "XI RPL 1", tanggal: "2026-10-03", waktu: "09:41", tagihan: 320000, diterima: 320000, petugas: "Azis N." }
-    ];
+        return cocok ? cocok.label : String(nilai ?? "");
+    };
+
+
+    let DATA_TRANSAKSI = [];
+
+    /* ============================================================
+       AKSES API
+    ============================================================ */
+
+    const permintaanAPI = async (url, opsi = {}) => {
+
+        let respons;
+
+        try {
+            respons = await fetch(url, {
+                ...opsi,
+                headers: {
+                    Accept: "application/json",
+                    ...(opsi.headers || {})
+                },
+                credentials: "same-origin"
+            });
+        } catch {
+            throw new Error(
+                "Tidak dapat terhubung ke server."
+            );
+        }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            // Respons bukan JSON.
+        }
+
+        if (!respons.ok) {
+            throw new Error(
+                hasil?.message ||
+                "Gagal memuat data transaksi."
+            );
+        }
+
+        return hasil;
+    };
+
+    const petakanTransaksi = (t) => {
+
+        const jenisDb = String(t.jenis ?? "").toUpperCase();
+
+        const tanggal = String(t.tanggal_format ?? t.tanggal ?? "").slice(0, 10);
+
+        // Jam WIB dikirim backend lewat field "waktu"; created_at
+        // hanya dipakai sebagai cadangan.
+        let waktu = String(t.waktu ?? "").trim();
+
+        if (!waktu && t.created_at) {
+            const cocok = String(t.created_at)
+                .match(/[T ](\d{2}):(\d{2})/);
+
+            if (cocok) {
+                waktu = cocok[1] + ":" + cocok[2];
+            }
+        }
+
+        const nominal = Number(t.nominal) || 0;
+        const diterima = Number(t.uang_diterima) || nominal;
+
+        // Rincian grup dari backend (baris dengan no_bukti sama).
+        // Satu pembayaran multi-iuran = satu transaksi utama; semua
+        // rinciannya ditampilkan pada modal detail.
+        const rincian = Array.isArray(t.rincian) ? t.rincian : [];
+
+        const nominalGrup =
+            Number(t.nominal_grup) > 0 ? Number(t.nominal_grup) : nominal;
+
+        const diterimaGrup =
+            Number(t.uang_diterima_grup) > 0
+                ? Number(t.uang_diterima_grup)
+                : diterima;
+
+        return {
+            id: t.no_bukti || ("TRX-" + (t.id_transaksi ?? "")),
+            no_bukti: t.no_bukti ?? "",
+            id_transaksi: t.id_transaksi ?? null,
+            jenis: (jenisDb === "PENGELUARAN" || jenisDb === "K") ? "keluar" : "masuk",
+            kategori: t.kategori ?? "",
+            keterangan: t.keterangan ?? "",
+            kelas: t.nama_siswa ?? "",
+            tanggal: tanggal,
+            waktu: waktu || "-",
+            // Nilai grup dipakai untuk baris & ringkasan transaksi utama
+            // agar multi-iuran tidak terhitung sebagian.
+            tagihan: nominalGrup,
+            diterima: diterimaGrup,
+            petugas: t.dicatat_oleh ?? t.pic ?? t.nama_pembayar ?? "",
+            rincian: rincian,
+            jumlah_rincian:
+                Number(t.jumlah_rincian) > 0
+                    ? Number(t.jumlah_rincian)
+                    : rincian.length,
+            // Status pembayaran & sisa tagihan dari backend (dihitung
+            // dari akumulasi pembayaran; bukan kolom database).
+            status_pembayaran: t.status_pembayaran ?? null,
+            sisa_tagihan: t.sisa_tagihan !== null && t.sisa_tagihan !== undefined
+                ? Number(t.sisa_tagihan)
+                : null
+        };
+    };
+
+    const muatData = async () => {
+
+        try {
+            const hasil = await permintaanAPI(API_URL);
+
+            const data =
+                Array.isArray(hasil.data)
+                    ? hasil.data
+                    : [];
+
+            // =====================================================
+            // SATU TRANSAKSI UTAMA PER no_bukti
+            // =====================================================
+            // Backend mengirim satu entri per baris transaksi, namun
+            // setiap entri sudah memuat seluruh rincian grup
+            // (`rincian`). Di sini kita simpan hanya SATU wakil per
+            // no_bukti agar pembayaran multi-iuran (beberapa baris
+            // dengan no_bukti sama) tidak muncul sebagai beberapa
+            // transaksi utama. Data lama (no_bukti unik per baris)
+            // tetap tampil satu per satu seperti semula.
+            const perBukti = new Map();
+
+            data.forEach((t) => {
+                const kunci =
+                    t.no_bukti || ("TRX-" + (t.id_transaksi ?? ""));
+
+                if (!perBukti.has(kunci)) {
+                    perBukti.set(kunci, t);
+                    return;
+                }
+
+                // Bila entri wakil belum punya rincian lengkap,
+                // lengkapi dari entri lain di grup yang sama.
+                const wakil = perBukti.get(kunci);
+
+                if (
+                    (!Array.isArray(wakil.rincian) || wakil.rincian.length === 0) &&
+                    Array.isArray(t.rincian)
+                ) {
+                    wakil.rincian = t.rincian;
+                    wakil.nominal_grup = t.nominal_grup;
+                    wakil.uang_diterima_grup = t.uang_diterima_grup;
+                    wakil.jumlah_rincian = t.jumlah_rincian;
+                }
+            });
+
+            DATA_TRANSAKSI = Array.from(perBukti.values())
+                .map(petakanTransaksi);
+
+            isiPilihanBulan();
+            isiPilihanKategori();
+            terapkanFilter();
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat data transaksi:",
+                error
+            );
+
+            DATA_TRANSAKSI = [];
+
+            terapkanFilter();
+        }
+    };
 
 
     /* ============================================================
@@ -65,7 +242,18 @@
     };
 
     const formatTanggal = (iso) => {
-        const d = new Date(iso + "T00:00:00");
+        // Terima "2026-10-19", "2026-10-19 00:00:00", atau ISO penuh.
+        const bagian = String(iso ?? "").slice(0, 10).split("-");
+
+        if (bagian.length !== 3 || !bagian[0]) return "-";
+
+        const d = new Date(
+            Number(bagian[0]),
+            Number(bagian[1]) - 1,
+            Number(bagian[2])
+        );
+
+        if (Number.isNaN(d.getTime())) return String(iso);
 
         return d.toLocaleDateString("id-ID", {
             day: "2-digit",
@@ -102,14 +290,18 @@
 
 
     const CHIP_KATEGORI = {
-        "Iuran": "chip--iuran",
-        "Kas": "chip--kas",
-        "Pemasukan lainnya": "chip--masuk-lain",
-        "Kebutuhan kelas": "chip--butuh",
-        "Perlengkapan kelas": "chip--perlengkapan",
-        "Kegiatan kelas": "chip--kegiatan",
-        "Pengeluaran lainnya": "chip--keluar-lain"
+        "iuran": "chip--iuran",
+        "kas": "chip--kas",
+        "pemasukan lainnya": "chip--masuk-lain",
+        "kebutuhan kelas": "chip--butuh",
+        "perlengkapan kelas": "chip--perlengkapan",
+        "kegiatan kelas": "chip--kegiatan",
+        "pengeluaran lainnya": "chip--keluar-lain"
     };
+
+    /* Cari kelas warna chip tanpa terpengaruh huruf besar/kecil. */
+    const chipKategori = (nilai) =>
+        CHIP_KATEGORI[String(nilai ?? "").toLowerCase()] || "chip--keluar-lain";
 
 
     /* ============================================================
@@ -164,7 +356,7 @@
             daftar
                 .map(
                     (k) =>
-                        `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`
+                        `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`
                 )
                 .join("");
 
@@ -173,6 +365,39 @@
                 .some((o) => o.value === nilaiLama)
         ) {
             pilihKategori.value = nilaiLama;
+        }
+    };
+
+
+    const isiPilihanBulan = () => {
+
+        const pilih = $("filterBulan");
+        if (!pilih) return;
+
+        const nilaiLama = pilih.value;
+
+        // Bulan diambil dari data nyata agar tidak pernah basi.
+        const daftar = [...new Set(
+            DATA_TRANSAKSI
+                .map((t) => String(t.tanggal ?? "").slice(0, 7))
+                .filter((b) => /^\d{4}-\d{2}$/.test(b))
+        )].sort().reverse();
+
+        const NAMA_BULAN = [
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        ];
+
+        pilih.innerHTML =
+            `<option value="semua">Semua Bulan</option>` +
+            daftar.map((b) => {
+                const [th, bl] = b.split("-");
+                const nama = NAMA_BULAN[Number(bl) - 1] ?? bl;
+                return `<option value="${b}">${nama} ${th}</option>`;
+            }).join("");
+
+        if ([...pilih.options].some((o) => o.value === nilaiLama)) {
+            pilih.value = nilaiLama;
         }
     };
 
@@ -194,11 +419,18 @@
                 return false;
             }
 
-            if (kategori !== "semua" && t.kategori !== kategori) {
+            if (
+                kategori !== "semua" &&
+                String(t.kategori ?? "").toLowerCase() !==
+                    String(kategori).toLowerCase()
+            ) {
                 return false;
             }
 
-            if (bulan !== "semua" && !t.tanggal.startsWith(bulan)) {
+            if (
+                bulan !== "semua" &&
+                !String(t.tanggal ?? "").startsWith(bulan)
+            ) {
                 return false;
             }
 
@@ -265,9 +497,14 @@
             ? `<span class="cell-keterangan__sub">${escapeHtml(t.kelas)}</span>`
             : "";
 
-        const chip =
-            CHIP_KATEGORI[t.kategori] ||
-            "chip--keluar-lain";
+        // Tandai transaksi yang punya rincian (mis. pembayaran
+        // multi-iuran) agar pengguna tahu detailnya bisa dibuka.
+        const rincianBadge =
+            t.jumlah_rincian > 1
+                ? `<span class="cell-rincian">${t.jumlah_rincian} rincian</span>`
+                : "";
+
+        const chip = chipKategori(t.kategori);
 
 
         return `
@@ -285,13 +522,15 @@
                         ${escapeHtml(t.keterangan)}
                     </div>
 
+                    ${rincianBadge}
+
                     ${kelas}
 
                 </td>
 
                 <td>
                     <span class="chip ${chip}">
-                        ${escapeHtml(t.kategori)}
+                        ${escapeHtml(labelKategori(t.kategori))}
                     </span>
                 </td>
 
@@ -443,7 +682,7 @@
 
         const t =
             DATA_TRANSAKSI.find(
-                (x) => x.id === id
+                (x) => String(x.id) === String(id)
             );
 
         if (!t) return;
@@ -458,10 +697,10 @@
                 : "Pengeluaran";
 
         $("detailKategori").textContent =
-            t.kategori;
+            labelKategori(t.kategori);
 
         $("detailKelas").textContent =
-            t.kelas || "—";
+            t.kelas || "-";
 
         $("detailTanggal").textContent =
             formatTanggal(t.tanggal);
@@ -474,6 +713,27 @@
 
         $("detailKeterangan").textContent =
             t.keterangan;
+
+
+        // Status pembayaran (Lunas / Cicilan) - chip di bawah judul
+        // modal. Transaksi non-iuran tidak punya status (disembunyikan).
+        const chipStatus = $("detailStatusBayar");
+
+        if (chipStatus) {
+            if (t.status_pembayaran === "Lunas") {
+                chipStatus.hidden = false;
+                chipStatus.className = "badge badge--ok";
+                chipStatus.textContent = "Lunas";
+            } else if (t.status_pembayaran === "Cicilan") {
+                chipStatus.hidden = false;
+                chipStatus.className = "badge badge--pending";
+                chipStatus.textContent =
+                    "Cicilan • Sisa " + formatRupiah(t.sisa_tagihan ?? 0);
+            } else {
+                chipStatus.hidden = true;
+                chipStatus.textContent = "";
+            }
+        }
 
 
         const masukKas =
@@ -514,7 +774,87 @@
                 : "Jumlah uang yang keluar dari kas";
 
 
+        tampilkanRincianDetail(t);
+
+
         bukaModal("modalDetail");
+    };
+
+
+    /* ============================================================
+       RINCIAN TRANSAKSI (MULTI-IURAN / PENGELUARAN)
+       ============================================================ */
+
+    /*
+     * Menampilkan rincian pembayaran/pengeluaran pada modal detail.
+     * Satu pembayaran multi-iuran tetap satu transaksi utama;
+     * seluruh rinciannya (siswa, iuran, periode, nominal) muncul
+     * di sini. Bila transaksi hanya satu baris, blok ini
+     * disembunyikan agar tampilan tetap ringkas.
+     */
+    const tampilkanRincianDetail = (t) => {
+
+        const wadah = $("detailRincian");
+        const list = $("detailRincianList");
+        const total = $("detailRincianTotal");
+
+        if (!wadah || !list || !total) return;
+
+        const rincian =
+            Array.isArray(t.rincian)
+                ? t.rincian.filter(Boolean)
+                : [];
+
+        // Tanpa rincian bermakna (hanya satu baris) → sembunyikan.
+        if (rincian.length <= 1) {
+            wadah.hidden = true;
+            list.innerHTML = "";
+            total.textContent = "-";
+            return;
+        }
+
+        list.innerHTML = rincian
+            .map((r) => {
+
+                const nama =
+                    r.nama_iuran
+                        ? escapeHtml(r.nama_iuran)
+                        : escapeHtml(r.keterangan || "Pembayaran");
+
+                const periode =
+                    r.periode
+                        ? `<span class="detail-rincian__periode">${escapeHtml(r.periode)}</span>`
+                        : "";
+
+                // Status pembayaran rincian ini (Lunas/Cicilan) dari
+                // tabel detail_transaksi + akumulasi pembayaran.
+                const chip = r.status_pembayaran === "Lunas"
+                    ? `<span class="badge badge--ok">Lunas</span>`
+                    : r.status_pembayaran === "Cicilan"
+                        ? `<span class="badge badge--pending">Cicilan${r.sisa_tagihan != null ? " • Sisa " + formatRupiah(r.sisa_tagihan) : ""}</span>`
+                        : "";
+
+                return `
+                    <div class="detail-rincian__baris">
+                        <div class="detail-rincian__info">
+                            <span class="detail-rincian__nama">${nama}</span>
+                            ${periode}
+                            ${chip}
+                        </div>
+                        <b class="detail-rincian__nominal">${formatRupiah(r.nominal)}</b>
+                    </div>
+                `;
+            })
+            .join("");
+
+        const totalRincian = rincian.reduce(
+            (jumlah, r) => jumlah + (Number(r.nominal) || 0),
+            0
+        );
+
+        total.textContent = formatRupiah(totalRincian);
+
+        wadah.hidden = false;
     };
 
 
@@ -763,7 +1103,10 @@
 
     document.addEventListener(
         "DOMContentLoaded",
-        init
+        () => {
+            init();
+            muatData();
+        }
     );
 
 })();

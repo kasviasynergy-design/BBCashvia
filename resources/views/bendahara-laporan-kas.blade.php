@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Laporan Kas | BBCashvia</title>
+    <title>Laporan Kas - BBCashvia</title>
 
 
     {{-- =====================================================
@@ -42,13 +42,15 @@
 
     @vite([
         'resources/css/bendahara-laporan-kas.css',
-        'resources/js/bendahara-laporan-kas.js'
+        'resources/js/bendahara-laporan-kas.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 
 </head>
 
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
 <div class="app-shell">
 
@@ -254,18 +256,18 @@
             <div class="sidebar__user">
 
                 <div class="sidebar__avatar">
-                    SN
+                    {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
 
 
                 <div class="sidebar__userinfo">
 
                     <div class="sidebar__username">
-                        Siti Nurhaliza
+                        {{ auth()->user()->name ?? 'Pengguna' }}
                     </div>
 
                     <div class="sidebar__userrole">
-                        Bendahara • XI RPL 1
+                        Bendahara • {{ auth()->user()->labelKelas() }}
                     </div>
 
                 </div>
@@ -388,18 +390,18 @@
                     >
 
                         <div class="topbar__avatar">
-                            SN
+                            {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                         </div>
 
 
                         <div class="topbar__profileinfo">
 
                             <div class="topbar__profilename">
-                                Siti Nurhaliza
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </div>
 
                             <div class="topbar__profilerole">
-                                Bendahara • XI RPL 1
+                                Bendahara • {{ auth()->user()->labelKelas() }}
                             </div>
 
                         </div>
@@ -425,35 +427,18 @@
                         <div class="dropdown__head">
 
                             <div class="dropdown__name">
-                                Siti Nurhaliza
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </div>
 
                             <div class="dropdown__mail">
-                                Bendahara • Kelas XI RPL 1
+                                Bendahara • {{ auth()->user()->labelKelas() }}
                             </div>
 
                             <div class="dropdown__mail">
-                                siti.nurhaliza@gmail.com
+                                {{ auth()->user()->email ?? '-' }}
                             </div>
 
                         </div>
-
-
-                        <button
-                            type="button"
-                            class="dropdown__item"
-                            id="btnProfileAccount"
-                        >
-
-                            <span class="material-symbols-outlined">
-                                person
-                            </span>
-
-                            <span>
-                                Profil
-                            </span>
-
-                        </button>
 
 
                         <button
@@ -487,41 +472,37 @@
 
         <main class="content">
 
+        @include('partials.kelas-belum-ditetapkan')
+
+
 
             {{-- =================================================
                  HERO
             ================================================== --}}
 
-            <section class="hero">
+            {{-- PAGE HEADER --}}
+            <section class="page-head">
 
+                <div class="page-head__text">
 
-                <div class="hero__text">
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/bendahara">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Laporan Kas</span>
+                    </nav>
 
-                    <span class="hero__eyebrow">
-                        Bendahara • XI RPL 1
-                    </span>
+                    <h2 class="page-head__title">Laporan Kas</h2>
 
-
-                    <h2 class="hero__title">
-                        Laporan Kas
-                    </h2>
-
-
-                    <p class="hero__sub">
-                        Pantau arus kas kelas XI RPL 1 berdasarkan
-                        pemasukan, pengeluaran, dan saldo kas
-                        pada periode yang dipilih.
+                    <p class="page-head__sub">
+                        Pantau arus kas {{ auth()->user()->labelKelas() }} berdasarkan
+                        pemasukan, pengeluaran, dan saldo kas pada periode yang dipilih.
                     </p>
 
                 </div>
 
             </section>
 
-
-            {{-- =================================================
-                 SUMMARY
-            ================================================== --}}
-
+            {{-- SUMMARY --}}
             <section class="stat-grid">
 
 
@@ -691,7 +672,7 @@
                         class="stat-card__foot"
                         id="sumJumlahNote"
                     >
-                        Transaksi kelas XI RPL 1
+                        Transaksi {{ auth()->user()->labelKelas() }}
                     </div>
 
                 </article>
@@ -720,7 +701,7 @@
 
                         <div class="panel__sub">
                             Data laporan hanya menampilkan transaksi
-                            kelas XI RPL 1.
+                            {{ auth()->user()->labelKelas() }}.
                         </div>
 
                     </div>
@@ -996,7 +977,7 @@
 
                         <div class="panel__sub">
                             Saldo dihitung berdasarkan urutan transaksi
-                            kelas XI RPL 1.
+                            {{ auth()->user()->labelKelas() }}.
                         </div>
 
                     </div>
@@ -1128,7 +1109,7 @@
             <div class="content__foot">
 
                 Laporan kas Bendahara •
-                Kelas XI RPL 1 •
+                {{ auth()->user()->labelKelas() }} •
                 Tahun Ajaran 2026/2027
 
             </div>
@@ -1152,7 +1133,7 @@
 
 
     <div class="print-head__title">
-        Laporan Kas — Kelas XI RPL 1
+        Laporan Kas - {{ auth()->user()->labelKelas() }}
     </div>
 
 
@@ -1193,5 +1174,6 @@
 </div>
 
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

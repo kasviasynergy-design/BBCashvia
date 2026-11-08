@@ -12,7 +12,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>
-        Buat Kata Sandi Baru — BBCashvia
+        Buat Kata Sandi Baru -  BBCashvia
     </title>
 
     <link rel="preconnect"
@@ -116,11 +116,24 @@
                     </div>
 
 
-                    <small>
-                        Minimal 8 karakter, 1 huruf kapital,
-                        dan 1 karakter khusus.
-                    </small>
-
+                    <ul class="change-requirements" id="passwordRequirements">
+                        <li data-req="length">
+                            <span class="req-icon">○</span>
+                            Minimal 8 karakter
+                        </li>
+                        <li data-req="upper">
+                            <span class="req-icon">○</span>
+                            Minimal satu huruf besar (A-Z)
+                        </li>
+                        <li data-req="number">
+                            <span class="req-icon">○</span>
+                            Minimal satu angka (0-9)
+                        </li>
+                        <li data-req="symbol">
+                            <span class="req-icon">○</span>
+                            Minimal satu simbol (!@#$% dan lainnya)
+                        </li>
+                    </ul>
 
                     <p
                         class="change-error"

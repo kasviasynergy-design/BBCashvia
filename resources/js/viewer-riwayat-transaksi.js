@@ -1,71 +1,170 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     /* ============================================================
-       DATA DUMMY RIWAYAT TRANSAKSI
+       DATA RIWAYAT TRANSAKSI (DARI DATABASE)
     ============================================================ */
 
-    const transactions = [
-        {
-            no: 1,
-            receipt: "TRX-2026-001",
-            date: "01 Okt 2026",
-            type: "Pemasukan",
-            category: "Iuran",
-            description: "Kas Kelas",
-            amount: 20000,
-            status: "Berhasil"
-        },
-        {
-            no: 2,
-            receipt: "TRX-2026-002",
-            date: "02 Okt 2026",
-            type: "Pemasukan",
-            category: "Iuran",
-            description: "Kebersihan",
-            amount: 10000,
-            status: "Berhasil"
-        },
-        {
-            no: 3,
-            receipt: "TRX-2026-003",
-            date: "03 Okt 2026",
-            type: "Pengeluaran",
-            category: "Operasional",
-            description: "Alat Kebersihan",
-            amount: 15000,
-            status: "Berhasil"
-        },
-        {
-            no: 4,
-            receipt: "TRX-2026-004",
-            date: "05 Okt 2026",
-            type: "Pemasukan",
-            category: "Iuran",
-            description: "Kas Kelas",
-            amount: 25000,
-            status: "Berhasil"
-        },
-        {
-            no: 5,
-            receipt: "TRX-2026-005",
-            date: "06 Okt 2026",
-            type: "Pengeluaran",
-            category: "Kegiatan",
-            description: "Dekorasi Kelas",
-            amount: 10000,
-            status: "Berhasil"
-        },
-        {
-            no: 6,
-            receipt: "TRX-2026-006",
-            date: "08 Okt 2026",
-            type: "Pemasukan",
-            category: "Iuran",
-            description: "Kegiatan Kelas",
-            amount: 0,
-            status: "Dibatalkan"
-        }
+    let transactions = [];
+
+
+    /* ============================================================
+       AKSES API
+    ============================================================ */
+
+    const API_URL = "/data/transaksi";
+
+    const BULAN_SINGKAT = [
+        "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+        "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
     ];
+
+    /* Pemetaan nilai kategori database ke label yang enak dibaca. */
+    const PETAKAN_KATEGORI = {
+        "iuran": "Iuran",
+        "kas": "Kas",
+        "kebutuhan kelas": "Kebutuhan Kelas",
+        "perlengkapan kelas": "Perlengkapan Kelas",
+        "kegiatan kelas": "Kegiatan Kelas",
+        "pemasukan lainnya": "Pemasukan Lainnya",
+        "pengeluaran lainnya": "Pengeluaran Lainnya"
+    };
+
+    const labelKategori = (kategori) => {
+
+        const kunci = String(kategori || "").toLowerCase();
+
+        return PETAKAN_KATEGORI[kunci] || (kategori || "-");
+
+    };
+
+
+    /* Amankan teks sebelum dimasukkan ke HTML. */
+    const escapeHtml = (teks) => {
+
+        return String(teks ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+
+    };
+
+
+    const permintaanAPI = async (url, opsi = {}) => {
+
+        let respons;
+
+        try {
+            respons = await fetch(url, {
+                ...opsi,
+                headers: {
+                    Accept: "application/json",
+                    ...(opsi.headers || {})
+                },
+                credentials: "same-origin"
+            });
+        } catch {
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            // Respons bukan JSON.
+        }
+
+        if (!respons.ok) {
+            throw new Error(
+                hasil?.message || "Gagal memuat data transaksi."
+            );
+        }
+
+        return hasil;
+    };
+
+
+    const formatTanggal = (nilai) => {
+
+        const iso = String(nilai ?? "").slice(0, 10);
+        const bagian = iso.split("-");
+
+        if (bagian.length !== 3) {
+            return iso;
+        }
+
+        const bulan = Number(bagian[1]);
+
+        return `${bagian[2]} ${BULAN_SINGKAT[bulan - 1] ?? bagian[1]} ${bagian[0]}`;
+    };
+
+
+    const petakanTransaksi = (t) => {
+
+        const jenisDb = String(t.jenis ?? "").toUpperCase();
+
+        return {
+            receipt: t.no_bukti || ("TRX-" + (t.id_transaksi ?? "")),
+            date: formatTanggal(t.tanggal),
+            type: (jenisDb === "PENGELUARAN" || jenisDb === "K") ? "Pengeluaran" : "Pemasukan",
+            category: labelKategori(t.kategori),
+            description: t.keterangan || t.nama_pembayar || "-",
+            amount: Number(t.nominal) || 0,
+            status: "Berhasil"
+        };
+    };
+
+
+    /* Isi pilihan kategori filter dari kategori nyata di database. */
+    const isiPilihanKategori = () => {
+
+        if (!categoryFilter) return;
+
+        const nilaiLama = categoryFilter.value;
+
+        const daftar = [...new Set(
+            transactions
+                .map((t) => String(t.category ?? "").trim())
+                .filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b, "id"));
+
+        categoryFilter.innerHTML =
+            `<option value="all">Semua Kategori</option>` +
+            daftar
+                .map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`)
+                .join("");
+
+        if ([...categoryFilter.options].some((o) => o.value === nilaiLama)) {
+            categoryFilter.value = nilaiLama;
+        }
+    };
+
+
+    const muatData = async () => {
+
+        try {
+            const hasil = await permintaanAPI(API_URL);
+
+            const data =
+                Array.isArray(hasil.data) ? hasil.data : [];
+
+            transactions = data.map(petakanTransaksi);
+
+            filterData();
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat data transaksi:",
+                error
+            );
+
+            transactions = [];
+
+            filterData();
+        }
+    };
 
 
     /* ============================================================
@@ -374,7 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         if (confirmed) {
-            window.location.href = "/";
+            window.location.href = "/logout";
         }
 
     };
@@ -498,7 +597,6 @@ document.addEventListener("DOMContentLoaded", () => {
        INITIAL RENDER
     ============================================================ */
 
-    renderTable(transactions);
-    updateSummary(transactions);
+    muatData();
 
 });

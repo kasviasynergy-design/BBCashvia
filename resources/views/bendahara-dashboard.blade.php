@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Dashboard Bendahara | BBCashvia</title>
+    <title>Dashboard Bendahara - BBCashvia</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
+        rel="stylesheet">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0"
@@ -21,11 +20,17 @@
 
     @vite([
         'resources/css/bendahara-dashboard.css',
-        'resources/js/bendahara-dashboard.js'
+        'resources/js/bendahara-dashboard.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
+    <style>
+        /*! tailwindcss v4.0.7 | MIT License | https://tailwin
+css.com */@layer theme{:root,:host{--primary:#2BA19E;--primary-dark:#237A77;--primary-soft:#D4F1F9;--success:#2BA19E;--success-soft:#D4F1F9;--warning:#F4D98E;--warning-soft:#F4D98E;--bg:#FFFDFF;--surface:#FFFFFF;--surface-soft:#D4F1F9;--border:#A5DBE3;--sidebar-active:#D4F1F9;--sidebar-active-text:#2BA19E;}}
+    </style>
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
 <div class="app-shell">
 
@@ -91,7 +96,7 @@
             <div class="sidebar__section">
 
                 <div class="sidebar__section-title">
-                    DATA &amp; IURAN
+                    DATA & IURAN
                 </div>
 
                 <a
@@ -190,17 +195,17 @@
             <div class="sidebar__user">
 
                 <div class="sidebar__avatar">
-                    SN
+                    {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
 
                 <div class="sidebar__userinfo">
 
                     <span class="sidebar__username">
-                        Siti Nurhaliza
+                        {{ auth()->user()->name ?? 'Pengguna' }}
                     </span>
 
                     <span class="sidebar__userrole">
-                        Bendahara • XI RPL 1
+                        Bendahara • {{ auth()->user()->labelKelas() }}
                     </span>
 
                 </div>
@@ -228,7 +233,7 @@
 
     {{-- =========================================================
          MAIN SHELL
-         ========================================================= --}}
+         ===================================================== --}}
     <div class="shell">
 
 
@@ -292,18 +297,19 @@
                         aria-expanded="false"
                     >
 
+
                         <div class="topbar__avatar">
-                            SN
+                            {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                         </div>
 
                         <div class="topbar__profileinfo">
 
                             <span class="topbar__profilename">
-                                Siti Nurhaliza
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </span>
 
                             <span class="topbar__profilerole">
-                                Bendahara • XI RPL 1
+                                Bendahara • {{ auth()->user()->labelKelas() }}
                             </span>
 
                         </div>
@@ -321,21 +327,23 @@
                         id="profileDropdown"
                     >
 
+
                         <div class="dropdown__head">
 
                             <span class="dropdown__name">
-                                Siti Nurhaliza
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </span>
 
                             <span class="dropdown__mail">
-                                Bendahara • Kelas XI RPL 1
+                                Bendahara • {{ auth()->user()->labelKelas() }}
                             </span>
 
                             <span class="dropdown__mail">
-                                siti.nurhaliza@gmail.com
+                                {{ auth()->user()->email ?? '-' }}
                             </span>
 
                         </div>
+
 
                         <button
                             type="button"
@@ -364,24 +372,24 @@
         <main class="content">
 
 
+        @include('partials.kelas-belum-ditetapkan')
+
+
             {{-- =================================================
                  HERO
                  ================================================= --}}
-            <section class="hero">
+            {{-- SAPAAN / HERO --}}
+            <section class="hero" aria-label="Panel Bendahara">
 
                 <div class="hero__text">
 
-                    <span class="hero__eyebrow">
-                        Panel Bendahara • Kas Kelas
-                    </span>
+                    <nav class="hero__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <span aria-current="page">Beranda</span>
+                    </nav>
 
                     <h2 class="hero__title">
-                        Selamat datang, Siti Nurhaliza 👋
+                        Selamat datang, {{ auth()->user()->name ?? 'Pengguna' }} 👋
                     </h2>
-
-                    <p class="hero__sub">
-                        Bendahara Kelas XI RPL 1 • 36 Siswa
-                    </p>
 
                     <p class="hero__sub">
                         Kelola pembayaran, iuran, transaksi, dan kondisi
@@ -397,22 +405,22 @@
                         href="/bendahara/transaksi"
                         class="btn btn--primary"
                     >
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             add_card
                         </span>
 
-                        Catat Transaksi
+                        <span>Catat Transaksi</span>
                     </a>
 
                     <a
                         href="/bendahara/iuran"
                         class="btn btn--ghost"
                     >
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             receipt_long
                         </span>
 
-                        Lihat Iuran
+                        <span>Lihat Iuran</span>
                     </a>
 
                 </div>
@@ -423,216 +431,138 @@
             {{-- =================================================
                  STATISTICS
                  ================================================= --}}
-            <section class="stat-grid">
+            <section class="stat-grid stat-grid--kpi">
 
 
                 {{-- TOTAL KAS --}}
                 <article class="stat-card">
 
+
                     <div class="stat-card__top">
 
                         <div>
-                            <div class="stat-card__label">
-                                Total Kas
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statSaldo"
-                            >
-                                Rp 0
-                            </div>
+                            <p class="stat-card__label">Total Kas</p>
+                            <p class="stat-card__value" id="statSaldo">Rp 0</p>
                         </div>
 
-                        <div class="stat-card__icon stat-card__icon--kas">
-                            <span class="material-symbols-outlined">
+                        <span class="stat-card__icon stat-card__icon--kas">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 account_balance_wallet
                             </span>
-                        </div>
+                        </span>
 
                     </div>
 
                     <div class="stat-card__foot">
                         Saldo kas saat ini
                     </div>
-
                 </article>
 
 
                 {{-- TOTAL PEMASUKAN --}}
                 <article class="stat-card">
 
+
                     <div class="stat-card__top">
 
                         <div>
-                            <div class="stat-card__label">
-                                Total Pemasukan
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statPemasukan"
-                            >
-                                Rp 0
-                            </div>
+                            <p class="stat-card__label">Total Pemasukan</p>
+                            <p class="stat-card__value" id="statPemasukan">Rp 0</p>
                         </div>
 
-                        <div class="stat-card__icon stat-card__icon--in">
-                            <span class="material-symbols-outlined">
+                        <span class="stat-card__icon stat-card__icon--in">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 trending_up
                             </span>
-                        </div>
+                        </span>
 
                     </div>
 
                     <div class="stat-card__foot">
 
                         <span class="stat-card__trend stat-card__trend--up">
-                            <span class="material-symbols-outlined">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 arrow_upward
                             </span>
 
                             Kas masuk
                         </span>
-
                     </div>
-
                 </article>
 
 
                 {{-- TOTAL IURAN --}}
                 <article class="stat-card">
 
+
                     <div class="stat-card__top">
 
                         <div>
-                            <div class="stat-card__label">
-                                Total Iuran
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statIuran"
-                            >
-                                Rp 0
-                            </div>
+                            <p class="stat-card__label">Total Iuran</p>
+                            <p class="stat-card__value" id="statIuran">Rp 0</p>
                         </div>
 
-                        <div class="stat-card__icon stat-card__icon--iuran">
-                            <span class="material-symbols-outlined">
+                        <span class="stat-card__icon stat-card__icon--iuran">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 receipt_long
                             </span>
-                        </div>
-
-                    </div>
-
-                    <div class="stat-card__foot">
-
-                        <span id="statIuranMeta">
-                            Memuat...
                         </span>
 
                     </div>
 
+                    <p class="stat-card__foot" id="statIuranMeta">
+                        -
+                    </p>
                 </article>
 
 
                 {{-- BELUM LUNAS --}}
                 <article class="stat-card">
 
+
                     <div class="stat-card__top">
 
                         <div>
-                            <div class="stat-card__label">
-                                Siswa Belum Lunas
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statBelumLunas"
-                            >
-                                0 siswa
-                            </div>
+                            <p class="stat-card__label">Siswa Belum Lunas</p>
+                            <p class="stat-card__value" id="statBelumLunas">0 siswa</p>
                         </div>
 
-                        <div class="stat-card__icon stat-card__icon--out">
-                            <span class="material-symbols-outlined">
+                        <span class="stat-card__icon stat-card__icon--out">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 pending_actions
                             </span>
-                        </div>
+                        </span>
 
                     </div>
 
                     <div class="stat-card__foot">
                         Perlu ditindaklanjuti
                     </div>
-
                 </article>
 
 
                 {{-- TOTAL TRANSAKSI --}}
                 <article class="stat-card">
 
+
                     <div class="stat-card__top">
 
                         <div>
-                            <div class="stat-card__label">
-                                Total Transaksi
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statTransaksi"
-                            >
-                                0 transaksi
-                            </div>
+                            <p class="stat-card__label">Total Transaksi</p>
+                            <p class="stat-card__value" id="statTransaksi">0 transaksi</p>
                         </div>
 
-                        <div class="stat-card__icon stat-card__icon--trx">
-                            <span class="material-symbols-outlined">
+                        <span class="stat-card__icon stat-card__icon--trx">
+                            <span class="material-symbols-outlined" aria-hidden="true">
                                 payments
                             </span>
-                        </div>
+                        </span>
 
                     </div>
 
                     <div class="stat-card__foot">
                         Seluruh transaksi tercatat
                     </div>
-
-                </article>
-
-
-                {{-- TRANSAKSI HARI INI --}}
-                <article class="stat-card">
-
-                    <div class="stat-card__top">
-
-                        <div>
-                            <div class="stat-card__label">
-                                Transaksi Hari Ini
-                            </div>
-
-                            <div
-                                class="stat-card__value"
-                                id="statHariIni"
-                            >
-                                0 transaksi
-                            </div>
-                        </div>
-
-                        <div class="stat-card__icon stat-card__icon--siswa">
-                            <span class="material-symbols-outlined">
-                                today
-                            </span>
-                        </div>
-
-                    </div>
-
-                    <div class="stat-card__foot">
-                        Aktivitas hari ini
-                    </div>
-
                 </article>
 
             </section>
@@ -643,16 +573,19 @@
                  ================================================= --}}
             <section class="panel panel--ringkasan">
 
+
                 <div class="panel__head">
 
+
                     <div>
+
 
                         <div class="panel__eyebrow">
                             Ringkasan Keuangan
                         </div>
 
                         <div class="panel__title">
-                            Posisi Kas — Kelas XI RPL 1
+                            Posisi Kas - {{ auth()->user()->labelKelas() }}
                         </div>
 
                         <div class="panel__sub">
@@ -677,28 +610,9 @@
 
                 <div class="rumus">
 
-                    <div class="rumus__item">
-
-                        <div class="rumus__label">
-                            Saldo Awal
-                        </div>
-
-                        <div
-                            class="rumus__value"
-                            id="saldoAwal"
-                        >
-                            Rp 0
-                        </div>
-
-                    </div>
-
-
-                    <div class="rumus__operator">
-                        +
-                    </div>
-
 
                     <div class="rumus__item">
+
 
                         <div class="rumus__label">
                             Total Pemasukan
@@ -721,6 +635,7 @@
 
                     <div class="rumus__item">
 
+
                         <div class="rumus__label">
                             Total Pengeluaran
                         </div>
@@ -741,6 +656,7 @@
 
 
                     <div class="rumus__item rumus__item--hasil">
+
 
                         <div class="rumus__label">
                             Saldo Saat Ini
@@ -769,20 +685,23 @@
                 {{-- GRAFIK --}}
                 <article class="panel">
 
+
                     <div class="panel__head">
 
+
                         <div>
+
 
                             <div class="panel__eyebrow">
                                 Arus Kas
                             </div>
 
                             <div class="panel__title">
-                                Pemasukan &amp; Pengeluaran
+                                Pemasukan & Pengeluaran
                             </div>
 
                             <div class="panel__sub">
-                                Pergerakan kas Kelas XI RPL 1 beberapa bulan terakhir.
+                                Pergerakan kas {{ auth()->user()->labelKelas() }} beberapa bulan terakhir.
                             </div>
 
                         </div>
@@ -791,6 +710,7 @@
 
 
                     <div class="chart-tabs">
+
 
                         <button
                             type="button"
@@ -825,7 +745,9 @@
 
                     <div class="chart-legend">
 
+
                         <div class="chart-legend__item">
+
 
                             <span class="chart-legend__dot chart-legend__dot--in"></span>
 
@@ -833,7 +755,9 @@
 
                         </div>
 
+
                         <div class="chart-legend__item">
+
 
                             <span class="chart-legend__dot chart-legend__dot--out"></span>
 
@@ -849,20 +773,23 @@
                 {{-- RINGKASAN IURAN --}}
                 <article class="panel">
 
+
                     <div class="panel__head">
 
+
                         <div>
+
 
                             <div class="panel__eyebrow">
                                 Monitoring Iuran
                             </div>
 
                             <div class="panel__title">
-                                Status Pembayaran — XI RPL 1
+                                Status Pembayaran - {{ auth()->user()->labelKelas() }}
                             </div>
 
                             <div class="panel__sub">
-                                Ringkasan pembayaran iuran siswa Kelas XI RPL 1.
+                                Ringkasan pembayaran iuran siswa {{ auth()->user()->labelKelas() }}.
                             </div>
 
                         </div>
@@ -883,7 +810,9 @@
 
                     <div class="iuran-summary">
 
+
                         <div class="iuran-summary__item">
+
 
                             <div class="iuran-summary__icon iuran-summary__icon--success">
                                 <span class="material-symbols-outlined">
@@ -892,6 +821,7 @@
                             </div>
 
                             <div class="iuran-summary__content">
+
 
                                 <span class="iuran-summary__label">
                                     Sudah Lunas
@@ -908,6 +838,7 @@
 
                         <div class="iuran-summary__item">
 
+
                             <div class="iuran-summary__icon iuran-summary__icon--warning">
                                 <span class="material-symbols-outlined">
                                     schedule
@@ -915,6 +846,7 @@
                             </div>
 
                             <div class="iuran-summary__content">
+
 
                                 <span class="iuran-summary__label">
                                     Belum Lunas
@@ -944,6 +876,8 @@
                             </div>
 
                             <div class="iuran-progress__track">
+
+
                                 <span
                                     id="iuranProgress"
                                     style="width: 0%"
@@ -962,7 +896,9 @@
             {{-- =================================================
                  TRANSAKSI TERBARU
                  ================================================= --}}
-            <section class="panel">
+            <section
+                class="panel panel--table"
+                aria-label="Transaksi terbaru">
 
                 <div class="panel__head">
 
@@ -973,24 +909,26 @@
                         </div>
 
                         <div class="panel__title">
-                            Transaksi Terbaru — Kelas XI RPL 1
+                            Transaksi Terbaru
                         </div>
 
                         <div class="panel__sub">
-                            Transaksi kas Kelas XI RPL 1 yang terakhir dicatat.
+                            10 transaksi terakhir yang tercatat di database.
                         </div>
 
                     </div>
 
+
                     <a
-                        href="/bendahara/transaksi"
+                        href="/bendahara/riwayat-transaksi"
                         class="panel__link"
                     >
-                        Semua Transaksi
+                        Lihat Semua
 
-                        <span class="material-symbols-outlined">
+                        <span class="material-symbols-outlined" aria-hidden="true">
                             arrow_forward
                         </span>
+
                     </a>
 
                 </div>
@@ -1003,47 +941,25 @@
                         <thead>
 
                             <tr>
-
-                                <th>
-                                    No. Bukti
-                                </th>
-
-                                <th>
-                                    Siswa
-                                </th>
-
-                                <th>
-                                    Iuran
-                                </th>
-
-                                <th>
-                                    Nominal
-                                </th>
-
-                                <th>
-                                    Metode
-                                </th>
-
-                                <th>
-                                    Tanggal
-                                </th>
-
-                                <th>
-                                    Status
-                                </th>
-
+                                <th>No. Bukti</th>
+                                <th>Siswa</th>
+                                <th>Keterangan</th>
+                                <th>Nominal</th>
+                                <th>Jenis</th>
+                                <th>Tanggal</th>
+                                <th>Status</th>
                             </tr>
 
                         </thead>
+
 
                         <tbody id="transactionTable">
 
                             <tr>
                                 <td
                                     colspan="7"
-                                    class="table__empty"
-                                >
-                                    Memuat transaksi...
+                                    class="table__empty">
+                                    Memuat data…
                                 </td>
                             </tr>
 
@@ -1058,7 +974,7 @@
 
             {{-- FOOTER --}}
             <div class="content__foot">
-                BBCashvia • KASVIA Synergy • Data dashboard Kelas XI RPL 1 saat ini menggunakan simulasi frontend.
+                BBCashvia • KASVIA Synergy • Seluruh data dashboard diambil langsung dari database.
             </div>
 
         </main>
@@ -1067,5 +983,6 @@
 
 </div>
 
+@include('partials.konfirmasi-logout')
 </body>
 </html>

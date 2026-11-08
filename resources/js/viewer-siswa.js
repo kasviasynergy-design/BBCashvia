@@ -1,7 +1,14 @@
 /* ============================================================
-   BBCASHVIA — VIEWER DATA SISWA
-   Dummy data + interaksi halaman
+   BBCASHVIA - VIEWER DATA SISWA
+   Data siswa berasal dari API Laravel (database).
 ============================================================ */
+
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -9,224 +16,112 @@ document.addEventListener("DOMContentLoaded", () => {
        DATA SISWA
     ======================================================== */
 
-    const siswa = [
-        {
-            nis: "2026001",
-            nama: "Nadia Putri",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026002",
-            nama: "Rizky Maulana",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026003",
-            nama: "Salsabila Putri",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026004",
-            nama: "Fajar Nugraha",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026005",
-            nama: "Aulia Rahma",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026006",
-            nama: "Dimas Pratama",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026007",
-            nama: "Citra Lestari",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026008",
-            nama: "Bagas Saputra",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026009",
-            nama: "Nabila Zahra",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026010",
-            nama: "Rafi Kurniawan",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026011",
-            nama: "Aisyah Ramadhani",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026012",
-            nama: "Galang Prakoso",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026013",
-            nama: "Intan Permata",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026014",
-            nama: "Raka Firmansyah",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026015",
-            nama: "Dewi Anggraini",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026016",
-            nama: "Ardiansyah Putra",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026017",
-            nama: "Nisa Maharani",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026018",
-            nama: "Fikri Ramadhan",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026019",
-            nama: "Putri Amelia",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026020",
-            nama: "Rendy Setiawan",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026021",
-            nama: "Sarah Nuraini",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026022",
-            nama: "Ilham Maulana",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026023",
-            nama: "Anisa Fitri",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026024",
-            nama: "Yoga Pratama",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026025",
-            nama: "Maya Sari",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026026",
-            nama: "Daffa Alfarizi",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026027",
-            nama: "Lia Oktaviani",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026028",
-            nama: "Rian Hidayat",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026029",
-            nama: "Vina Aprilia",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026030",
-            nama: "Andika Wijaya",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026031",
-            nama: "Fani Lestari",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026032",
-            nama: "Reza Akbar",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026033",
-            nama: "Dinda Safitri",
-            gender: "Perempuan",
-            status: "Aktif"
-        },
-        {
-            nis: "2026034",
-            nama: "Rizal Fadillah",
-            gender: "Laki-laki",
-            status: "Aktif"
-        },
-        {
-            nis: "2026035",
-            nama: "Siti Aulia",
-            gender: "Perempuan",
-            status: "Tidak Aktif"
-        },
-        {
-            nis: "2026036",
-            nama: "Bayu Aditya",
-            gender: "Laki-laki",
-            status: "Tidak Aktif"
+
+    let siswa = [];
+
+
+    /* ========================================================
+       AKSES API
+    ======================================================== */
+
+    const API_URL = "/data/siswa";
+
+
+    const permintaanAPI = async (url, opsi = {}) => {
+
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                ...opsi,
+                headers: {
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    ...(opsi.headers || {})
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
         }
-    ];
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            // Respons bukan JSON.
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal memuat data siswa.");
+        }
+
+        return hasil;
+    };
+
+
+    const petakanSiswa = (item) => ({
+        nis: item.nis ?? "",
+        nama: item.nama ?? "",
+        kelas: item.kelas ?? "",
+        gender: item.jenis_kelamin || "-",
+        dibayar: Number(item.total_dibayar) || 0,
+        status: item.status || "Aktif"
+    });
+
+
+    const formatRupiah = (nilai) =>
+        new Intl.NumberFormat(
+            "id-ID",
+            {
+                style: "currency",
+                currency: "IDR",
+                minimumFractionDigits: 0
+            }
+        ).format(Number(nilai) || 0);
+
+
+    const muatData = async () => {
+
+        const tbodyV = document.getElementById("studentTableBody");
+        if (tbodyV) {
+            tbodyV.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="5"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        try {
+            const hasil = await permintaanAPI(API_URL);
+
+            const data =
+                Array.isArray(hasil.data) ? hasil.data : [];
+
+            siswa = data.map(petakanSiswa);
+
+            isiRingkasan();
+
+            filterData();
+        } catch (error) {
+
+            console.error(
+                "Gagal memuat data siswa:",
+                error
+            );
+
+            siswa = [];
+
+            filterData();
+        }
+    };
 
 
     /* ========================================================
@@ -247,6 +142,65 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const emptyState =
         document.getElementById("emptyState");
+
+    const totalSiswa =
+        document.getElementById("totalSiswa");
+
+    const siswaAktif =
+        document.getElementById("siswaAktif");
+
+    const siswaTidakAktif =
+        document.getElementById("siswaTidakAktif");
+
+    const infoJumlahSiswa =
+        document.getElementById("infoJumlahSiswa");
+
+
+    /* ========================================================
+       RINGKASAN (DARI DATA ASLI DATABASE)
+    ======================================================== */
+
+    function isiRingkasan() {
+
+        const jumlah = siswa.length;
+
+        const aktif = siswa.filter(
+            (item) => item.status === "Aktif"
+        ).length;
+
+        if (totalSiswa) {
+            totalSiswa.textContent = jumlah;
+        }
+
+        if (siswaAktif) {
+            siswaAktif.textContent = aktif;
+        }
+
+        if (siswaTidakAktif) {
+            siswaTidakAktif.textContent = jumlah - aktif;
+        }
+
+        if (infoJumlahSiswa) {
+            infoJumlahSiswa.textContent = jumlah;
+        }
+
+    }
+
+
+    /* ========================================================
+       INISIAL
+    ======================================================== */
+
+    function inisial(nama) {
+
+        return String(nama || "-")
+            .split(" ")
+            .slice(0, 2)
+            .map((kata) => kata.charAt(0))
+            .join("")
+            .toUpperCase();
+
+    }
 
 
     /* ========================================================
@@ -284,23 +238,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const statusClass =
                 item.status === "Aktif"
-                    ? "active"
-                    : "inactive";
+                    ? "success"
+                    : "danger";
 
 
             row.innerHTML = `
                 <td>${index + 1}</td>
 
                 <td>
-                    <span class="student-nis">
+                    <span class="mono-text">
                         ${item.nis}
                     </span>
                 </td>
 
                 <td>
-                    <span class="student-name">
-                        ${item.nama}
-                    </span>
+                    <div class="table-person">
+                        <div class="table-avatar">
+                            ${inisial(item.nama)}
+                        </div>
+
+                        <span>
+                            ${item.nama}
+                        </span>
+                    </div>
                 </td>
 
                 <td>
@@ -308,7 +268,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
 
                 <td>
-                    <span class="status-badge ${statusClass}">
+                    <span class="mono-text">
+                        ${formatRupiah(item.dibayar)}
+                    </span>
+                </td>
+
+                <td>
+                    <span class="status-pill ${statusClass}">
+                        <span class="status-dot"></span>
                         ${item.status}
                     </span>
                 </td>
@@ -382,10 +349,291 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* ========================================================
+       TAMBAH SISWA (FORM)
+    ======================================================== */
+
+    const bacaCsrf = () =>
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") || "";
+
+
+    const kirimData = async (url, dataForm) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": bacaCsrf(),
+                    // S3-07: pembawaan kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    "X-Idempotency-Key": kunciIdempoten()
+                },
+                body: JSON.stringify(dataForm),
+                credentials: "same-origin"
+            });
+
+        } catch {
+
+            throw new Error(
+                "Tidak dapat terhubung ke server."
+            );
+
+        }
+
+        let hasil = {};
+
+        try {
+
+            hasil = await respons.json();
+
+        } catch {
+            /* Respons bukan JSON. */
+        }
+
+        if (!respons.ok) {
+
+            const pesanGagal =
+                hasil?.errors
+                    ? Object.values(hasil.errors)
+                        .flat()
+                        .join(" ")
+                    : "";
+
+            throw new Error(
+                pesanGagal
+                || hasil?.message
+                || "Gagal menyimpan data."
+            );
+
+        }
+
+        return hasil;
+
+    };
+
+
+    const btnTambahSiswa =
+        document.getElementById("btnTambahSiswa");
+
+    const modalFormSiswa =
+        document.getElementById("modalFormSiswa");
+
+    const formSiswa =
+        document.getElementById("formSiswa");
+
+    const formErrorSiswa =
+        document.getElementById("formErrorSiswa");
+
+
+    const tampilkanPesanSiswa = (pesan, sukses = false) => {
+
+        if (!formErrorSiswa) {
+            return;
+        }
+
+        formErrorSiswa.textContent = pesan;
+
+        formErrorSiswa.classList
+            .toggle("success", sukses);
+
+        formErrorSiswa.hidden = false;
+
+    };
+
+
+    const bersihkanPesanSiswa = () => {
+
+        if (!formErrorSiswa) {
+            return;
+        }
+
+        formErrorSiswa.hidden = true;
+
+        formErrorSiswa.classList.remove("success");
+
+    };
+
+
+    const bukaModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        requestAnimationFrame(() => {
+            modal.classList.add("is-open");
+        });
+
+        document.body.classList.add("modal-open");
+
+    };
+
+
+    const tutupModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove("is-open");
+
+        window.setTimeout(() => {
+            modal.hidden = true;
+        }, 180);
+
+        window.setTimeout(() => {
+
+            if (
+                !document
+                    .querySelector(".modal.is-open")
+            ) {
+                document.body.classList
+                    .remove("modal-open");
+            }
+
+        }, 190);
+
+    };
+
+
+    btnTambahSiswa?.addEventListener(
+        "click",
+        () => {
+
+            bukaModal(modalFormSiswa);
+
+            bersihkanPesanSiswa();
+
+            document
+                .getElementById("inputNisSiswa")
+                ?.focus();
+
+        }
+    );
+
+
+    document
+        .querySelectorAll("[data-close-modal]")
+        .forEach((element) => {
+
+            element.addEventListener(
+                "click",
+                () => {
+
+                    tutupModal(
+                        element.closest(".modal")
+                    );
+
+                }
+            );
+
+        });
+
+
+    formSiswa?.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+            const dataForm = {
+                nis:
+                    document
+                        .getElementById("inputNisSiswa")
+                        ?.value.trim() || "",
+                nama:
+                    document
+                        .getElementById("inputNamaSiswa")
+                        ?.value.trim() || "",
+                jenis_kelamin:
+                    document
+                        .getElementById("inputJkSiswa")
+                        ?.value || "",
+                status:
+                    document
+                        .getElementById("inputStatusSiswa")
+                        ?.value || "Aktif",
+                no_hp:
+                    document
+                        .getElementById("inputHpSiswa")
+                        ?.value.trim() || ""
+            };
+
+
+            bersihkanPesanSiswa();
+
+            if (!dataForm.nis || !dataForm.nama) {
+
+                tampilkanPesanSiswa(
+                    "NIS dan nama siswa wajib diisi."
+                );
+
+                return;
+
+            }
+
+
+            const tombolSimpan =
+                formSiswa.querySelector(
+                    'button[type="submit"]'
+                );
+
+            // S3-07: kunci tombol saat proses (teks "Memproses...",
+            // tidak dapat diklik dua kali). null = masih diproses,
+            // boleh henti.
+            const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+            if (!pemulihanTombol) return;
+
+
+            try {
+
+                await kirimData(
+                    "/viewer/api/siswa",
+                    dataForm
+                );
+
+                tampilkanPesanSiswa(
+                    `Siswa ${dataForm.nama} berhasil ditambahkan ke kelas.`,
+                    true
+                );
+
+                formSiswa.reset();
+
+                await muatData();
+
+                window.setTimeout(() => {
+                    tutupModal(modalFormSiswa);
+                }, 1300);
+
+            } catch (error) {
+
+                tampilkanPesanSiswa(error.message);
+
+            } finally {
+
+                // S3-07: tombol pulih setelah proses berakhir.
+                pemulihanTombol.pulihkan();
+
+            }
+
+        }
+    );
+
+
+    /* ========================================================
        INITIAL TABLE
     ======================================================== */
 
-    renderTable(siswa);
+    muatData();
 
 
     /* ========================================================
@@ -440,7 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        window.location.href = "/";
+        window.location.href = "/logout";
     }
 
 
@@ -559,6 +807,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (event.key !== "Escape") {
                 return;
             }
+
+            document
+                .querySelectorAll(".modal.is-open")
+                .forEach((modal) => {
+                    tutupModal(modal);
+                });
 
             closeSidebar();
 

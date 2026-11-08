@@ -1,37 +1,118 @@
 /* ============================================================
-   BBCASHVIA — VIEWER IURAN
-   Dummy data + interaksi halaman
+   BBCASHVIA - VIEWER IURAN
+   Data berasal dari database (endpoint /data/iuran).
+   Tidak menggunakan data dummy.
 ============================================================ */
+
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
     /* ========================================================
-       DATA IURAN
+       ENDPOINT + STATE
     ======================================================== */
 
-    const iuran = [
-        {
-            nama: "Kas Kelas",
-            periode: "Oktober 2026",
-            nominal: 20000,
-            jatuhTempo: "10 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            nama: "Kebersihan",
-            periode: "Oktober 2026",
-            nominal: 10000,
-            jatuhTempo: "15 Okt 2026",
-            status: "Belum Lunas"
-        },
-        {
-            nama: "Kegiatan Kelas",
-            periode: "Oktober 2026",
-            nominal: 25000,
-            jatuhTempo: "20 Okt 2026",
-            status: "Lunas"
+    const API_URL = "/data/iuran";
+
+    let iuran = [];
+
+
+    const ambilJSON = async (url) => {
+
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+
+            respons = await fetch(url, {
+
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+
+                credentials: "same-origin",
+                signal: controller.signal
+
+            });
+
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
         }
-    ];
+
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* respons bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal mengambil data iuran.");
+        }
+
+        return hasil;
+
+    };
+
+
+    /* Pemetaan kategori database ke label periode yang ramah. */
+
+    const LABEL_PERIODE = {
+        "sekali bayar": "Sekali Bayar",
+        "mingguan": "Mingguan",
+        "bulanan": "Bulanan",
+        "tahunan": "Tahunan"
+    };
+
+
+    const pilihPeriode = (kategori) =>
+        LABEL_PERIODE[String(kategori || "").toLowerCase()]
+        || "Lainnya";
+
+
+    const formatTanggal = (nilai) => {
+
+        if (!nilai) {
+            return "-";
+        }
+
+        const date = new Date(nilai);
+
+        if (Number.isNaN(date.getTime())) {
+            return String(nilai);
+        }
+
+        return new Intl.DateTimeFormat("id-ID", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        }).format(date);
+
+    };
+
+
+    const escapeHtml = (value) =>
+        String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
 
     /* ========================================================
@@ -82,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 currency: "IDR",
                 minimumFractionDigits: 0
             }
-        ).format(value);
+        ).format(Number(value) || 0);
     }
 
 
@@ -180,13 +261,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <td>
                     <span class="iuran-name">
-                        ${item.nama}
+                        ${escapeHtml(item.nama)}
                     </span>
                 </td>
 
                 <td>
                     <span class="iuran-period">
-                        ${item.periode}
+                        ${escapeHtml(item.periode)}
                     </span>
                 </td>
 
@@ -198,13 +279,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <td>
                     <span class="iuran-deadline">
-                        ${item.jatuhTempo}
+                        ${escapeHtml(item.jatuhTempo)}
                     </span>
                 </td>
 
                 <td>
                     <span class="status-badge ${statusClass}">
-                        ${item.status}
+                        ${escapeHtml(item.status)}
                     </span>
                 </td>
             `;
@@ -298,10 +379,351 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* ========================================================
-       INITIAL TABLE
+       TAMBAH IURAN (FORM)
     ======================================================== */
 
-    renderTable(iuran);
+    const bacaCsrf = () =>
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content") || "";
+
+
+    const kirimData = async (url, dataForm) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": bacaCsrf(),
+                    // S3-07: pembawaan kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    "X-Idempotency-Key": kunciIdempoten()
+                },
+                body: JSON.stringify(dataForm),
+                credentials: "same-origin"
+            });
+
+        } catch {
+
+            throw new Error(
+                "Tidak dapat terhubung ke server."
+            );
+
+        }
+
+        let hasil = {};
+
+        try {
+
+            hasil = await respons.json();
+
+        } catch {
+            /* Respons bukan JSON. */
+        }
+
+        if (!respons.ok) {
+
+            const pesanGagal =
+                hasil?.errors
+                    ? Object.values(hasil.errors)
+                        .flat()
+                        .join(" ")
+                    : "";
+
+            throw new Error(
+                pesanGagal
+                || hasil?.message
+                || "Gagal menyimpan data."
+            );
+
+        }
+
+        return hasil;
+
+    };
+
+
+    const btnTambahIuran =
+        document.getElementById("btnTambahIuran");
+
+    const modalFormIuran =
+        document.getElementById("modalFormIuran");
+
+    const formIuran =
+        document.getElementById("formIuran");
+
+    const formErrorIuran =
+        document.getElementById("formErrorIuran");
+
+
+    const tampilkanPesanIuran = (pesan, sukses = false) => {
+
+        if (!formErrorIuran) {
+            return;
+        }
+
+        formErrorIuran.textContent = pesan;
+
+        formErrorIuran.classList
+            .toggle("success", sukses);
+
+        formErrorIuran.hidden = false;
+
+    };
+
+
+    const bersihkanPesanIuran = () => {
+
+        if (!formErrorIuran) {
+            return;
+        }
+
+        formErrorIuran.hidden = true;
+
+        formErrorIuran.classList.remove("success");
+
+    };
+
+
+    const bukaModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.hidden = false;
+
+        requestAnimationFrame(() => {
+            modal.classList.add("is-open");
+        });
+
+        document.body.classList.add("modal-open");
+
+    };
+
+
+    const tutupModal = (modal) => {
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.remove("is-open");
+
+        window.setTimeout(() => {
+            modal.hidden = true;
+        }, 180);
+
+        window.setTimeout(() => {
+
+            if (
+                !document
+                    .querySelector(".modal.is-open")
+            ) {
+                document.body.classList
+                    .remove("modal-open");
+            }
+
+        }, 190);
+
+    };
+
+
+    btnTambahIuran?.addEventListener(
+        "click",
+        () => {
+
+            bukaModal(modalFormIuran);
+
+            bersihkanPesanIuran();
+
+            document
+                .getElementById("inputNamaIuran")
+                ?.focus();
+
+        }
+    );
+
+
+    document
+        .querySelectorAll("[data-close-modal]")
+        .forEach((element) => {
+
+            element.addEventListener(
+                "click",
+                () => {
+
+                    tutupModal(
+                        element.closest(".modal")
+                    );
+
+                }
+            );
+
+        });
+
+
+    formIuran?.addEventListener(
+        "submit",
+        async (event) => {
+
+            event.preventDefault();
+
+            const dataForm = {
+                nama_iuran:
+                    document
+                        .getElementById("inputNamaIuran")
+                        ?.value.trim() || "",
+                kategori:
+                    document
+                        .getElementById("inputKategoriIuran")
+                        ?.value || "sekali bayar",
+                jatuh_tempo:
+                    document
+                        .getElementById("inputJatuhTempo")
+                        ?.value || "",
+                nominal:
+                    Number(
+                        document
+                            .getElementById("inputNominalIuran")
+                            ?.value
+                    ) || 0,
+                status:
+                    document
+                        .getElementById("inputStatusIuran")
+                        ?.value || "aktif",
+                keterangan:
+                    document
+                        .getElementById("inputKeteranganIuran")
+                        ?.value.trim() || ""
+            };
+
+
+            bersihkanPesanIuran();
+
+            if (
+                !dataForm.nama_iuran ||
+                dataForm.nominal <= 0
+            ) {
+
+                tampilkanPesanIuran(
+                    "Nama iuran wajib diisi dan nominal harus lebih dari 0."
+                );
+
+                return;
+
+            }
+
+
+            const tombolSimpan =
+                formIuran.querySelector(
+                    'button[type="submit"]'
+                );
+
+            // S3-07: kunci tombol saat proses (teks "Memproses...",
+            // tidak dapat diklik dua kali). null = masih diproses,
+            // boleh henti.
+            const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+            if (!pemulihanTombol) return;
+
+
+            try {
+
+                await kirimData(
+                    "/viewer/api/iuran",
+                    dataForm
+                );
+
+                tampilkanPesanIuran(
+                    `Iuran ${dataForm.nama_iuran} berhasil ditambahkan.`,
+                    true
+                );
+
+                formIuran.reset();
+
+                await muatData();
+
+                window.setTimeout(() => {
+                    tutupModal(modalFormIuran);
+                }, 1300);
+
+            } catch (error) {
+
+                tampilkanPesanIuran(error.message);
+
+            } finally {
+
+                // S3-07: tombol pulih setelah proses berakhir.
+                pemulihanTombol.pulihkan();
+
+            }
+
+        }
+    );
+
+
+    /* ========================================================
+       MUAT DATA DARI DATABASE
+    ======================================================== */
+
+    const muatData = async () => {
+
+        const tbodyV = document.getElementById("iuranTableBody");
+        if (tbodyV) {
+            tbodyV.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="6"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        try {
+
+            const hasil = await ambilJSON(API_URL);
+
+            const baris =
+                Array.isArray(hasil?.data) ? hasil.data : [];
+
+
+            iuran = baris.map((item) => {
+
+                const target = Number(item.target) || 0;
+                const terkumpul = Number(item.terkumpul) || 0;
+
+
+                return {
+                    nama: item.nama_iuran ?? "-",
+                    periode: pilihPeriode(item.kategori),
+                    nominal: Number(item.nominal) || 0,
+                    jatuhTempo: formatTanggal(item.jatuh_tempo),
+                    // Status kelas dihitung dari pembayaran yang sudah
+                    // terkumpul, bukan dari status master iuran.
+                    status: target > 0 && terkumpul + 0.009 >= target
+                        ? "Lunas"
+                        : "Belum Lunas"
+                };
+
+            });
+
+        } catch (err) {
+
+            console.error(err);
+
+            iuran = [];
+
+        }
+
+
+        filterData();
+
+    };
+
+
+    muatData();
 
 
     /* ========================================================
@@ -357,7 +779,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        window.location.href = "/";
+        window.location.href = "/logout";
     }
 
 
@@ -476,6 +898,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (event.key !== "Escape") {
                 return;
             }
+
+            document
+                .querySelectorAll(".modal.is-open")
+                .forEach((modal) => {
+                    tutupModal(modal);
+                });
 
             closeSidebar();
 

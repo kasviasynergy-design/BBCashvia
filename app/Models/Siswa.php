@@ -20,6 +20,7 @@ class Siswa extends Model
         'id_kelas',
         'status',
         'Jenis_Kelamin',
+        'no_hp',
     ];
 
     public function kelas(): BelongsTo

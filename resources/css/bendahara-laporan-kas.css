@@ -1,5 +1,5 @@
 /* =========================================================
-   BBCASHVIA — BENDAHARA LAPORAN KAS
+   BBCASHVIA Ã¢â‚¬â€ BENDAHARA LAPORAN KAS
    STYLE MENGIKUTI BENDAHARA DASHBOARD
    ========================================================= */
 
@@ -12,33 +12,34 @@
     --sidebar-w: 264px;
     --topbar-h: 64px;
 
-    --bg: #f8fafc;
-    --surface: #ffffff;
-    --surface-soft: #f1f5f9;
+    --bg: #FFFDFF;
+    --surface: #FFFFFF;
+    --surface-soft: #D4F1F9;
 
     --text: #0f172a;
     --text-soft: #64748b;
     --text-muted: #94a3b8;
 
-    --border: #e2e8f0;
+    --border: #A5DBE3;
 
-    --primary: #2563eb;
-    --primary-dark: #1d4ed8;
-    --primary-soft: #eff6ff;
+    --primary: #2BA19E;
+    --primary-dark: #237A77;
+    --primary-soft: #D4F1F9;
 
-    --success: #16a34a;
-    --success-soft: #f0fdf4;
+    --success: #2BA19E;
+    --success-soft: #D4F1F9;
 
     --danger: #dc2626;
     --danger-soft: #fef2f2;
 
-    --warning: #d97706;
-    --warning-soft: #fffbeb;
+    --warning: #F4D98E;
+    --warning-soft: #F4D98E;
+    --warning-text: #8C6D1F;
 
     --sidebar-bg: #ffffff;
     --sidebar-text: #475569;
-    --sidebar-active: #eff6ff;
-    --sidebar-active-text: #2563eb;
+    --sidebar-active: #D4F1F9;
+    --sidebar-active-text: #2BA19E;
 
     --shadow-sm:
         0 1px 2px rgba(15, 23, 42, 0.04);
@@ -112,7 +113,7 @@ img {
     font-weight: normal;
     font-style: normal;
 
-    font-size: 22px;
+    font-size: 24px;
 
     line-height: 1;
 
@@ -240,7 +241,7 @@ img {
 }
 
 .sidebar__brandname {
-    font-size: 15px;
+    font-size: 18.5px;
     font-weight: 800;
 
     color: var(--text);
@@ -249,7 +250,7 @@ img {
 }
 
 .sidebar__brandsub {
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 500;
 
     color: var(--text-muted);
@@ -288,7 +289,7 @@ img {
 
     margin-bottom: 8px;
 
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 800;
 
     letter-spacing: 0.08em;
@@ -325,7 +326,7 @@ img {
 
     color: var(--sidebar-text);
 
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 600;
 
     transition:
@@ -345,7 +346,7 @@ img {
     align-items: center;
     justify-content: center;
 
-    font-size: 20px;
+    font-size: 22px;
 
     color: #64748b;
 
@@ -355,7 +356,7 @@ img {
 }
 
 .side-link:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
 
     color: var(--text);
 }
@@ -399,7 +400,7 @@ img {
 
     border-radius: 10px;
 
-    background: #f8fafc;
+    background: #FFFDFF;
 }
 
 .sidebar__avatar {
@@ -418,7 +419,7 @@ img {
 
     color: var(--primary);
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 800;
 }
 
@@ -434,7 +435,7 @@ img {
 .sidebar__username {
     overflow: hidden;
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
 
     color: var(--text);
@@ -444,7 +445,7 @@ img {
 }
 
 .sidebar__userrole {
-    font-size: 9px;
+    font-size: 12.5px;
 
     color: var(--text-muted);
 }
@@ -465,7 +466,7 @@ img {
 
     color: var(--text-soft);
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 600;
 
     cursor: pointer;
@@ -482,7 +483,7 @@ img {
 }
 
 .sidebar__logout .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 
@@ -583,7 +584,7 @@ img {
 }
 
 .topbar__title h1 {
-    font-size: 17px;
+    font-size: 20.5px;
     font-weight: 800;
 
     color: var(--text);
@@ -594,7 +595,7 @@ img {
 .topbar__title p {
     margin-top: 3px;
 
-    font-size: 11px;
+    font-size: 14.5px;
 
     color: var(--text-muted);
 
@@ -617,7 +618,7 @@ img {
 
     border-radius: 9px;
 
-    background: #f8fafc;
+    background: #FFFDFF;
 
     color: var(--text);
 
@@ -635,7 +636,7 @@ img {
 }
 
 .topbar__burger .material-symbols-outlined {
-    font-size: 23px;
+    font-size: 25px;
 }
 
 
@@ -671,14 +672,14 @@ img {
 
     color: var(--text-soft);
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 600;
 
     white-space: nowrap;
 }
 
 .topbar__chip .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 
     color: var(--primary);
 }
@@ -708,7 +709,7 @@ img {
 }
 
 .topbar__profile:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
 }
 
 .topbar__avatar {
@@ -725,7 +726,7 @@ img {
 
     color: var(--primary);
 
-    font-size: 13px;
+    font-size: 16.5px;
     font-weight: 800;
 }
 
@@ -739,20 +740,20 @@ img {
 }
 
 .topbar__profilename {
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
 
     color: var(--text);
 }
 
 .topbar__profilerole {
-    font-size: 9px;
+    font-size: 12.5px;
 
     color: var(--text-muted);
 }
 
 .topbar__chevron {
-    font-size: 18px;
+    font-size: 20px;
 
     color: var(--text-muted);
 
@@ -805,14 +806,14 @@ img {
 }
 
 .dropdown__name {
-    font-size: 12px;
+    font-size: 15.5px;
     font-weight: 700;
 
     color: var(--text);
 }
 
 .dropdown__mail {
-    font-size: 10px;
+    font-size: 13.5px;
 
     color: var(--text-muted);
 
@@ -835,7 +836,7 @@ img {
 
     color: var(--text-soft);
 
-    font-size: 12px;
+    font-size: 15.5px;
     font-weight: 600;
 
     cursor: pointer;
@@ -844,7 +845,7 @@ img {
 }
 
 .dropdown__item:hover {
-    background: #f8fafc;
+    background: #FFFDFF;
 }
 
 .dropdown__item--danger:hover {
@@ -854,7 +855,7 @@ img {
 }
 
 .dropdown__item .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 }
 
 
@@ -897,11 +898,11 @@ img {
     background:
         linear-gradient(
             135deg,
-            #eff6ff 0%,
+            #D4F1F9 0%,
             #ffffff 100%
         );
 
-    border: 1px solid #dbeafe;
+    border: 1px solid #D4F1F9;
 }
 
 .hero::after {
@@ -917,7 +918,7 @@ img {
 
     border-radius: 50%;
 
-    background: rgba(37, 99, 235, 0.07);
+    background: rgba(43, 161, 158, 0.07);
 }
 
 .hero__text {
@@ -933,7 +934,7 @@ img {
 
     margin-bottom: 7px;
 
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 800;
 
     letter-spacing: 0.04em;
@@ -942,7 +943,7 @@ img {
 }
 
 .hero__title {
-    font-size: 24px;
+    font-size: 26px;
     font-weight: 800;
 
     line-height: 1.3;
@@ -955,7 +956,7 @@ img {
 
     margin-top: 7px;
 
-    font-size: 12px;
+    font-size: 15.5px;
 
     line-height: 1.6;
 
@@ -993,7 +994,7 @@ img {
 
     border-radius: 8px;
 
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 700;
 
     cursor: pointer;
@@ -1006,7 +1007,7 @@ img {
 }
 
 .btn .material-symbols-outlined {
-    font-size: 17px;
+    font-size: 20.5px;
 }
 
 .btn--primary {
@@ -1026,11 +1027,90 @@ img {
 
     color: var(--primary);
 
-    border: 1px solid #dbeafe;
+    border: 1px solid #D4F1F9;
 }
 
 .btn--ghost:hover {
     background: var(--primary-soft);
+}
+
+
+/* =========================================================
+   HEADER HALAMAN (TANPA KOTAK WARNA)
+   Hierarki & tipografi mengikuti halaman Siswa/Transaksi
+   Bendahara: latar transparan tanpa kardus/border biru.
+   ========================================================= */
+
+.page-head {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    min-width: 0;
+
+    margin-bottom: 24px;
+}
+
+.page-head__text {
+    min-width: 0;
+}
+
+.page-head__eyebrow {
+    margin-bottom: 7px;
+
+    color: var(--primary);
+
+    font-size: 13.5px;
+    font-weight: 800;
+
+    letter-spacing: .04em;
+    text-transform: uppercase;
+
+    line-height: 1.4;
+}
+
+.page-head__title {
+    margin: 0;
+
+    color: var(--text);
+
+    font-size: 26px;
+    font-weight: 800;
+
+    line-height: 1.3;
+
+    overflow-wrap: anywhere;
+}
+
+.page-head__sub {
+    margin-top: 7px;
+
+    max-width: 650px;
+
+    color: var(--text-soft);
+
+    font-size: 15.5px;
+
+    line-height: 1.6;
+
+    overflow-wrap: anywhere;
+}
+
+.page-head__actions {
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+}
+
+.page-head__actions .btn {
+    white-space: nowrap;
 }
 
 
@@ -1089,7 +1169,7 @@ img {
 }
 
 .stat-card__label {
-    font-size: 11px;
+    font-size: 14.5px;
     font-weight: 600;
 
     color: var(--text-soft);
@@ -1098,7 +1178,7 @@ img {
 .stat-card__value {
     margin-top: 5px;
 
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
 
     color: var(--text);
@@ -1124,7 +1204,7 @@ img {
 }
 
 .stat-card__icon .material-symbols-outlined {
-    font-size: 21px;
+    font-size: 23px;
 }
 
 
@@ -1165,7 +1245,7 @@ img {
 
     gap: 5px;
 
-    font-size: 10px;
+    font-size: 13.5px;
 
     color: var(--text-muted);
 
@@ -1213,7 +1293,7 @@ img {
 }
 
 .panel__eyebrow {
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 800;
 
     letter-spacing: 0.08em;
@@ -1226,7 +1306,7 @@ img {
 .panel__title {
     margin-top: 3px;
 
-    font-size: 14px;
+    font-size: 17.5px;
     font-weight: 800;
 
     color: var(--text);
@@ -1235,7 +1315,7 @@ img {
 .panel__sub {
     margin-top: 4px;
 
-    font-size: 10px;
+    font-size: 13.5px;
 
     color: var(--text-muted);
 }
@@ -1266,7 +1346,7 @@ img {
 }
 
 .field label {
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 700;
 
     color: var(--text-soft);
@@ -1288,7 +1368,7 @@ img {
 
     color: var(--text);
 
-    font-size: 11px;
+    font-size: 14.5px;
 
     outline: none;
 
@@ -1299,11 +1379,11 @@ img {
 
 .field input:focus,
 .field select:focus {
-    border-color: #93c5fd;
+    border-color: #A5DBE3;
 
     box-shadow:
         0 0 0 3px
-        rgba(37, 99, 235, 0.08);
+        rgba(43, 161, 158, 0.08);
 }
 
 .filter-actions {
@@ -1362,7 +1442,7 @@ img {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     line-height: 1;
 }
@@ -1385,7 +1465,7 @@ img {
 
     height: 1px;
 
-    background: #e2e8f0;
+    background: #A5DBE3;
 
     pointer-events: none;
 }
@@ -1456,7 +1536,7 @@ img {
 }
 
 .barchart__bar--in {
-    background: #2563eb;
+    background: #2BA19E;
 }
 
 .barchart__bar--out {
@@ -1485,7 +1565,7 @@ img {
 
     color: #ffffff;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     line-height: 1.3;
 
@@ -1520,7 +1600,7 @@ img {
 
     color: #64748b;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     line-height: 1;
 
@@ -1548,7 +1628,7 @@ img {
 
     color: var(--text-muted);
 
-    font-size: 10px;
+    font-size: 13.5px;
 }
 
 .chart-empty.is-show {
@@ -1556,7 +1636,7 @@ img {
 }
 
 .chart-empty .material-symbols-outlined {
-    font-size: 30px;
+    font-size: 32px;
 
     color: #cbd5e1;
 }
@@ -1585,7 +1665,7 @@ img {
 
     color: #64748b;
 
-    font-size: 9px;
+    font-size: 12.5px;
     font-weight: 600;
 }
 
@@ -1599,7 +1679,7 @@ img {
 }
 
 .chart-legend__dot--in {
-    background: #2563eb;
+    background: #2BA19E;
 }
 
 .chart-legend__dot--out {
@@ -1632,13 +1712,13 @@ img {
     text-align: left;
 
     border-bottom:
-        1px solid #f1f5f9;
+        1px solid #D4F1F9;
 }
 
 .table th {
     background: #fafafa;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     font-weight: 700;
 
@@ -1648,7 +1728,7 @@ img {
 }
 
 .table td {
-    font-size: 10px;
+    font-size: 13.5px;
 
     color: var(--text-soft);
 
@@ -1686,13 +1766,13 @@ img {
 .table-date strong {
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 13.5px;
 }
 
 .table-date span {
     color: var(--text-muted);
 
-    font-size: 9px;
+    font-size: 12.5px;
 }
 
 
@@ -1712,7 +1792,7 @@ img {
 .table-description strong {
     color: var(--text);
 
-    font-size: 10px;
+    font-size: 13.5px;
 
     font-weight: 700;
 }
@@ -1722,7 +1802,7 @@ img {
 
     font-family: "JetBrains Mono", monospace;
 
-    font-size: 8px;
+    font-size: 11.5px;
 }
 
 
@@ -1741,7 +1821,7 @@ img {
 
     border-radius: 999px;
 
-    font-size: 8px;
+    font-size: 11.5px;
 
     font-weight: 700;
 
@@ -1770,7 +1850,7 @@ img {
         "JetBrains Mono",
         monospace;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     font-weight: 700;
 
@@ -1795,7 +1875,7 @@ img {
         "JetBrains Mono",
         monospace;
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     font-weight: 800;
 
@@ -1810,7 +1890,7 @@ img {
    ========================================================= */
 
 .table-total td {
-    background: #f8fafc;
+    background: #FFFDFF;
 
     border-top:
         1px solid var(--border);
@@ -1824,7 +1904,7 @@ img {
 
 .table-total .money,
 .table-total .balance {
-    font-size: 9px;
+    font-size: 12.5px;
 }
 
 
@@ -1856,17 +1936,17 @@ img {
 
     border-radius: 12px;
 
-    background: #f1f5f9;
+    background: #D4F1F9;
 
     color: #94a3b8;
 }
 
 .table-empty__icon .material-symbols-outlined {
-    font-size: 22px;
+    font-size: 24px;
 }
 
 .table-empty__title {
-    font-size: 12px;
+    font-size: 15.5px;
 
     font-weight: 800;
 
@@ -1878,7 +1958,7 @@ img {
 
     margin: 5px auto 14px;
 
-    font-size: 10px;
+    font-size: 13.5px;
 
     line-height: 1.5;
 
@@ -1896,7 +1976,7 @@ img {
     border-top:
         1px solid var(--border);
 
-    font-size: 9px;
+    font-size: 12.5px;
 
     color: var(--text-muted);
 }
@@ -1909,7 +1989,7 @@ img {
 .content__foot {
     padding: 20px 0 8px;
 
-    font-size: 10px;
+    font-size: 13.5px;
 
     line-height: 1.5;
 
@@ -1941,7 +2021,7 @@ img {
     padding: 11px 14px;
 
     border:
-        1px solid #bbf7d0;
+        1px solid #A5DBE3;
 
     border-radius: 10px;
 
@@ -1951,7 +2031,7 @@ img {
 
     box-shadow: var(--shadow-md);
 
-    font-size: 10px;
+    font-size: 13.5px;
     font-weight: 700;
 
     opacity: 0;
@@ -1977,7 +2057,7 @@ img {
 }
 
 .toast .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 20px;
 
     color: var(--success);
 }
@@ -2153,7 +2233,7 @@ img {
     }
 
     .topbar__title h1 {
-        font-size: 15px;
+        font-size: 18.5px;
     }
 
     .topbar__title p {
@@ -2201,11 +2281,11 @@ img {
     }
 
     .hero__title {
-        font-size: 20px;
+        font-size: 22px;
     }
 
     .hero__sub {
-        font-size: 11px;
+        font-size: 14.5px;
     }
 
     .hero__actions {
@@ -2216,6 +2296,27 @@ img {
 
     .hero__actions .btn {
         flex: 1;
+    }
+
+
+    /* HEADER HALAMAN */
+
+    .page-head {
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 14px;
+
+        margin-bottom: 18px;
+    }
+
+    .page-head__title {
+        font-size: 22px;
+    }
+
+    .page-head__sub {
+        font-size: 14.5px;
     }
 
 
@@ -2240,19 +2341,19 @@ img {
     }
 
     .stat-card__icon .material-symbols-outlined {
-        font-size: 19px;
+        font-size: 21px;
     }
 
     .stat-card__value {
-        font-size: 16px;
+        font-size: 19.5px;
     }
 
     .stat-card__label {
-        font-size: 10px;
+        font-size: 13.5px;
     }
 
     .stat-card__foot {
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
 
@@ -2280,11 +2381,11 @@ img {
     }
 
     .panel__title {
-        font-size: 13px;
+        font-size: 16.5px;
     }
 
     .panel__sub {
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
 
@@ -2304,7 +2405,7 @@ img {
 
         height: 245px;
 
-        font-size: 8px;
+        font-size: 11.5px;
     }
 
     .barchart__plot {
@@ -2324,7 +2425,7 @@ img {
     }
 
     .barchart__mon {
-        font-size: 8px;
+        font-size: 11.5px;
     }
 
     .chart-legend {
@@ -2347,7 +2448,7 @@ img {
     .content__foot {
         padding: 15px 0 5px;
 
-        font-size: 9px;
+        font-size: 12.5px;
     }
 
 
@@ -2403,11 +2504,11 @@ img {
     }
 
     .hero__title {
-        font-size: 18px;
+        font-size: 20px;
     }
 
     .hero__sub {
-        font-size: 10px;
+        font-size: 13.5px;
     }
 
     .hero__actions {
@@ -2416,6 +2517,17 @@ img {
 
     .hero__actions .btn {
         width: 100%;
+    }
+
+
+    /* HEADER HALAMAN */
+
+    .page-head__title {
+        font-size: 20px;
+    }
+
+    .page-head__sub {
+        font-size: 13.5px;
     }
 
 
@@ -2430,7 +2542,7 @@ img {
     }
 
     .stat-card__value {
-        font-size: 14px;
+        font-size: 17.5px;
     }
 
     .stat-card__top {
@@ -2465,7 +2577,7 @@ img {
 
         height: 220px;
 
-        font-size: 7px;
+        font-size: 11.5px;
     }
 
     .barchart__plot {
@@ -2485,7 +2597,7 @@ img {
     }
 
     .barchart__mon {
-        font-size: 7px;
+        font-size: 11.5px;
     }
 
     .chart-legend {
@@ -2493,7 +2605,7 @@ img {
     }
 
     .chart-legend__item {
-        font-size: 8px;
+        font-size: 11.5px;
     }
 
 }
@@ -2511,15 +2623,15 @@ img {
     }
 
     .hero__title {
-        font-size: 17px;
+        font-size: 20.5px;
     }
 
     .hero__sub {
-        font-size: 10px;
+        font-size: 13.5px;
     }
 
     .stat-card__value {
-        font-size: 16px;
+        font-size: 19.5px;
     }
 
 }
@@ -2591,7 +2703,7 @@ img {
 
 
     .hero__title {
-        font-size: 20px;
+        font-size: 22px;
     }
 
 
@@ -2633,7 +2745,7 @@ img {
 
 
     .stat-card__value {
-        font-size: 14px;
+        font-size: 17.5px;
     }
 
 
@@ -2685,7 +2797,7 @@ img {
     .table td {
         padding: 8px;
 
-        font-size: 8px;
+        font-size: 11.5px;
     }
 
 
@@ -2705,7 +2817,7 @@ img {
 
 
     .print-head__brand {
-        font-size: 12px;
+        font-size: 15.5px;
 
         font-weight: 800;
     }
@@ -2714,7 +2826,7 @@ img {
     .print-head__title {
         margin-top: 3px;
 
-        font-size: 18px;
+        font-size: 20px;
 
         font-weight: 800;
     }
@@ -2723,7 +2835,7 @@ img {
     .print-head__periode {
         margin-top: 4px;
 
-        font-size: 9px;
+        font-size: 12.5px;
 
         color: #666666;
     }
@@ -2766,4 +2878,12 @@ img {
 
     }
 
+}
+
+/* =========================================================
+   HIDDEN GUARD
+   ========================================================= */
+
+[hidden] {
+    display: none !important;
 }

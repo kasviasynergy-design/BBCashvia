@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
 
     /* =========================================================
-       BBCASHVIA — BENDAHARA LAPORAN KAS
+       BBCASHVIA - BENDAHARA LAPORAN KAS
        KHUSUS KELAS XI RPL 1
     ========================================================= */
 
@@ -11,8 +11,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ========================================================= */
 
     const KELAS_BENDAHARA = "XI RPL 1";
-
-    const SALDO_AWAL = 1250000;
 
 
     const KATEGORI_MASUK = [
@@ -616,7 +614,7 @@ document.addEventListener("DOMContentLoaded", () => {
        KATEGORI FILTER
     ========================================================= */
 
-    function populateKategoriFilter() {
+    async function populateKategoriFilter() {
 
         if (!filterKategori) {
             return;
@@ -628,28 +626,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let kategori = [];
 
+        try {
+            const response = await fetch("/bendahara/api/transaksi/kategori", {
+                headers: { Accept: "application/json" },
+                credentials: "same-origin"
+            });
 
-        if (jenis === "masuk") {
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    if (jenis === "masuk") {
+                        kategori = data.data.masuk || [];
+                    } else if (jenis === "keluar") {
+                        kategori = data.data.keluar || [];
+                    } else {
+                        kategori = data.data.semua || [];
+                    }
+                }
+            }
+        } catch (error) {
+            console.warn("Gagal memuat kategori dari server:", error);
+        }
 
-            kategori = [
-                ...KATEGORI_MASUK
-            ];
-
-        } else if (jenis === "keluar") {
-
-            kategori = [
-                ...KATEGORI_KELUAR
-            ];
-
-        } else {
-
-            kategori = [
-                ...new Set([
-                    ...KATEGORI_MASUK,
-                    ...KATEGORI_KELUAR
-                ])
-            ];
-
+        // Fallback ke konstanta lokal jika fetch gagal
+        if (!kategori.length) {
+            if (jenis === "masuk") {
+                kategori = [...KATEGORI_MASUK];
+            } else if (jenis === "keluar") {
+                kategori = [...KATEGORI_KELUAR];
+            } else {
+                kategori = [...new Set([...KATEGORI_MASUK, ...KATEGORI_KELUAR])];
+            }
         }
 
 
@@ -665,8 +672,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const option =
                 document.createElement("option");
 
-            option.value = item;
-            option.textContent = item;
+            option.value = item.value || item;
+            option.textContent = item.label || item;
 
             filterKategori.appendChild(
                 option
@@ -907,10 +914,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
 
-        const saldo =
-            SALDO_AWAL +
-            totalMasuk -
-            totalKeluar;
+        const saldo = totalMasuk - totalKeluar;
 
 
         const jumlah =
@@ -943,10 +947,6 @@ document.addEventListener("DOMContentLoaded", () => {
             `${hasilFilter.filter(
                 (item) => item.jenis === "keluar"
             ).length} transaksi pengeluaran`;
-
-
-        sumSaldoNote.textContent =
-            `Saldo awal ${formatRupiah(SALDO_AWAL)}`;
 
 
         sumJumlahNote.textContent =
@@ -1263,10 +1263,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         /*
-         * Saldo berjalan dimulai dari saldo awal.
+         * Saldo berjalan dihitung dari transaksi (pemasukan dikurung pengeluaran).
          */
-        let saldoBerjalan =
-            SALDO_AWAL;
+        let saldoBerjalan = 0;
 
 
         let totalMasuk = 0;
@@ -1416,10 +1415,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
 
-        const finalSaldo =
-            SALDO_AWAL +
-            totalMasuk -
-            totalKeluar;
+        const finalSaldo = totalMasuk - totalKeluar;
 
 
         footTabelLaporan.innerHTML = `
@@ -1504,7 +1500,7 @@ document.addEventListener("DOMContentLoaded", () => {
             periode =
                 `${formatTanggal(
                     mulai
-                )} — ${formatTanggal(
+                )} - ${formatTanggal(
                     selesai
                 )}`;
 
@@ -1597,8 +1593,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
-        let saldoBerjalan =
-            SALDO_AWAL;
+        let saldoBerjalan = 0;
 
 
         const rows = [];
@@ -1891,30 +1886,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btnProfileLogout.addEventListener(
             "click",
             logout
-        );
-
-    }
-
-
-    /* =========================================================
-       PROFILE ACCOUNT
-    ========================================================= */
-
-    const btnProfileAccount =
-        $("#btnProfileAccount");
-
-
-    if (btnProfileAccount) {
-
-        btnProfileAccount.addEventListener(
-            "click",
-            () => {
-
-                showToast(
-                    "Profil Bendahara."
-                );
-
-            }
         );
 
     }

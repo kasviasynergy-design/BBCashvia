@@ -1,161 +1,152 @@
+/* ============================================================
+   BBCASHVIA - VIEWER LAPORAN KAS
+   Laporan kas per bulan dari endpoint /data/transaksi.
+   Semua angka berasal dari database,
+   tidak ada data dummy.
+============================================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
 
     /* ============================================================
-       DATA LAPORAN KAS
+       ENDPOINT + STATE
     ============================================================ */
 
-    const reports = {
+    const API_URL = "/data/transaksi";
 
-        "oktober-2026": {
-            period: "Oktober 2026",
-            openingBalance: 480000,
+    const NAMA_BULAN = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
 
-            transactions: [
-                {
-                    receipt: "TRX-2026-001",
-                    date: "01 Okt 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kas Kelas",
-                    amount: 20000
-                },
-                {
-                    receipt: "TRX-2026-002",
-                    date: "02 Okt 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kebersihan",
-                    amount: 10000
-                },
-                {
-                    receipt: "TRX-2026-003",
-                    date: "03 Okt 2026",
-                    type: "Pengeluaran",
-                    category: "Operasional",
-                    description: "Alat Kebersihan",
-                    amount: 15000
-                },
-                {
-                    receipt: "TRX-2026-004",
-                    date: "05 Okt 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kas Kelas",
-                    amount: 30000
-                },
-                {
-                    receipt: "TRX-2026-005",
-                    date: "06 Okt 2026",
-                    type: "Pengeluaran",
-                    category: "Kegiatan",
-                    description: "Dekorasi Kelas",
-                    amount: 10000
-                },
-                {
-                    receipt: "TRX-2026-006",
-                    date: "08 Okt 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kegiatan Kelas",
-                    amount: 25000
-                }
-            ]
-        },
+    const PETAKAN_KATEGORI = {
+        "iuran": "Iuran",
+        "kas": "Kas",
+        "kebutuhan kelas": "Kebutuhan Kelas",
+        "perlengkapan kelas": "Perlengkapan Kelas",
+        "kegiatan kelas": "Kegiatan Kelas",
+        "pemasukan lainnya": "Pemasukan Lainnya",
+        "pengeluaran lainnya": "Pengeluaran Lainnya"
+    };
 
-        "september-2026": {
-            period: "September 2026",
-            openingBalance: 250000,
+    /* Peta bulan → laporan bulan, disusun ulang setiap muat data. */
+    let reports = {};
 
-            transactions: [
-                {
-                    receipt: "TRX-2026-101",
-                    date: "02 Sep 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kas Kelas",
-                    amount: 30000
-                },
-                {
-                    receipt: "TRX-2026-102",
-                    date: "05 Sep 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kebersihan",
-                    amount: 15000
-                },
-                {
-                    receipt: "TRX-2026-103",
-                    date: "08 Sep 2026",
-                    type: "Pengeluaran",
-                    category: "Operasional",
-                    description: "Perlengkapan Kelas",
-                    amount: 20000
-                }
-            ]
-        },
+    /* Kunci bulan terbaru, dipakai sebagai pilihan bawaan. */
+    let kunciTerbaru = "";
 
-        "agustus-2026": {
-            period: "Agustus 2026",
-            openingBalance: 100000,
+    /* Filter jenis yang sedang dipilih: all | pemasukan | pengeluaran. */
+    let jenisDipilih = "all";
 
-            transactions: [
-                {
-                    receipt: "TRX-2026-201",
-                    date: "03 Agu 2026",
-                    type: "Pemasukan",
-                    category: "Iuran",
-                    description: "Kas Kelas",
-                    amount: 50000
+
+    /* ============================================================
+       AKSES API
+    ============================================================ */
+
+    const ambilJSON = async (url) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
                 },
-                {
-                    receipt: "TRX-2026-202",
-                    date: "07 Agu 2026",
-                    type: "Pengeluaran",
-                    category: "Kegiatan",
-                    description: "Kegiatan Kelas",
-                    amount: 25000
-                }
-            ]
+
+                credentials: "same-origin"
+
+            });
+
+        } catch {
+
+            throw new Error("Tidak dapat terhubung ke server.");
+
         }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* respons bukan JSON */
+        }
+
+        if (!respons.ok) {
+
+            throw new Error(
+                hasil?.message || "Gagal mengambil data laporan."
+            );
+
+        }
+
+        return {
+            data: Array.isArray(hasil?.data) ? hasil.data : [],
+            ringkasan: hasil?.ringkasan ?? {}
+        };
 
     };
 
 
     /* ============================================================
-       ELEMENT
+       HELPER
     ============================================================ */
 
-    const periodFilter =
-        document.getElementById("periodFilter");
+    const escapeHtml = (value) =>
+        String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
 
-    const periodTitle =
-        document.getElementById("periodTitle");
+    const labelKategori = (kategori) => {
 
-    const openingBalance =
-        document.getElementById("openingBalance");
+        const kunci = String(kategori || "").toLowerCase();
 
-    const incomeAmount =
-        document.getElementById("incomeAmount");
+        return PETAKAN_KATEGORI[kunci] || (kategori || "-");
 
-    const expenseAmount =
-        document.getElementById("expenseAmount");
+    };
 
-    const closingBalance =
-        document.getElementById("closingBalance");
+    const jenisTransaksi = (nilai) => {
 
-    const reportTableBody =
-        document.getElementById("reportTableBody");
+        const arah = String(nilai ?? "").toLowerCase();
 
-    const tableCount =
-        document.getElementById("tableCount");
+        if (arah === "pemasukan" || arah === "masuk" || arah === "m") {
+            return "Pemasukan";
+        }
 
-    const emptyState =
-        document.getElementById("emptyState");
+        return "Pengeluaran";
 
+    };
 
-    /* ============================================================
-       FORMAT RUPIAH
-    ============================================================ */
+    const formatTanggal = (nilai) => {
+
+        const iso = String(nilai ?? "").slice(0, 10);
+        const bagian = iso.split("-");
+
+        if (bagian.length !== 3) {
+            return iso || "-";
+        }
+
+        const tanggal = new Date(
+            Number(bagian[0]),
+            Number(bagian[1]) - 1,
+            Number(bagian[2])
+        );
+
+        if (Number.isNaN(tanggal.getTime())) {
+            return iso;
+        }
+
+        return new Intl.DateTimeFormat("id-ID", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }).format(tanggal);
+
+    };
 
     const formatCurrency = (value) => {
 
@@ -163,96 +154,232 @@ document.addEventListener("DOMContentLoaded", () => {
             style: "currency",
             currency: "IDR",
             minimumFractionDigits: 0
-        }).format(value);
+        }).format(Number(value) || 0);
 
     };
 
 
     /* ============================================================
-       UPDATE REPORT
+       ELEMENT (ID PERSIS SEPERTI BLADE)
     ============================================================ */
 
-    const renderReport = (report) => {
+    const periodFilter =
+        document.getElementById("periodFilter");
 
-        const transactions =
-            report.transactions;
+    const statusFilter =
+        document.getElementById("statusFilter");
 
-        const income = transactions
-            .filter(item =>
-                item.type === "Pemasukan"
-            )
-            .reduce(
-                (total, item) =>
-                    total + item.amount,
-                0
+    const reportTableBody =
+        document.getElementById("laporanKasTableBody");
+
+    const tableCount =
+        document.getElementById("tableCount");
+
+    const emptyState =
+        document.getElementById("emptyState");
+
+    const rumusPemasukanEl =
+        document.getElementById("rumusPemasukan");
+
+    const rumusPengeluaranEl =
+        document.getElementById("rumusPengeluaran");
+
+    const rumusSaldoEl =
+        document.getElementById("rumusSaldo");
+
+
+    /* ============================================================
+       KELOMPOKKAN TRANSAKSI PER BULAN (DARI DATABASE)
+       Satu no_bukti yang mencakup beberapa iuran tampil sebagai
+       SATU transaksi utama (nominal = nominal_grup).
+    ============================================================ */
+
+    const kelompokkanPerBulan = (baris) => {
+
+        const peta = {};
+
+        baris.forEach((t) => {
+
+            const iso = String(t.tanggal ?? "").slice(0, 10);
+            const bagian = iso.split("-");
+
+            if (bagian.length !== 3 || !bagian[0]) {
+                return;
+            }
+
+            const tahun = Number(bagian[0]);
+            const bulan = Number(bagian[1]);
+
+            if (!tahun || bulan < 1 || bulan > 12) {
+                return;
+            }
+
+            const kunci = `${bagian[0]}-${bagian[1]}`;
+
+            if (!peta[kunci]) {
+
+                peta[kunci] = {
+                    kunci,
+                    tahun,
+                    bulan,
+                    period: `${NAMA_BULAN[bulan - 1]} ${tahun}`,
+                    openingBalance: 0,
+                    totalMasuk: 0,
+                    totalKeluar: 0,
+                    transactions: []
+                };
+
+            }
+
+            const noBukti = String(
+                t.no_bukti || ("TRX-" + (t.id_transaksi ?? ""))
             );
 
-        const expense = transactions
-            .filter(item =>
-                item.type === "Pengeluaran"
-            )
-            .reduce(
-                (total, item) =>
-                    total + item.amount,
-                0
+            /* Satu no_bukti satu baris utama per bulan. */
+            if (peta[kunci].transactions.some(trx => trx.bukti === noBukti)) {
+                return;
+            }
+
+            const jenis = jenisTransaksi(t.jenis);
+
+            const nominal =
+                Number(t.nominal_grup ?? t.nominal) || 0;
+
+            peta[kunci].transactions.push({
+                bukti: noBukti,
+                tanggal: formatTanggal(t.tanggal),
+                sortKey: new Date(
+                    tahun, bulan - 1, Number(bagian[2]) || 1
+                ).getTime(),
+                jenis,
+                category: labelKategori(t.kategori),
+                description: t.keterangan || "-",
+                amount: nominal,
+                jumlahRincian: Number(t.jumlah_rincian) || 1
+            });
+
+            if (jenis === "Pemasukan") {
+                peta[kunci].totalMasuk += nominal;
+            } else {
+                peta[kunci].totalKeluar += nominal;
+            }
+
+        });
+
+        /* Urutkan transaksi tiap bulan dari tua ke baru. */
+        Object.values(peta).forEach((report) => {
+
+            report.transactions.sort(
+                (a, b) => a.sortKey - b.sortKey
             );
 
-        const closing =
-            report.openingBalance +
-            income -
-            expense;
+        });
+
+        return peta;
+
+    };
 
 
-        periodTitle.textContent =
-            report.period;
+    /* Saldo akhir tiap bulan dihitung dari data:
+       Saldo akhir = pemasukan - pengeluaran. */
+    const hitungSaldoBulanan = () => {
 
-        openingBalance.textContent =
-            formatCurrency(
-                report.openingBalance
-            );
+        const kunciUrut = Object.keys(reports).sort((a, b) => {
 
-        incomeAmount.textContent =
-            formatCurrency(income);
+            if (a === b) return 0;
 
-        expenseAmount.textContent =
-            formatCurrency(expense);
+            return a < b ? -1 : 1;   /* "2026-09" < "2026-10" */
 
-        closingBalance.textContent =
-            formatCurrency(closing);
+        });
 
+        let saldoBerjalan = 0;
+
+        kunciUrut.forEach((kunci) => {
+
+            const report = reports[kunci];
+
+            report.openingBalance = saldoBerjalan;
+
+            saldoBerjalan =
+                saldoBerjalan +
+                report.totalMasuk -
+                report.totalKeluar;
+
+            report.closingBalance = saldoBerjalan;
+
+        });
+
+        return kunciUrut;
+
+    };
+
+
+    /* ============================================================
+       RINGKASAN PERIODE (RUMUS KAS)
+    ============================================================ */
+
+    const isiRingkasan = (report) => {
+
+        if (rumusPemasukanEl) {
+            rumusPemasukanEl.textContent =
+                formatCurrency(report?.totalMasuk ?? 0);
+        }
+
+        if (rumusPengeluaranEl) {
+            rumusPengeluaranEl.textContent =
+                formatCurrency(report?.totalKeluar ?? 0);
+        }
+
+        if (rumusSaldoEl) {
+            rumusSaldoEl.textContent =
+                formatCurrency(report?.closingBalance ?? 0);
+        }
+
+    };
+
+
+    /* ============================================================
+       TABEL LAPORAN - KOLOM: NO | TANGGAL | JENIS | KATEGORI |
+       KETERANGAN | NOMINAL (sesuai struktur tabel halaman)
+    ============================================================ */
+
+    const renderTable = (transactions) => {
+
+        if (!reportTableBody) {
+            return;
+        }
 
         reportTableBody.innerHTML = "";
 
 
         if (transactions.length === 0) {
 
-            emptyState.classList.add("show");
+            emptyState?.classList.add("show");
 
-            tableCount.textContent =
-                "Tidak ada transaksi";
+            if (tableCount) {
+                tableCount.textContent = "0";
+            }
 
             return;
+
         }
 
-
-        emptyState.classList.remove("show");
+        emptyState?.classList.remove("show");
 
 
         transactions.forEach((item, index) => {
 
-            const row =
-                document.createElement("tr");
+            const masuk = item.jenis === "Pemasukan";
 
-            const typeClass =
-                item.type === "Pemasukan"
-                    ? "income"
-                    : "expense";
+            const typeClass = masuk ? "success" : "danger";
 
-            const prefix =
-                item.type === "Pemasukan"
-                    ? "+"
-                    : "-";
+            const prefix = masuk ? "+" : "-";
 
+            const rincianTeks = item.jumlahRincian > 1
+                ? ` • ${item.jumlahRincian} iuran`
+                : "";
+
+            const row = document.createElement("tr");
 
             row.innerHTML = `
                 <td>
@@ -260,37 +387,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
 
                 <td>
-                    <span class="receipt-number">
-                        ${item.receipt}
+                    <span class="mono-text">
+                        ${escapeHtml(item.tanggal)}
                     </span>
                 </td>
 
                 <td>
-                    ${item.date}
-                </td>
-
-                <td>
-                    <span class="report-type ${typeClass}">
-                        ${item.type}
+                    <span class="status-pill ${typeClass}">
+                        <span class="status-dot"></span>
+                        ${item.jenis}
                     </span>
                 </td>
 
                 <td>
-                    <span class="report-category">
-                        ${item.category}
-                    </span>
+                    ${escapeHtml(item.category)}
                 </td>
 
                 <td>
-                    <span class="report-description">
-                        ${item.description}
+                    <span>
+                        ${escapeHtml(item.description)}
                     </span>
+
+                    <div class="mono-text">
+                        ${escapeHtml(item.bukti)}${rincianTeks}
+                    </div>
                 </td>
 
                 <td>
-                    <span class="report-nominal ${typeClass}">
+                    <strong class="nominal">
                         ${prefix}${formatCurrency(item.amount)}
-                    </span>
+                    </strong>
                 </td>
             `;
 
@@ -298,33 +424,84 @@ document.addEventListener("DOMContentLoaded", () => {
 
         });
 
-
-        tableCount.textContent =
-            `Menampilkan ${transactions.length} transaksi`;
+        if (tableCount) {
+            tableCount.textContent = transactions.length;
+        }
 
     };
 
 
     /* ============================================================
-       PERIOD FILTER
+       PERIODE FILTER - PILIHAN DARI DATA NYATA (TANPA "SEMUA")
     ============================================================ */
 
-    periodFilter.addEventListener(
-        "change",
-        () => {
+    const isiPilihanPeriode = () => {
 
-            const selectedPeriod =
-                periodFilter.value;
-
-            const selectedReport =
-                reports[selectedPeriod];
-
-            if (selectedReport) {
-                renderReport(selectedReport);
-            }
-
+        if (!periodFilter) {
+            return;
         }
-    );
+
+        const urutDariTerbaru = Object.values(reports)
+            .sort((a, b) =>
+                (a.kunci < b.kunci ? 1 : -1));
+
+        periodFilter.innerHTML = urutDariTerbaru
+            .map((report) => `
+                <option value="${escapeHtml(report.kunci)}">
+                    ${escapeHtml(report.period)}
+                </option>
+            `)
+            .join("");
+
+        if (urutDariTerbaru.length > 0) {
+            kunciTerbaru = urutDariTerbaru[0].kunci;
+        }
+
+        periodFilter.value = kunciTerbaru;
+
+    };
+
+
+    const tampilkanPeriodeDipilih = () => {
+
+        /*
+         * Nilai kosong diperlakukan setara pilihan "all" (regesi
+         * FilterLaporanKasTest) - bukan filter yang membuang seluruh
+         * tampilan: tanpa periode terpilih, pakai periode terbarunya
+         * bila data tersedia.
+         */
+        const kunciDipilih = periodFilter?.value || "all";
+
+        const report =
+            kunciDipilih === "all"
+                ? (reports[kunciTerbaru] ?? null)
+                : (reports[kunciDipilih] ?? null);
+
+        /* Ringkasan selalu memakai seluruh transaksi bulan itu. */
+        isiRingkasan(report);
+
+        /* Tabel mengikuti filter jenis yang dipilih. */
+        const jenisDasar = jenisDipilih;
+
+        const baris = (report?.transactions ?? [])
+            .filter(item =>
+                jenisDasar === "all" ||
+                item.jenis.toLowerCase() === jenisDasar
+            );
+
+        renderTable(baris);
+
+    };
+
+    periodFilter?.addEventListener("change", tampilkanPeriodeDipilih);
+
+    statusFilter?.addEventListener("change", () => {
+
+        jenisDipilih = statusFilter.value || "all";
+
+        tampilkanPeriodeDipilih();
+
+    });
 
 
     /* ============================================================
@@ -340,89 +517,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileDropdown =
         document.getElementById("profileDropdown");
 
+    if (profileButton && profileWrapper && profileDropdown) {
 
-    if (
-        profileButton &&
-        profileWrapper &&
-        profileDropdown
-    ) {
+        profileButton.addEventListener("click", (event) => {
 
-        profileButton.addEventListener(
-            "click",
-            (event) => {
+            event.stopPropagation();
 
-                event.stopPropagation();
+            profileWrapper.classList.toggle("open");
 
-                profileWrapper.classList.toggle("open");
+        });
 
-            }
-        );
+        profileDropdown.addEventListener("click", (event) => {
+            event.stopPropagation();
+        });
 
-
-        profileDropdown.addEventListener(
-            "click",
-            (event) => {
-
-                event.stopPropagation();
-
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            () => {
-
-                profileWrapper.classList.remove(
-                    "open"
-                );
-
-            }
-        );
-
-    }
-
-
-    /* ============================================================
-       LOGOUT
-    ============================================================ */
-
-    const confirmLogout = () => {
-
-        const confirmed = window.confirm(
-            "Apakah kamu yakin ingin keluar dari akun Viewer?"
-        );
-
-        if (confirmed) {
-            window.location.href = "/";
-        }
-
-    };
-
-
-    const logoutButton =
-        document.getElementById("logoutButton");
-
-    const dropdownLogout =
-        document.getElementById("dropdownLogout");
-
-
-    if (logoutButton) {
-
-        logoutButton.addEventListener(
-            "click",
-            confirmLogout
-        );
-
-    }
-
-
-    if (dropdownLogout) {
-
-        dropdownLogout.addEventListener(
-            "click",
-            confirmLogout
-        );
+        document.addEventListener("click", () => {
+            profileWrapper.classList.remove("open");
+        });
 
     }
 
@@ -443,111 +554,105 @@ document.addEventListener("DOMContentLoaded", () => {
     const navLinks =
         document.querySelectorAll(".nav-link");
 
-
     const openSidebar = () => {
 
-        sidebar.classList.add("open");
+        sidebar?.classList.add("open");
 
-        sidebarBackdrop.classList.add("show");
+        sidebarBackdrop?.classList.add("show");
 
-        document.body.classList.add(
-            "nav-open"
-        );
+        document.body.classList.add("nav-open");
 
     };
-
 
     const closeSidebar = () => {
 
-        sidebar.classList.remove("open");
+        sidebar?.classList.remove("open");
 
-        sidebarBackdrop.classList.remove(
-            "show"
-        );
+        sidebarBackdrop?.classList.remove("show");
 
-        document.body.classList.remove(
-            "nav-open"
-        );
+        document.body.classList.remove("nav-open");
 
     };
 
+    menuToggle?.addEventListener("click", (event) => {
 
-    if (menuToggle) {
+        event.stopPropagation();
 
-        menuToggle.addEventListener(
-            "click",
-            openSidebar
-        );
+        const terbuka = sidebar?.classList.contains("open");
 
-    }
+        if (terbuka) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
 
+    });
 
-    if (sidebarBackdrop) {
+    sidebarBackdrop?.addEventListener("click", closeSidebar);
 
-        sidebarBackdrop.addEventListener(
-            "click",
-            closeSidebar
-        );
+    navLinks.forEach((link) => {
 
-    }
+        link.addEventListener("click", () => {
 
-
-    navLinks.forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                if (window.innerWidth <= 900) {
-                    closeSidebar();
-                }
-
+            if (window.innerWidth <= 900) {
+                closeSidebar();
             }
-        );
+
+        });
+
+    });
+
+    document.addEventListener("keydown", (event) => {
+
+        if (event.key === "Escape") {
+
+            closeSidebar();
+
+            profileWrapper?.classList.remove("open");
+
+        }
+
+    });
+
+    window.addEventListener("resize", () => {
+
+        if (window.innerWidth > 900) {
+            closeSidebar();
+        }
 
     });
 
 
-    document.addEventListener(
-        "keydown",
-        (event) => {
-
-            if (event.key === "Escape") {
-
-                closeSidebar();
-
-                if (profileWrapper) {
-
-                    profileWrapper.classList.remove(
-                        "open"
-                    );
-
-                }
-
-            }
-
-        }
-    );
-
-
-    window.addEventListener(
-        "resize",
-        () => {
-
-            if (window.innerWidth > 900) {
-                closeSidebar();
-            }
-
-        }
-    );
-
-
     /* ============================================================
-       INITIAL LOAD
+       MUAT DATA DARI DATABASE
     ============================================================ */
 
-    renderReport(
-        reports["oktober-2026"]
-    );
+    const muatData = async () => {
+
+        let baris = [];
+
+        try {
+
+            const hasil = await ambilJSON(API_URL);
+
+            baris = hasil.data;
+
+        } catch (err) {
+
+            console.error("Gagal memuat laporan kas:", err);
+
+        }
+
+        reports = kelompokkanPerBulan(baris);
+
+        hitungSaldoBulanan();
+
+        isiPilihanPeriode();
+
+        tampilkanPeriodeDipilih();
+
+    };
+
+    muatData();
 
 });

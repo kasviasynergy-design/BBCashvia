@@ -1,79 +1,71 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Iuran | BBCashvia</title>
+    <title>Iuran - BBCashvia</title>
 
-    <meta
-        name="description"
-        content="Informasi iuran siswa dan status pembayaran pada sistem kas kelas BBCashvia."
-    >
+    <meta name="description"
+        content="Informasi iuran siswa dan status pembayaran pada sistem kas kelas BBCashvia.">
 
-    {{-- =====================================================
-         FONT
-    ====================================================== --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"
         rel="stylesheet"
     >
 
     @vite([
         'resources/css/viewer-iuran.css',
-        'resources/js/viewer-iuran.js'
+        'resources/js/viewer-iuran.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
     {{-- =====================================================
          SIDEBAR BACKDROP
-    ====================================================== --}}
+     ====================================================== --}}
     <div
         class="sidebar-backdrop"
         id="sidebarBackdrop"
     ></div>
 
-
     {{-- =====================================================
          SIDEBAR
-    ====================================================== --}}
+     ====================================================== --}}
     <aside
         class="sidebar"
         id="sidebar"
-    >
+    >    {{-- BRAND --}}
+        <div class="sidebar__brand">
 
-        {{-- BRAND --}}
-        <div class="sidebar-brand">
+            <div class="sidebar__logo">
 
-    <div class="brand-icon">
-    <img
-        src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
-        alt="Logo BBCashvia"
-        class="brand-icon-img"
-    >
-    </div>
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="sidebar__logo-img"
+                >
 
-            <div class="brand-text">
-                <strong>BBCashvia</strong>
-                <span>KASVIA Synergy</span>
+            </div>
+
+            <div class="sidebar__brandtext">
+                <span class="sidebar__brandname">BBCashvia</span>
+                <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
 
         </div>
 
-
         {{-- =================================================
              NAVIGATION
-        ================================================== --}}
+         ================================================== --}}
         <nav class="sidebar-nav">
 
             {{-- MENU UTAMA --}}
@@ -98,7 +90,6 @@
 
             </div>
 
-
             {{-- DATA & IURAN --}}
             <div class="nav-section">
 
@@ -119,10 +110,9 @@
                     </span>
                 </a>
 
-
                 <a
                     href="/viewer/iuran"
-                    class="nav-link active"
+                    class="nav-link is-active"
                     aria-current="page"
                 >
                     <span class="material-symbols-outlined">
@@ -135,7 +125,6 @@
                 </a>
 
             </div>
-
 
             {{-- TRANSAKSI --}}
             <div class="nav-section">
@@ -157,22 +146,7 @@
                     </span>
                 </a>
 
-
-                <a
-                    href="/viewer/riwayat-transaksi"
-                    class="nav-link"
-                >
-                    <span class="material-symbols-outlined">
-                        history
-                    </span>
-
-                    <span>
-                        Riwayat Transaksi
-                    </span>
-                </a>
-
             </div>
-
 
             {{-- LAPORAN --}}
             <div class="nav-section">
@@ -198,25 +172,30 @@
 
         </nav>
 
-
         {{-- =================================================
              SIDEBAR FOOTER
-        ================================================== --}}
+         ================================================== --}}
         <div class="sidebar-footer">
 
             <div class="sidebar-user">
 
                 <div class="user-avatar">
-                    AR
+                    {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
 
                 <div class="user-info">
-                    <strong>Andi Ramadhan</strong>
-                    <span>Viewer</span>
+
+                    <span class="sidebar__username">
+                        {{ auth()->user()->name ?? 'Pengguna' }}
+                    </span>
+
+                    <span class="sidebar__userrole">
+                        Viewer • {{ auth()->user()->labelKelas() }}
+                    </span>
+
                 </div>
 
             </div>
-
 
             <button
                 type="button"
@@ -236,16 +215,14 @@
 
     </aside>
 
-
     {{-- =====================================================
          MAIN AREA
-    ====================================================== --}}
+     ====================================================== --}}
     <div class="main-area">
-
 
         {{-- =================================================
              TOPBAR
-        ================================================== --}}
+         ================================================== --}}
         <header class="topbar">
 
             <div class="topbar-left">
@@ -261,14 +238,12 @@
                     </span>
                 </button>
 
-
                 <div class="page-heading">
                     <span>Iuran</span>
                     <strong>Tagihan & Pembayaran</strong>
                 </div>
 
             </div>
-
 
             <div class="topbar-right">
 
@@ -279,11 +254,10 @@
                     </span>
 
                     <span>
-                        XI RPL 1
+                        {{ auth()->user()->labelKelas() }}
                     </span>
 
                 </div>
-
 
                 <div class="profile-wrapper">
 
@@ -293,42 +267,40 @@
                         id="profileButton"
                     >
 
+
                         <div class="profile-avatar">
-                            AR
+                            {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                         </div>
 
                         <div class="profile-text">
-                            <strong>Andi Ramadhan</strong>
-                            <span>Viewer</span>
+                            <strong>{{ auth()->user()->name ?? 'Pengguna' }}</strong>
+                            <span>Viewer • {{ auth()->user()->labelKelas() }}</span>
                         </div>
 
                         <span class="material-symbols-outlined profile-arrow">
                             expand_more
                         </span>
-
                     </button>
-
 
                     <div
                         class="profile-dropdown"
                         id="profileDropdown"
                     >
 
+
                         <div class="profile-dropdown-head">
 
                             <div class="profile-avatar large">
-                                AR
+                                {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                             </div>
 
                             <div>
-                                <strong>Andi Ramadhan</strong>
-                                <span>andi@example.com</span>
+                                <strong>{{ auth()->user()->name ?? 'Pengguna' }}</strong>
+                                <span>Viewer • {{ auth()->user()->labelKelas() }}</span>
+                                <span>{{ auth()->user()->email ?? '-' }}</span>
                             </div>
 
                         </div>
-
-
-                        <div class="profile-dropdown-divider"></div>
 
 
                         <button
@@ -351,23 +323,27 @@
 
         </header>
 
-
         {{-- =================================================
              CONTENT
-        ================================================== --}}
+         ================================================== --}}
         <main class="content">
+
+        @include('partials.kelas-belum-ditetapkan')
 
 
             {{-- =================================================
                  PAGE INTRO
-            ================================================== --}}
+             ================================================== --}}
             <section class="page-intro">
 
                 <div>
 
-                    <span class="page-eyebrow">
-                        IURAN SAYA
-                    </span>
+
+                    <nav class="page-eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/viewer">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Iuran</span>
+                    </nav>
 
                     <h1>
                         Iuran
@@ -385,13 +361,15 @@
 
             {{-- =================================================
                  RINGKASAN IURAN
-            ================================================== --}}
+             ================================================== --}}
             <section class="stats-grid">
 
 
                 <article class="stat-card">
 
+
                     <div class="stat-card-top">
+
 
                         <div class="stat-icon blue">
                             <span class="material-symbols-outlined">
@@ -405,12 +383,14 @@
                         Total Iuran
                     </div>
 
+
                     <div
                         class="stat-value"
                         id="totalIuran"
                     >
                         3
                     </div>
+
 
                     <div class="stat-meta">
                         Iuran aktif di kelas
@@ -421,7 +401,9 @@
 
                 <article class="stat-card">
 
+
                     <div class="stat-card-top">
+
 
                         <div class="stat-icon green">
                             <span class="material-symbols-outlined">
@@ -435,12 +417,14 @@
                         Sudah Dibayar
                     </div>
 
+
                     <div
                         class="stat-value"
                         id="sudahDibayar"
                     >
                         2
                     </div>
+
 
                     <div class="stat-meta">
                         Iuran berstatus lunas
@@ -451,7 +435,9 @@
 
                 <article class="stat-card">
 
+
                     <div class="stat-card-top">
+
 
                         <div class="stat-icon orange">
                             <span class="material-symbols-outlined">
@@ -465,12 +451,14 @@
                         Belum Dibayar
                     </div>
 
+
                     <div
                         class="stat-value"
                         id="belumDibayar"
                     >
                         1
                     </div>
+
 
                     <div class="stat-meta">
                         Iuran masih harus dibayar
@@ -481,7 +469,9 @@
 
                 <article class="stat-card">
 
+
                     <div class="stat-card-top">
+
 
                         <div class="stat-icon purple">
                             <span class="material-symbols-outlined">
@@ -495,12 +485,14 @@
                         Total Tagihan
                     </div>
 
+
                     <div
                         class="stat-value money"
                         id="totalTagihan"
                     >
                         Rp55.000
                     </div>
+
 
                     <div class="stat-meta">
                         Total nominal iuran
@@ -513,19 +505,22 @@
 
             {{-- =================================================
                  INFORMASI IURAN KELAS
-            ================================================== --}}
+             ================================================== --}}
             <section class="panel">
+
 
                 <div class="panel-header">
 
+
                     <div>
+
 
                         <span class="panel-eyebrow">
                             INFORMASI IURAN
                         </span>
 
                         <h2>
-                            Iuran Kelas XI RPL 1
+                            Iuran {{ auth()->user()->labelKelas() }}
                         </h2>
 
                     </div>
@@ -535,58 +530,77 @@
 
                 <div class="class-info-grid">
 
+
                     <div class="class-info-item">
+
 
                         <span class="material-symbols-outlined">
                             school
                         </span>
 
+
                         <div>
+
+
                             <span>
                                 Kelas
                             </span>
 
+
                             <strong>
-                                XI RPL 1
+                                {{ auth()->user()->labelKelas() }}
                             </strong>
+
                         </div>
 
                     </div>
 
 
                     <div class="class-info-item">
+
 
                         <span class="material-symbols-outlined">
                             calendar_month
                         </span>
 
+
                         <div>
+
+
                             <span>
                                 Tahun Ajaran
                             </span>
 
+
                             <strong>
                                 2026/2027
                             </strong>
+
                         </div>
 
                     </div>
 
 
                     <div class="class-info-item">
+
 
                         <span class="material-symbols-outlined">
                             event
                         </span>
 
+
                         <div>
+
+
                             <span>
                                 Periode Berjalan
                             </span>
 
+
                             <strong>
                                 Oktober 2026
                             </strong>
+
                         </div>
 
                     </div>
@@ -594,18 +608,24 @@
 
                     <div class="class-info-item">
 
+
                         <span class="material-symbols-outlined">
                             receipt
                         </span>
 
+
                         <div>
+
+
                             <span>
                                 Iuran Aktif
                             </span>
 
+
                             <strong>
                                 3 Iuran
                             </strong>
+
                         </div>
 
                     </div>
@@ -617,12 +637,15 @@
 
             {{-- =================================================
                  IURAN SAYA
-            ================================================== --}}
+             ================================================== --}}
             <section class="panel">
+
 
                 <div class="panel-header">
 
+
                     <div>
+
 
                         <span class="panel-eyebrow">
                             IURAN SAYA
@@ -634,25 +657,28 @@
 
                     </div>
 
-                    <div class="panel-count">
-
-                        <span id="tableCount">
-                            3
-                        </span>
-
-                        iuran
-
-                    </div>
-
                 </div>
 
 
+                <div class="panel-count">
+
+
+                    <span id="tableCount">
+                        3
+                    </span>
+
+                    iuran
+
+                </div>
+
                 {{-- =================================================
                      FILTER
-                ================================================== --}}
+                 ================================================== --}}
                 <div class="filter-area">
 
+
                     <div class="search-box">
+
 
                         <span class="material-symbols-outlined">
                             search
@@ -670,19 +696,24 @@
 
                     <div class="filter-control">
 
+
                         <span class="material-symbols-outlined">
                             filter_list
                         </span>
 
+
                         <select id="statusFilter">
+
 
                             <option value="all">
                                 Semua Status
                             </option>
 
+
                             <option value="Lunas">
                                 Lunas
                             </option>
+
 
                             <option value="Belum Lunas">
                                 Belum Lunas
@@ -695,23 +726,29 @@
 
                     <div class="filter-control">
 
+
                         <span class="material-symbols-outlined">
                             calendar_month
                         </span>
 
+
                         <select id="periodFilter">
+
 
                             <option value="all">
                                 Semua Periode
                             </option>
 
+
                             <option value="Oktober 2026">
                                 Oktober 2026
                             </option>
 
+
                             <option value="September 2026">
                                 September 2026
                             </option>
+
 
                             <option value="Agustus 2026">
                                 Agustus 2026
@@ -726,23 +763,40 @@
 
                 {{-- =================================================
                      TABLE
-                ================================================== --}}
+                 ================================================== --}}
                 <div class="table-wrapper">
+
 
                     <table class="data-table">
 
+
                         <thead>
 
+
                             <tr>
+
+
                                 <th>No</th>
+
+
                                 <th>Nama Iuran</th>
+
+
                                 <th>Periode</th>
+
+
                                 <th>Nominal</th>
+
+
                                 <th>Jatuh Tempo</th>
+
+
                                 <th>Status</th>
+
                             </tr>
 
                         </thead>
+
 
                         <tbody id="iuranTableBody">
                         </tbody>
@@ -751,16 +805,17 @@
 
                 </div>
 
-
                 {{-- =================================================
                      EMPTY STATE
-                ================================================== --}}
+                 ================================================== --}}
                 <div
                     class="empty-state"
                     id="emptyState"
                 >
 
+
                     <div class="empty-icon">
+
 
                         <span class="material-symbols-outlined">
                             search_off
@@ -768,9 +823,11 @@
 
                     </div>
 
+
                     <strong>
                         Data iuran tidak ditemukan
                     </strong>
+
 
                     <span>
                         Coba ubah kata pencarian atau filter.
@@ -783,16 +840,19 @@
 
             {{-- =================================================
                  FOOTER
-            ================================================== --}}
+             ================================================== --}}
             <footer class="page-footer">
+
 
                 <span>
                     BBCashvia
                 </span>
 
+
                 <span>
-                    •
+                    ·
                 </span>
+
 
                 <span>
                     KASVIA Synergy
@@ -804,6 +864,6 @@
 
     </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
-
 </html>

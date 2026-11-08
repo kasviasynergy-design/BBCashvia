@@ -9,3 +9,31 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ============================================================
+   SKELETON LOADING (shimmer) - BBCashvia
+   ============================================================ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        #eef2f7 0%,
+        #f8fafc 50%,
+        #eef2f7 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.skeleton-text { height: 12px; margin: 6px 0; border-radius: 6px; }
+.skeleton-text--sm { width: 40%; height: 10px; }
+.skeleton-text--md { width: 65%; }
+.skeleton-text--lg { width: 85%; height: 14px; }
+.skeleton-card { min-height: 96px; border-radius: 14px; }
+.skeleton-row td { padding: 10px 12px; }
+.skeleton-row .skeleton { height: 14px; }

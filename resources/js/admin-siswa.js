@@ -1,6 +1,12 @@
-/* BBCASHVIA — HALAMAN DATA SISWA (ADMIN)
+/* BBCASHVIA - HALAMAN DATA SISWA (ADMIN)
    Data siswa dan jurusan berasal dari API Laravel.
    Tidak menggunakan data siswa atau pembayaran dummy. */
+// S3-07: modul bersama pengaman simpan ganda (anti-double-click
+// + kunci idempotensi yang dibaca oleh guard backend).
+import {
+    beriKunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
 
 (function () {
     "use strict";
@@ -109,6 +115,10 @@
             return "Sesi berakhir. Muat ulang halaman lalu coba lagi.";
         }
 
+        if (status >= 500) {
+            return "Terjadi gangguan pada server. Coba lagi beberapa saat.";
+        }
+
         return "Terjadi kesalahan saat menghubungi server.";
     };
 
@@ -124,18 +134,27 @@
         };
 
         let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         try {
-            respons = await fetch(url, {
+            // S3-07: permintaan POST otomatis dibawa kunci idempotensi.
+            respons = await fetch(url, beriKunciIdempoten({
                 ...opsi,
                 headers,
-                credentials: "same-origin"
-            });
-        } catch {
+                credentials: "same-origin",
+                signal: controller.signal
+            }));
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") {
+                throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            }
             throw new Error(
                 "Tidak dapat terhubung ke server. Periksa koneksi Laravel."
             );
         }
+        clearTimeout(timeoutId);
 
         let hasil = {};
 
@@ -161,6 +180,14 @@
 
         sedangMemuat = true;
 
+        // Skeleton loading: tampilkan placeholder baris selama data dimuat.
+        const tbodySiswa = $("isiTabelSiswa");
+        if (tbodySiswa) {
+            tbodySiswa.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="6"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
         try {
             const hasil = await permintaanAPI(API_URL);
 
@@ -172,7 +199,6 @@
             );
 
             isiPilihanJurusan();
-            aturFilterYangBelumTersedia();
             terapkanFilter();
         } catch (error) {
             console.error("Gagal memuat data siswa:", error);
@@ -197,7 +223,7 @@
             const nilaiLama = filter.value || "semua";
 
             filter.innerHTML = `
-                <option value="semua">Semua Jurusan</option>
+                <option value="semua">Semua Kelas</option>
                 ${DAFTAR_KELAS.map((jurusan) => `
                     <option value="${escapeHtml(jurusan.id_kelas)}">
                         ${escapeHtml(jurusan.nama_kelas)}
@@ -214,7 +240,7 @@
             const nilaiLama = input.value;
 
             input.innerHTML = `
-                <option value="">— Pilih kelas —</option>
+                <option value="">- Pilih kelas -</option>
                 ${DAFTAR_KELAS.length
                     ? DAFTAR_KELAS.map((jurusan) => `
                         <option value="${escapeHtml(jurusan.id_kelas)}">
@@ -232,25 +258,6 @@
             } else {
                 input.value = "";
             }
-        }
-    };
-
-    const aturFilterYangBelumTersedia = () => {
-        const filterJk = $("filterJk");
-        const filterIuran = $("filterIuran");
-
-        if (filterJk) {
-            Array.from(filterJk.options).forEach((opsi) => {
-                opsi.disabled = opsi.value !== "semua";
-            });
-            filterJk.value = "semua";
-        }
-
-        if (filterIuran) {
-            Array.from(filterIuran.options).forEach((opsi) => {
-                opsi.disabled = opsi.value !== "semua";
-            });
-            filterIuran.value = "semua";
         }
     };
 
@@ -283,8 +290,8 @@
         tbody.innerHTML = baris.map((kelas) => {
             const id = escapeHtml(kelas.id_kelas);
             const nama = escapeHtml(kelas.nama_kelas);
-            const tingkat = escapeHtml(kelas.tingkat || "-");
-            const tahun = escapeHtml(kelas.tahun_ajaran || "-");
+            const tingkat = escapeHtml(kelas.tingkat || "");
+            const tahun = escapeHtml(kelas.tahun_ajaran || "");
             const jumlah = escapeHtml(kelas.jumlah_siswa ?? 0);
 
             return `
@@ -416,7 +423,10 @@
             '[type="submit"]'
         );
 
-        if (tombolSimpan) tombolSimpan.disabled = true;
+        // S3-07: kunci tombol saat proses (teks "Memproses...", tidak
+        // dapat diklik dua kali). null = masih diproses, boleh henti.
+        const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+        if (!pemulihanTombol) return;
 
         try {
             const payload = {
@@ -453,7 +463,8 @@
             $("formErrorKelas").textContent = error.message;
             $("formErrorKelas").hidden = false;
         } finally {
-            if (tombolSimpan) tombolSimpan.disabled = false;
+            // S3-07: tombol pulih setelah proses selesai.
+            pemulihanTombol.pulihkan();
         }
     };
 
@@ -560,6 +571,24 @@
         const jurusan = escapeHtml(siswa.kelas || "Belum ditentukan");
         const status = escapeHtml(siswa.status || "Aktif");
 
+        const jk = siswa.jenis_kelamin === "Laki-Laki"
+            ? "Laki-laki"
+            : siswa.jenis_kelamin === "Perempuan"
+                ? "Perempuan"
+                : "-";
+
+        const hp = siswa.no_hp
+            ? escapeHtml(siswa.no_hp)
+            : "-";
+
+        const statusIuran = String(siswa.status_iuran ?? "").toLowerCase();
+
+        const badgeIuran = statusIuran === "lunas"
+            ? `<span class="badge badge--ok">Sudah Bayar</span>`
+            : statusIuran === "sebagian"
+                ? `<span class="badge badge--partial">Sebagian</span>`
+                : `<span class="badge badge--none">Belum Bayar</span>`;
+
         return `
             <tr>
                 <td>
@@ -583,17 +612,15 @@
                 </td>
 
                 <td>
-                    <span>—</span>
+                    <span>${jk}</span>
                 </td>
 
                 <td>
-                    <span>—</span>
+                    <span class="cell-kontak">${hp}</span>
                 </td>
 
                 <td>
-                    <span class="badge badge--none">
-                        Data iuran belum tersedia
-                    </span>
+                    ${badgeIuran}
                 </td>
 
                 <td class="td-aksi">
@@ -662,13 +689,21 @@
             $("sumTotal").textContent = baris.length;
         }
 
-        /*
-         * Jenis kelamin belum tersimpan dalam tabel siswa.
-         * Jangan menghitung atau menampilkan angka buatan.
-         */
-        if ($("sumLk")) $("sumLk").textContent = "—";
-        if ($("sumPr")) $("sumPr").textContent = "—";
-        if ($("sumBelum")) $("sumBelum").textContent = "—";
+        const jumlahLk = baris.filter(
+            (s) => s.jenis_kelamin === "Laki-Laki"
+        ).length;
+
+        const jumlahPr = baris.filter(
+            (s) => s.jenis_kelamin === "Perempuan"
+        ).length;
+
+        const jumlahBelum = baris.filter(
+            (s) => s.status_iuran !== "lunas"
+        ).length;
+
+        if ($("sumLk")) $("sumLk").textContent = jumlahLk;
+        if ($("sumPr")) $("sumPr").textContent = jumlahPr;
+        if ($("sumBelum")) $("sumBelum").textContent = jumlahBelum;
 
         if ($("sumTotalNote")) {
             $("sumTotalNote").textContent = baris.length
@@ -677,15 +712,15 @@
         }
 
         if ($("sumLkNote")) {
-            $("sumLkNote").textContent = "data belum tersedia";
+            $("sumLkNote").textContent = "siswa laki-laki";
         }
 
         if ($("sumPrNote")) {
-            $("sumPrNote").textContent = "data belum tersedia";
+            $("sumPrNote").textContent = "siswa perempuan";
         }
 
         if ($("sumBelumNote")) {
-            $("sumBelumNote").textContent = "data iuran belum tersedia";
+            $("sumBelumNote").textContent = "belum bayar / sebagian";
         }
     };
 
@@ -696,6 +731,8 @@
     const terapkanFilter = () => {
         const kata = $("cariSiswa")?.value.trim().toLowerCase() || "";
         const kelas = $("filterKelas")?.value || "semua";
+        const jk = $("filterJk")?.value || "semua";
+        const iuran = $("filterIuran")?.value || "semua";
 
         const hasil = SISWA.filter((siswa) => {
             if (
@@ -703,6 +740,24 @@
                 String(siswa.id_kelas) !== String(kelas)
             ) {
                 return false;
+            }
+
+            // Filter jenis kelamin (L/P). Data berisi "Laki-Laki"/"Perempuan".
+            if (jk !== "semua") {
+                const jkSiswa = /perempuan/i.test(String(siswa.jenis_kelamin ?? ""))
+                    ? "P"
+                    : (/laki/i.test(String(siswa.jenis_kelamin ?? "")) ? "L" : "");
+
+                if (jkSiswa !== jk) return false;
+            }
+
+            // Filter status iuran: lunas / sebagian / belum.
+            // Pencocokan harus persis supaya "Sebagian" tidak ikut
+            // muncul saat memilih "Belum Bayar".
+            if (iuran !== "semua") {
+                const status = String(siswa.status_iuran ?? "").toLowerCase();
+
+                if (status !== iuran) return false;
             }
 
             if (kata) {
@@ -818,6 +873,7 @@
         $("inputNis").value = siswa.nis;
         $("inputNama").value = siswa.nama;
         $("inputKelas").value = siswa.id_kelas ?? "";
+        if ($("inputHp")) $("inputHp").value = siswa.no_hp ?? "";
 
         // Set ulang radio jenis kelamin sesuai data
         const jenisKelaminRadios = document.querySelectorAll('input[name="jenisKelamin"]');
@@ -839,6 +895,7 @@
         const nis = $("inputNis").value.trim();
         const nama = $("inputNama").value.trim();
         const idKelas = $("inputKelas").value;
+        const noHp = $("inputHp") ? $("inputHp").value.trim() : "";
 
         // Ambil jenis kelamin yang dipilih (L atau P)
         const jenisKelaminChecked = document.querySelector('input[name="jenisKelamin"]:checked');
@@ -849,8 +906,8 @@
         if (!nis) {
             galat.push("NIS wajib diisi.");
         }
-        if (nis.length > 20) {
-            galat.push("NIS maksimal 20 karakter.");
+        if (nis.length > 11) {
+            galat.push("NIS maksimal 11 karakter.");
         }
 
         if (nama.length < 3) {
@@ -859,6 +916,10 @@
 
         if (!idKelas) {
             galat.push("Jurusan wajib dipilih.");
+        }
+
+        if (noHp && !/^[0-9+\-\s]{8,20}$/.test(noHp)) {
+            galat.push("Nomor HP tidak valid.");
         }
 
         if (galat.length) {
@@ -870,14 +931,18 @@
             '[type="submit"]'
         );
 
-        if (tombolSimpan) tombolSimpan.disabled = true;
+        // S3-07: kunci tombol saat proses (teks "Memproses...", tidak
+        // dapat diklik dua kali). null = masih diproses, boleh henti.
+        const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+        if (!pemulihanTombol) return;
 
         try {
             const payload = {
                 nis,
                 nama,
                 id_kelas: Number(idKelas),
-                jenis_kelamin: jenisKelamin
+                jenis_kelamin: jenisKelamin,
+                no_hp: noHp || null
             };
 
             const hasil = modeForm === "ubah"
@@ -907,7 +972,8 @@
         } catch (error) {
             tampilkanErrorForm(error.message);
         } finally {
-            if (tombolSimpan) tombolSimpan.disabled = false;
+            // S3-07: tombol pulih setelah proses selesai.
+            pemulihanTombol.pulihkan();
         }
     };
 
@@ -930,7 +996,7 @@
         $("detailNis").textContent = siswa.nis;
 
         if ($("detailJk")) {
-            $("detailJk").textContent = "—";
+            $("detailJk").textContent = "-";
             $("detailJk").classList.remove(
                 "chip--lk",
                 "chip--pr"
@@ -939,28 +1005,83 @@
 
         const jenisKelamin = siswa.jenis_kelamin || "Belum tersedia";
         $("detailJkTeks").textContent = jenisKelamin;
-        $("detailHp").textContent = "Belum tersedia di database";
+        $("detailHp").textContent = siswa.no_hp
+            ? siswa.no_hp
+            : "Belum diisi";
+
+        // Riwayat pembayaran nyata dari database.
+        const riwayat = Array.isArray(siswa.riwayat) ? siswa.riwayat : [];
+        const totalDibayar = Number(siswa.total_dibayar) || 0;
+
+        const statusIuran = String(siswa.status_iuran ?? "").toLowerCase();
+        const tagihanIuran = Number(siswa.tagihan_iuran) || 0;
+        const terbayarIuran = Number(siswa.terbayar_iuran) || 0;
 
         const badgeStatus = $("detailStatus");
 
         if (badgeStatus) {
-            badgeStatus.textContent = "Data iuran belum tersedia";
-            badgeStatus.className = "badge badge--none";
+            if (statusIuran === "lunas") {
+                badgeStatus.textContent =
+                    `Sudah bayar ${formatRupiah(terbayarIuran)}`;
+                badgeStatus.className = "badge badge--ok";
+            } else if (statusIuran === "sebagian") {
+                badgeStatus.textContent =
+                    `Dibayar ${formatRupiah(terbayarIuran)} dari ${formatRupiah(tagihanIuran)}`;
+                badgeStatus.className = "badge badge--partial";
+            } else {
+                badgeStatus.textContent = tagihanIuran > 0
+                    ? `Belum bayar • tagihan ${formatRupiah(tagihanIuran)}`
+                    : "Belum ada tagihan iuran aktif";
+                badgeStatus.className = "badge badge--none";
+            }
         }
 
-        const riwayat = $("riwayatIuran");
+        const kotakRiwayat = $("riwayatIuran");
 
-        if (riwayat) {
-            riwayat.innerHTML = `
-                <div class="riwayat-baris">
-                    <span class="riwayat-baris__bulan">
-                        Riwayat pembayaran
-                    </span>
-                    <span class="riwayat-baris__nominal">
-                        Belum tersedia
-                    </span>
-                </div>
-            `;
+        if (kotakRiwayat) {
+            if (riwayat.length === 0) {
+                kotakRiwayat.innerHTML = `
+                    <div class="riwayat-baris">
+                        <span class="riwayat-baris__bulan">
+                            Belum ada riwayat pembayaran
+                        </span>
+                        <span class="riwayat-baris__nominal">-</span>
+                    </div>
+                `;
+            } else {
+                kotakRiwayat.innerHTML = riwayat
+                    .map((t) => {
+                        const bulan = t.periode
+                            || (t.tanggal ? String(t.tanggal).slice(0, 10) : "-");
+
+                        const keterangan = t.keterangan
+                            ? ` • ${escapeHtml(t.keterangan)}`
+                            : "";
+
+                        return `
+                            <div class="riwayat-baris">
+                                <span class="riwayat-baris__bulan">
+                                    ${escapeHtml(bulan)}${keterangan}
+                                </span>
+                                <span class="riwayat-baris__nominal">
+                                    ${formatRupiah(t.nominal)}
+                                </span>
+                            </div>
+                        `;
+                    })
+                    .join("");
+
+                kotakRiwayat.innerHTML += `
+                    <div class="riwayat-baris">
+                        <span class="riwayat-baris__bulan">
+                            <strong>Total dibayar</strong>
+                        </span>
+                        <span class="riwayat-baris__nominal">
+                            <strong>${formatRupiah(totalDibayar)}</strong>
+                        </span>
+                    </div>
+                `;
+            }
         }
 
         bukaModal("modalDetail");
@@ -1096,19 +1217,9 @@
         $("cariSiswa")?.addEventListener("input", terapkanFilter);
         $("filterKelas")?.addEventListener("change", terapkanFilter);
 
-        $("filterJk")?.addEventListener("change", () => {
-            $("filterJk").value = "semua";
-            tampilkanToast(
-                "Filter jenis kelamin belum tersedia karena datanya belum tersimpan."
-            );
-        });
+        $("filterJk")?.addEventListener("change", terapkanFilter);
 
-        $("filterIuran")?.addEventListener("change", () => {
-            $("filterIuran").value = "semua";
-            tampilkanToast(
-                "Filter iuran belum tersedia karena data pembayaran belum terhubung."
-            );
-        });
+        $("filterIuran")?.addEventListener("change", terapkanFilter);
 
         $("btnResetFilter")?.addEventListener("click", resetFilter);
         $("btnKosongkanFilter")?.addEventListener("click", resetFilter);
@@ -1118,7 +1229,7 @@
         $("inputNis")?.addEventListener("input", (event) => {
             event.target.value = event.target.value
                 .replace(/\D/g, "")
-                .slice(0, 20);
+                .slice(0, 11);
         });
 
         $("formSiswa")?.addEventListener("submit", simpanSiswa);

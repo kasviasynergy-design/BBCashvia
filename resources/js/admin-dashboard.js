@@ -1,5 +1,5 @@
 /* ============================================================
-   BBCASHVIA — ADMIN DASHBOARD
+   BBCASHVIA - ADMIN DASHBOARD
    Data dari database sungguhan melalui API Laravel.
    Tidak menggunakan data dummy.
    ============================================================ */
@@ -30,6 +30,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     const $ = (selector) => document.querySelector(selector);
+
+    /* Pemetaan nilai kategori database ke label yang enak dibaca. */
+    const PETAKAN_KATEGORI = {
+        "iuran": "Iuran",
+        "kas": "Kas",
+        "kebutuhan kelas": "Kebutuhan Kelas",
+        "perlengkapan kelas": "Perlengkapan Kelas",
+        "kegiatan kelas": "Kegiatan Kelas",
+        "pemasukan lainnya": "Pemasukan Lainnya",
+        "pengeluaran lainnya": "Pengeluaran Lainnya"
+    };
+
+    const labelKategori = (kategori) =>
+        PETAKAN_KATEGORI[String(kategori ?? "").toLowerCase()] ||
+        String(kategori ?? "");
 
     const permintaanAPI = async (url) => {
         const csrf = document.querySelector('meta[name="csrf-token"]')
@@ -124,7 +139,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const isiRumus = () => {
         const map = [
-            ["#rumusAwal", formatRupiah(ringkasan.saldo_awal)],
             ["#rumusMasuk", "+ " + formatRupiah(ringkasan.total_masuk)],
             ["#rumusKeluar", "− " + formatRupiah(ringkasan.total_keluar)],
             ["#rumusSekarang", formatRupiah(ringkasan.saldo_sekarang)]
@@ -139,7 +153,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /* ============================================================
-    |  GRAFIK BAR — PEMASUKAN VS PENGELUARAN
+    |  GRAFIK BAR - PEMASUKAN VS PENGELUARAN
     |============================================================ */
 
     const renderBarChart = () => {
@@ -236,7 +250,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /* |======================================================================
-    |  GRAFIK GARIS — PERKEMBANGAN SALDO
+    |  GRAFIK GARIS - PERKEMBANGAN SALDO
     |====================================================================== */
 
     const renderLineChart = () => {
@@ -245,7 +259,125 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        wadah.innerHTML = '<div class="kosong">Grafik garis akan tersedia dalam versi mendatang.</div>';
+        if (!dataChart || dataChart.length === 0) {
+            wadah.innerHTML = '<div class="kosong">Data grafik tidak tersedia.</div>';
+            return;
+        }
+
+        /* Saldo akhir tiap bulan ditelusuri mundur dari saldo saat ini:
+           saldo bulan "sebelum" = saldo bulan ini − NET bulan ini,
+           sehingga perhitungan selalu dari transaksi. */
+        let berjalan = saldoSaatIni;
+        const titik = dataChart
+            .slice()
+            .reverse()
+            .map((item) => {
+                const hasil = { bulan: item.bulan, saldo: berjalan };
+                berjalan -= (Number(item.masuk) || 0) - (Number(item.keluar) || 0);
+                return hasil;
+            })
+            .reverse();
+
+        const nilaiMaks = Math.max(...titik.map((t) => t.saldo));
+        const nilaiMin = Math.min(...titik.map((t) => t.saldo));
+        const rentang = nilaiMaks - nilaiMin;
+
+        /* Skala Y dibingkai kelipatan 500.000 agar garis tetap terlihat. */
+        let yMaks;
+        let yMin;
+
+        if (rentang >= 1000000) {
+            yMaks = Math.ceil((nilaiMaks + rentang * 0.15) / 500000) * 500000;
+            yMin = Math.floor((nilaiMin - rentang * 0.15) / 500000) * 500000;
+        } else {
+            const tengah = (nilaiMaks + nilaiMin) / 2;
+            yMin = Math.floor((tengah - 500000) / 500000) * 500000;
+            yMaks = yMin + 1000000;
+        }
+
+        const jarakY = yMaks - yMin;
+        const skala = [0, 0.25, 0.5, 0.75, 1];
+
+        const labelSumbu = skala
+            .map((persen) =>
+                `<span>${formatSingkat(yMaks - jarakY * persen)}</span>`)
+            .join("");
+
+        const garisMuka = skala
+            .map((persen, index) => {
+                const kelas = index === 0
+                    ? "barchart__gl barchart__gl--base"
+                    : "barchart__gl";
+                return `<i class="${kelas}" style="bottom:${persen * 100}%"></i>`;
+            })
+            .join("");
+
+        const LEBAR = 700;
+        const TINGGI = 300;
+
+        /* X mengikuti pusat tiap kolom agar titik & label bulan sejajar. */
+        const xTitik = (indeks) => LEBAR * (indeks + 0.5) / titik.length;
+        const yTitik = (nilai) => (1 - (nilai - yMin) / jarakY) * TINGGI;
+
+        const titikGaris = titik
+            .map((t, indeks) =>
+                `${Math.round(xTitik(indeks))},${Math.round(yTitik(t.saldo))}`)
+            .join(" ");
+
+        const titikPertama = Math.round(xTitik(0));
+        const titikTerakhir = Math.round(xTitik(titik.length - 1));
+        const titikIsi = titikGaris
+            + ` ${titikTerakhir},${TINGGI} ${titikPertama},${TINGGI}`;
+
+        const kolom = titik
+            .map((t) => {
+                const atas = Math.max(
+                    2,
+                    Math.min(
+                        98,
+                        Math.round((1 - (t.saldo - yMin) / jarakY) * 100)
+                    )
+                );
+
+                return `
+                    <div class="linechart__col">
+                        <i
+                            class="linechart__point"
+                            style="top:${atas}%"
+                            title="Saldo akhir ${t.bulan}: ${formatRupiah(t.saldo)}"
+                            aria-label="Saldo akhir ${t.bulan}: ${formatRupiah(t.saldo)}"
+                        >
+                        </i>
+                        <span class="barchart__mon">${t.bulan}</span>
+                    </div>
+                `;
+            })
+            .join("");
+
+        wadah.innerHTML = `
+            <div class="linechart">
+                <div class="linechart__ylabs">${labelSumbu}</div>
+                <div class="linechart__plot" style="height:300px">
+                    ${garisMuka}
+                    <svg
+                        class="linechart__svg"
+                        viewBox="0 0 700 300"
+                        preserveAspectRatio="none"
+                        aria-hidden="true"
+                    >
+                        <polygon
+                            class="linechart__area"
+                            points="${titikIsi}"
+                        ></polygon>
+                        <polyline
+                            class="linechart__line"
+                            points="${titikGaris}"
+                        ></polyline>
+                    </svg>
+                    <div class="linechart__cols">${kolom}</div>
+                </div>
+            </div>
+        `;
     };
 
     /* |======================================================================
@@ -268,9 +400,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         const baris = dataRecent
             .map((t) => {
-                const tanda = t.arah === "masuk" ? "+" : "−";
+                const tanda = t.arah === "pemasukan" ? "+" : "−";
                 const kelasNominal =
-                    t.arah === "masuk" ? "table__nominal--in" : "table__nominal--out";
+                    t.arah === "pemasukan" ? "table__nominal--in" : "table__nominal--out";
                 const kelasKategori = "table__cat--" + (t.tipe || t.arah || "");
                 const kelasStatus =
                     t.statusTipe === "ok" ? "badge--ok" : "badge--warn";
@@ -286,7 +418,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                             <div class="table__secondary">${t.unit}</div>
                         </td>
                         <td>
-                            <span class="table__cat ${kelasKategori}">${t.kategori}</span>
+                            <span class="table__cat ${kelasKategori}">${labelKategori(t.kategori)}</span>
                         </td>
                         <td>
                             <div class="table__primary">${t.tanggal}</div>
@@ -414,16 +546,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isiSapaan = () => {
         const elSapaan = document.getElementById("greeting");
         if (elSapaan) {
-            const jam = new Date().getHours();
-            let sapaan = "Selamat malam";
-            if (jam >= 4 && jam < 11) {
-                sapaan = "Selamat pagi";
-            } else if (jam >= 11 && jam < 15) {
-                sapaan = "Selamat siang";
-            } else if (jam >= 15 && jam < 18) {
-                sapaan = "Selamat sore";
-            }
-            elSapaan.textContent = sapaan;
+            elSapaan.textContent = "Selamat datang";
         }
 
         const elTanggal = document.getElementById("topbarDate");

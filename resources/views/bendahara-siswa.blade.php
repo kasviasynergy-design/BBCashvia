@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Data Siswa | BBCashvia</title>
+    <title>Data Siswa - BBCashvia</title>
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,11 +18,13 @@
 
     @vite([
         'resources/css/bendahara-siswa.css',
-        'resources/js/bendahara-siswa.js'
+        'resources/js/bendahara-siswa.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
 <div class="app-shell">
 
@@ -109,11 +113,11 @@
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
-                <div class="sidebar__avatar">SN</div>
+                <div class="sidebar__avatar">{{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
 
                 <div class="sidebar__userinfo">
-                    <span class="sidebar__username">Siti Nurhaliza</span>
-                    <span class="sidebar__userrole">Bendahara • XI RPL 1</span>
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Pengguna' }}</span>
+                    <span class="sidebar__userrole">Bendahara • {{ auth()->user()->labelKelas() }}</span>
                 </div>
             </div>
 
@@ -150,7 +154,7 @@
 
                 <div class="topbar__title">
                     <h1>Data Siswa</h1>
-                    <p id="currentDate">Selasa, 6 Oktober 2026</p>
+                    <p id="currentDate">Memuat tanggal...</p>
                 </div>
 
             </div>
@@ -171,11 +175,11 @@
                         id="profileButton"
                         aria-expanded="false"
                     >
-                        <div class="topbar__avatar">SN</div>
+                        <div class="topbar__avatar">{{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}</div>
 
                         <div class="topbar__profileinfo">
-                            <span class="topbar__profilename">Siti Nurhaliza</span>
-                            <span class="topbar__profilerole">Bendahara • XI RPL 1</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Pengguna' }}</span>
+                            <span class="topbar__profilerole">Bendahara • {{ auth()->user()->labelKelas() }}</span>
                         </div>
 
                         <span class="material-symbols-outlined topbar__chevron">expand_more</span>
@@ -185,9 +189,9 @@
                     <div class="dropdown" id="profileDropdown">
 
                         <div class="dropdown__head">
-                            <span class="dropdown__name">Siti Nurhaliza</span>
-                            <span class="dropdown__mail">Bendahara • Kelas XI RPL 1</span>
-                            <span class="dropdown__mail">siti.nurhaliza@gmail.com</span>
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Pengguna' }}</span>
+                            <span class="dropdown__mail">Bendahara • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
                         <button
@@ -210,21 +214,31 @@
         <!-- CONTENT -->
         <main class="content">
 
-            <!-- HERO -->
-            <section class="hero">
+        @include('partials.kelas-belum-ditetapkan')
 
-                <div class="hero__text">
-                    <span class="hero__eyebrow">DATA &amp; IURAN • SISWA</span>
 
-                    <h2 class="hero__title">Data Siswa</h2>
+            {{-- PAGE HEADER --}}
+            <section class="page-head">
 
-                    <p class="hero__sub">
-                        Kelola data siswa kelas XI RPL 1,
+                <div class="page-head__text">
+
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/bendahara">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Data Siswa</span>
+                    </nav>
+
+                    <h2 class="page-head__title">Data Siswa</h2>
+
+                    <p class="page-head__sub">
+                        Kelola data siswa {{ auth()->user()->labelKelas() }},
                         termasuk status iuran dan pembayaran.
                     </p>
+
                 </div>
 
-                <div class="hero__actions">
+                <div class="page-head__actions">
+
                     <button
                         type="button"
                         class="btn btn--primary"
@@ -233,6 +247,7 @@
                         <span class="material-symbols-outlined">person_add</span>
                         Tambah Siswa
                     </button>
+
                 </div>
 
             </section>
@@ -246,12 +261,12 @@
 
                 <div class="class-info__text">
                     <span class="class-info__eyebrow">KELAS AKTIF</span>
-                    <strong>XI RPL 1</strong>
+                    <strong>{{ auth()->user()->labelKelas() }}</strong>
                     <span>Data siswa yang menjadi tanggung jawab Bendahara</span>
                 </div>
 
                 <div class="class-info__count">
-                    <strong id="classStudentCount">36</strong>
+                    <strong id="classStudentCount">-</strong>
                     <span>siswa</span>
                 </div>
 
@@ -264,7 +279,7 @@
                     <div class="stat-card__top">
                         <div>
                             <div class="stat-card__label">Total Siswa</div>
-                            <div class="stat-card__value" id="totalStudents">36</div>
+                            <div class="stat-card__value" id="totalStudents">-</div>
                         </div>
 
                         <div class="stat-card__icon stat-card__icon--siswa">
@@ -272,14 +287,14 @@
                         </div>
                     </div>
 
-                    <div class="stat-card__foot">Siswa kelas XI RPL 1</div>
+                    <div class="stat-card__foot">Siswa {{ auth()->user()->labelKelas() }}</div>
                 </article>
 
                 <article class="stat-card">
                     <div class="stat-card__top">
                         <div>
-                            <div class="stat-card__label">Sudah Lunas</div>
-                            <div class="stat-card__value" id="paidStudents">28</div>
+                            <div class="stat-card__label">Sudah Bayar</div>
+                            <div class="stat-card__value" id="paidStudents">-</div>
                         </div>
 
                         <div class="stat-card__icon stat-card__icon--in">
@@ -293,8 +308,8 @@
                 <article class="stat-card">
                     <div class="stat-card__top">
                         <div>
-                            <div class="stat-card__label">Belum Lunas</div>
-                            <div class="stat-card__value" id="unpaidStudents">8</div>
+                            <div class="stat-card__label">Belum Bayar</div>
+                            <div class="stat-card__value" id="unpaidStudents">-</div>
                         </div>
 
                         <div class="stat-card__icon stat-card__icon--warning">
@@ -302,7 +317,7 @@
                         </div>
                     </div>
 
-                    <div class="stat-card__foot">Masih memiliki sisa tagihan</div>
+                    <div class="stat-card__foot">Masih memiliki sisa tagihan (termasuk sebagian)</div>
                 </article>
 
             </section>
@@ -314,7 +329,7 @@
                     <div>
                         <div class="panel__eyebrow">DATA SISWA</div>
                         <div class="panel__title">Daftar Siswa</div>
-                        <div class="panel__sub">Data siswa kelas XI RPL 1</div>
+                        <div class="panel__sub">Data siswa {{ auth()->user()->labelKelas() }}</div>
                     </div>
                 </div>
 
@@ -337,8 +352,9 @@
 
                         <select id="statusFilter">
                             <option value="all">Semua Status</option>
-                            <option value="lunas">Lunas</option>
-                            <option value="belum">Belum Lunas</option>
+                            <option value="lunas">Sudah Bayar</option>
+                            <option value="sebagian">Sebagian</option>
+                            <option value="belum">Belum Bayar</option>
                         </select>
                     </div>
 
@@ -381,7 +397,7 @@
                 <div class="student-pagination">
 
                     <div class="pagination-info" id="paginationInfo">
-                        Menampilkan 1–8 dari 36 siswa
+                        Menampilkan 0 siswa
                     </div>
 
                     <div class="pagination">
@@ -461,7 +477,7 @@
                         type="text"
                         id="studentNis"
                         placeholder="Contoh: 24037"
-                        maxlength="20"
+                        maxlength="11"
                         autocomplete="off"
                     >
 
@@ -484,12 +500,9 @@
                 <div class="form-group">
                     <label for="studentClass">Kelas</label>
 
-                    <input
-                        type="text"
-                        id="studentClass"
-                        value="XI RPL 1"
-                        readonly
-                    >
+                    <select id="studentClass">
+                        <option value="">- Pilih Kelas -</option>
+                    </select>
 
                     <div class="form-hint">
                         Kelas mengikuti penugasan Bendahara.
@@ -497,36 +510,70 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="studentStatus">Status Pembayaran</label>
+                    <label for="studentJenisKelamin">Jenis Kelamin</label>
 
-                    <select id="studentStatus">
-                        <option value="lunas">Lunas</option>
-                        <option value="belum">Belum Lunas</option>
+                    <select id="studentJenisKelamin">
+                        <option value="">- Pilih Jenis Kelamin -</option>
+                        <option value="L">Laki-laki</option>
+                        <option value="P">Perempuan</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="studentBill">Total Tagihan</label>
+                    <label for="studentNoHp">No HP</label>
+
+                    <input
+                        type="text"
+                        id="studentNoHp"
+                        placeholder="Contoh: 081234567890"
+                        maxlength="20"
+                        autocomplete="off"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="studentStatusAktif">Status Siswa</label>
+
+                    <select id="studentStatusAktif">
+                        <option value="Aktif">Aktif</option>
+                        <option value="Tidak Aktif">Tidak Aktif</option>
+                    </select>
+
+                    <div class="form-hint">
+                        Status keaktifan siswa. Status pembayaran (Sudah Bayar/Sebagian/Belum Bayar) dihitung otomatis dari transaksi.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentBill">Total Tagihan (Otomatis)</label>
 
                     <input
                         type="number"
                         id="studentBill"
                         min="0"
                         step="1000"
-                        value="300000"
+                        readonly
                     >
+
+                    <div class="form-hint">
+                        Total tagihan dihitung otomatis dari iuran aktif.
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="studentPaid">Jumlah Dibayar</label>
+                    <label for="studentPaid">Jumlah Dibayar (Otomatis)</label>
 
                     <input
                         type="number"
                         id="studentPaid"
                         min="0"
                         step="1000"
-                        value="0"
+                        readonly
                     >
+
+                    <div class="form-hint">
+                        Jumlah dibayar dihitung otomatis dari transaksi pembayaran.
+                    </div>
                 </div>
 
             </div>
@@ -598,7 +645,7 @@
 
             <div class="detail-item">
                 <span>Kelas</span>
-                <strong id="modalClass">XI RPL 1</strong>
+                <strong id="modalClass">{{ auth()->user()->labelKelas() }}</strong>
             </div>
 
             <div class="detail-item">
@@ -652,6 +699,6 @@
 
 </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>
-```

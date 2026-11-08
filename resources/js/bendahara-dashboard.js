@@ -1,164 +1,54 @@
 /* =========================================================
    BBCASHVIA - BENDAHARA DASHBOARD
-   FRONTEND SIMULATION
+   Data berasal dari database (endpoint /bendahara/api/dashboard*).
+   Tidak menggunakan data dummy.
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
     /* =====================================================
-       DATA DUMMY
+       ENDPOINT
        ===================================================== */
 
-    const dataKas = {
+    const API = {
+        ringkasan: "/bendahara/api/dashboard",
+        chart: "/bendahara/api/dashboard/chart",
+        recent: "/bendahara/api/dashboard/recent"
+    };
 
-        saldoAwal: 3000000,
 
-        totalPemasukan: 12450000,
+    /* =====================================================
+       STATE (diisi dari server)
+       ===================================================== */
 
-        totalPengeluaran: 7200000,
+    let dataKas = {
 
-        totalIuran: 10800000,
+        totalPemasukan: 0,
 
-        totalSiswa: 36,
+        totalPengeluaran: 0,
 
-        siswaLunas: 28,
+        totalIuran: 0,
 
-        siswaBelumLunas: 8,
+        totalSiswa: 0,
 
-        totalTransaksi: 124,
+        siswaLunas: 0,
 
-        transaksiHariIni: 6
+        siswaBelumLunas: 0,
+
+        totalTransaksi: 0,
+
+        transaksiHariIni: 0
 
     };
 
 
-    const arusBulanan = [
-        {
-            bulan: "Apr",
-            masuk: 1800000,
-            keluar: 900000
-        },
-        {
-            bulan: "Mei",
-            masuk: 2200000,
-            keluar: 1250000
-        },
-        {
-            bulan: "Jun",
-            masuk: 1950000,
-            keluar: 900000
-        },
-        {
-            bulan: "Jul",
-            masuk: 2400000,
-            keluar: 1350000
-        },
-        {
-            bulan: "Agu",
-            masuk: 2100000,
-            keluar: 1100000
-        },
-        {
-            bulan: "Sep",
-            masuk: 2000000,
-            keluar: 950000
-        },
-        {
-            bulan: "Okt",
-            masuk: 2000000,
-            keluar: 750000
-        }
-    ];
+    let arusBulanan = [];
 
 
-    const saldoBulanan = [
-        {
-            bulan: "Apr",
-            saldo: 3900000
-        },
-        {
-            bulan: "Mei",
-            saldo: 4850000
-        },
-        {
-            bulan: "Jun",
-            saldo: 5900000
-        },
-        {
-            bulan: "Jul",
-            saldo: 6950000
-        },
-        {
-            bulan: "Agu",
-            saldo: 7950000
-        },
-        {
-            bulan: "Sep",
-            saldo: 9000000
-        },
-        {
-            bulan: "Okt",
-            saldo: 8250000
-        }
-    ];
+    let saldoBulanan = [];
 
 
-    const transaksiTerbaru = [
-        {
-            noBukti: "TRX-2026-00124",
-            siswa: "Nadia Putri",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Tunai",
-            tanggal: "05 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            noBukti: "TRX-2026-00123",
-            siswa: "Raka Pratama",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Transfer",
-            tanggal: "05 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            noBukti: "TRX-2026-00122",
-            siswa: "Salsa Aulia",
-            iuran: "Kegiatan Kelas",
-            nominal: 50000,
-            metode: "Tunai",
-            tanggal: "04 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            noBukti: "TRX-2026-00121",
-            siswa: "Fajar Ramadhan",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Tunai",
-            tanggal: "04 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            noBukti: "TRX-2026-00120",
-            siswa: "Alya Safitri",
-            iuran: "Kas Oktober",
-            nominal: 25000,
-            metode: "Transfer",
-            tanggal: "03 Okt 2026",
-            status: "Lunas"
-        },
-        {
-            noBukti: "TRX-2026-00119",
-            siswa: "Dimas Akbar",
-            iuran: "Kebersihan",
-            nominal: 15000,
-            metode: "Tunai",
-            tanggal: "03 Okt 2026",
-            status: "Lunas"
-        }
-    ];
+    let transaksiTerbaru = [];
 
 
     /* =====================================================
@@ -171,7 +61,60 @@ document.addEventListener("DOMContentLoaded", () => {
             style: "currency",
             currency: "IDR",
             minimumFractionDigits: 0
-        }).format(value);
+        }).format(Number(value) || 0);
+
+    };
+
+
+    const escapeHtml = (value) =>
+        String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+
+    const ambilJSON = async (url) => {
+
+        let respons;
+
+        try {
+
+            respons = await fetch(url, {
+
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+
+                credentials: "same-origin"
+
+            });
+
+        } catch {
+
+            throw new Error("Tidak dapat terhubung ke server.");
+
+        }
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* respons bukan JSON */
+        }
+
+        if (!respons.ok) {
+
+            throw new Error(
+                hasil?.message || "Gagal mengambil data dari server."
+            );
+
+        }
+
+        return hasil;
 
     };
 
@@ -195,10 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
        SALDO
        ===================================================== */
 
-    const saldoSaatIni =
-        dataKas.saldoAwal +
-        dataKas.totalPemasukan -
-        dataKas.totalPengeluaran;
+    const hitungSaldoSaatIni = () =>
+        dataKas.totalPemasukan - dataKas.totalPengeluaran;
 
 
     /* =====================================================
@@ -227,59 +168,66 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("statIuranMeta");
 
 
-    if (statSaldo) {
-        statSaldo.textContent =
-            formatRupiah(saldoSaatIni);
-    }
+    const renderStatistik = () => {
+
+        const saldoSaatIni =
+            hitungSaldoSaatIni();
 
 
-    if (statPemasukan) {
-        statPemasukan.textContent =
-            formatRupiah(dataKas.totalPemasukan);
-    }
+        if (statSaldo) {
+            statSaldo.textContent =
+                formatRupiah(saldoSaatIni);
+        }
 
 
-    if (statIuran) {
-        statIuran.textContent =
-            formatRupiah(dataKas.totalIuran);
-    }
+        if (statPemasukan) {
+            statPemasukan.textContent =
+                formatRupiah(dataKas.totalPemasukan);
+        }
 
 
-    if (statBelumLunas) {
-        statBelumLunas.textContent =
-            `${dataKas.siswaBelumLunas} siswa`;
-    }
+        if (statIuran) {
+            statIuran.textContent =
+                formatRupiah(dataKas.totalIuran);
+        }
 
 
-    if (statTransaksi) {
-        statTransaksi.textContent =
-            `${dataKas.totalTransaksi} transaksi`;
-    }
+        if (statBelumLunas) {
+            statBelumLunas.textContent =
+                `${dataKas.siswaBelumLunas} siswa`;
+        }
 
 
-    if (statHariIni) {
-        statHariIni.textContent =
-            `${dataKas.transaksiHariIni} transaksi`;
-    }
+        if (statTransaksi) {
+            statTransaksi.textContent =
+                `${dataKas.totalTransaksi} transaksi`;
+        }
 
 
-    if (statIuranMeta) {
-        const progress =
-            Math.round(
-                (dataKas.siswaLunas / dataKas.totalSiswa) * 100
-            );
+        if (statHariIni) {
+            statHariIni.textContent =
+                `${dataKas.transaksiHariIni} transaksi`;
+        }
 
-        statIuranMeta.textContent =
-            `${progress}% siswa sudah lunas`;
-    }
+
+        if (statIuranMeta) {
+            const progress =
+                dataKas.totalSiswa > 0
+                    ? Math.round(
+                        (dataKas.siswaLunas / dataKas.totalSiswa) * 100
+                    )
+                    : 0;
+
+            statIuranMeta.textContent =
+                `${progress}% siswa sudah lunas`;
+        }
+
+    };
 
 
     /* =====================================================
        RINGKASAN KAS
        ===================================================== */
-
-    const saldoAwal =
-        document.getElementById("saldoAwal");
 
     const rumusPemasukan =
         document.getElementById("rumusPemasukan");
@@ -291,28 +239,26 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("rumusSaldo");
 
 
-    if (saldoAwal) {
-        saldoAwal.textContent =
-            formatRupiah(dataKas.saldoAwal);
-    }
+    const renderRingkasanKas = () => {
+
+        if (rumusPemasukan) {
+            rumusPemasukan.textContent =
+                formatRupiah(dataKas.totalPemasukan);
+        }
 
 
-    if (rumusPemasukan) {
-        rumusPemasukan.textContent =
-            formatRupiah(dataKas.totalPemasukan);
-    }
+        if (rumusPengeluaran) {
+            rumusPengeluaran.textContent =
+                formatRupiah(dataKas.totalPengeluaran);
+        }
 
 
-    if (rumusPengeluaran) {
-        rumusPengeluaran.textContent =
-            formatRupiah(dataKas.totalPengeluaran);
-    }
+        if (rumusSaldo) {
+            rumusSaldo.textContent =
+                formatRupiah(hitungSaldoSaatIni());
+        }
 
-
-    if (rumusSaldo) {
-        rumusSaldo.textContent =
-            formatRupiah(saldoSaatIni);
-    }
+    };
 
 
     /* =====================================================
@@ -332,34 +278,40 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("iuranProgressText");
 
 
-    const progressIuran =
-        Math.round(
-            (dataKas.siswaLunas / dataKas.totalSiswa) * 100
-        );
+    const renderIuran = () => {
+
+        const progressIuran =
+            dataKas.totalSiswa > 0
+                ? Math.round(
+                    (dataKas.siswaLunas / dataKas.totalSiswa) * 100
+                )
+                : 0;
 
 
-    if (iuranLunas) {
-        iuranLunas.textContent =
-            `${dataKas.siswaLunas} siswa`;
-    }
+        if (iuranLunas) {
+            iuranLunas.textContent =
+                `${dataKas.siswaLunas} siswa`;
+        }
 
 
-    if (iuranBelumLunas) {
-        iuranBelumLunas.textContent =
-            `${dataKas.siswaBelumLunas} siswa`;
-    }
+        if (iuranBelumLunas) {
+            iuranBelumLunas.textContent =
+                `${dataKas.siswaBelumLunas} siswa`;
+        }
 
 
-    if (iuranProgress) {
-        iuranProgress.style.width =
-            `${progressIuran}%`;
-    }
+        if (iuranProgress) {
+            iuranProgress.style.width =
+                `${progressIuran}%`;
+        }
 
 
-    if (iuranProgressText) {
-        iuranProgressText.textContent =
-            `${progressIuran}%`;
-    }
+        if (iuranProgressText) {
+            iuranProgressText.textContent =
+                `${progressIuran}%`;
+        }
+
+    };
 
 
     /* =====================================================
@@ -372,7 +324,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const getStatusClass = (status) => {
 
-        if (status === "Lunas") {
+        if (status === "Lunas" || status === "Terverifikasi") {
             return "status status--success";
         }
 
@@ -385,7 +337,27 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
 
-    if (transactionTable) {
+    const renderTransaksi = () => {
+
+        if (!transactionTable) {
+            return;
+        }
+
+
+        if (!transaksiTerbaru.length) {
+
+            transactionTable.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align:center; padding:24px; color:#64748b;">
+                        Belum ada transaksi.
+                    </td>
+                </tr>
+            `;
+
+            return;
+
+        }
+
 
         transactionTable.innerHTML =
             transaksiTerbaru.map((trx) => {
@@ -395,16 +367,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         <td>
                             <strong class="table__code">
-                                ${trx.noBukti}
+                                ${escapeHtml(trx.noBukti)}
                             </strong>
                         </td>
 
                         <td>
-                            ${trx.siswa}
+                            ${escapeHtml(trx.siswa)}
                         </td>
 
                         <td>
-                            ${trx.iuran}
+                            ${escapeHtml(trx.iuran)}
                         </td>
 
                         <td>
@@ -414,16 +386,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         </td>
 
                         <td>
-                            ${trx.metode}
+                            ${escapeHtml(trx.metode)}
                         </td>
 
                         <td>
-                            ${trx.tanggal}
+                            ${escapeHtml(trx.tanggal)}
                         </td>
 
                         <td>
                             <span class="${getStatusClass(trx.status)}">
-                                ${trx.status}
+                                ${escapeHtml(trx.status)}
                             </span>
                         </td>
 
@@ -432,7 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }).join("");
 
-    }
+    };
 
 
     /* =====================================================
@@ -477,8 +449,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
 
+        if (!arusBulanan.length) {
+
+            barChart.innerHTML =
+                `<p class="chart-empty">Belum ada data grafik.</p>`;
+
+            return;
+
+        }
+
+
         const maxValue =
             Math.max(
+                1,
                 ...arusBulanan.flatMap((item) => [
                     item.masuk,
                     item.keluar
@@ -487,7 +470,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         const maxScale =
-            Math.ceil(maxValue / 1000000) * 1000000;
+            Math.max(1, Math.ceil(maxValue / 1000000) * 1000000);
 
 
         const gridValues = [
@@ -627,6 +610,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!lineChart) {
             return;
+        }
+
+
+        if (!saldoBulanan.length) {
+
+            lineChart.innerHTML =
+                `<p class="chart-empty">Belum ada data saldo.</p>`;
+
+            return;
+
         }
 
 
@@ -818,6 +811,148 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     renderLineChart();
+
+
+    /* =====================================================
+       MUAT DATA DARI DATABASE
+       ===================================================== */
+
+    const muatRingkasan = async () => {
+
+        const hasil = await ambilJSON(API.ringkasan);
+
+        const kpi = hasil?.data?.kpi ?? {};
+        const ring = hasil?.data?.ringkasan ?? {};
+
+        const belumLunas =
+            Number(kpi.siswa_belum_lunas) || 0;
+
+
+        dataKas = {
+            totalPemasukan: Number(kpi.total_pemasukan) || 0,
+            totalPengeluaran: Number(kpi.total_pengeluaran) || 0,
+            totalIuran: Number(kpi.total_iuran) || 0,
+            totalSiswa: Number(kpi.jumlah_siswa) || 0,
+            siswaLunas: Math.max(
+                0,
+                (Number(kpi.jumlah_siswa) || 0) - belumLunas
+            ),
+            siswaBelumLunas: belumLunas,
+            totalTransaksi: Number(kpi.total_transaksi) || 0,
+            transaksiHariIni: 0
+        };
+
+    };
+
+
+    const muatGrafik = async () => {
+
+        const hasil = await ambilJSON(API.chart);
+
+        const baris =
+            Array.isArray(hasil?.data) ? hasil.data : [];
+
+
+        arusBulanan = baris.map((item) => ({
+            bulan: item.bulan ?? "-",
+            masuk: Number(item.masuk) || 0,
+            keluar: Number(item.keluar) || 0
+        }));
+
+
+        let jalan = 0;
+
+        saldoBulanan = arusBulanan.map((item) => {
+
+            jalan += item.masuk - item.keluar;
+
+            return {
+                bulan: item.bulan,
+                saldo: jalan
+            };
+
+        });
+
+    };
+
+
+    const muatTerbaru = async () => {
+
+        const hasil = await ambilJSON(API.recent);
+
+        const baris =
+            Array.isArray(hasil?.data) ? hasil.data : [];
+
+
+        transaksiTerbaru = baris.map((t) => {
+
+            const arah =
+                String(t.arah || "").toLowerCase();
+
+
+            return {
+                noBukti: t.id ?? "-",
+                siswa: t.unit ?? "-",
+                iuran: t.ket ?? "-",
+                nominal: Number(t.nominal) || 0,
+                metode: arah === "pemasukan"
+                    ? "Masuk"
+                    : (arah === "pengeluaran" ? "Keluar" : "-"),
+                tanggal: t.tanggal ?? "-",
+                tanggalIso: t.tanggal_iso ?? null,
+                status: t.status ?? "-"
+            };
+
+        });
+
+
+        const hariIni = (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        })();
+
+
+        dataKas.transaksiHariIni =
+            transaksiTerbaru.filter(
+                (t) => t.tanggalIso === hariIni
+            ).length;
+
+    };
+
+
+    const muatSemua = async () => {
+
+        try {
+
+            await Promise.all([
+                muatRingkasan(),
+                muatGrafik(),
+                muatTerbaru()
+            ]);
+
+        } catch (err) {
+
+            console.error(err);
+
+        }
+
+
+        renderStatistik();
+
+        renderRingkasanKas();
+
+        renderIuran();
+
+        renderTransaksi();
+
+        renderBarChart();
+
+        renderLineChart();
+
+    };
+
+
+    muatSemua();
 
 
     /* =====================================================
@@ -1040,7 +1175,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =====================================================
        LOGOUT
-       FRONTEND SIMULATION
        ===================================================== */
 
     const logoutButtons = [
@@ -1060,7 +1194,7 @@ document.addEventListener("DOMContentLoaded", () => {
                  * dengan route logout Laravel.
                  */
 
-                window.location.href = "/";
+                window.location.href = "/logout";
 
             }
         );

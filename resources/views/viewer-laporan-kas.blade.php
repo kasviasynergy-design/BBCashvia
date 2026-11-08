@@ -1,189 +1,246 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Laporan Kas | BBCashvia</title>
+    <title>Laporan Kas - BBCashvia</title>
 
     <meta name="description"
-        content="Laporan kas kelas pada sistem BBCashvia.">
+        content="Laporan keuangan dan status kas kelas pada sistem BBCashvia.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0"
         rel="stylesheet"
     >
 
     @vite([
         'resources/css/viewer-laporan-kas.css',
-        'resources/js/viewer-laporan-kas.js'
+        'resources/js/viewer-laporan-kas.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
-    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+    {{-- =====================================================
+         SIDEBAR BACKDROP
+     ===================================================== --}}
+    <div
+        class="sidebar-backdrop"
+        id="sidebarBackdrop"
+    ></div>
 
-    <aside class="sidebar" id="sidebar">
+    {{-- =====================================================
+         SIDEBAR
+     ===================================================== --}}
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >    {{-- BRAND --}}
+        <div class="sidebar__brand">
 
-        <div class="sidebar-brand">
+            <div class="sidebar__logo">
 
-            <div class="brand-icon">
-                <span class="material-symbols-outlined">
-                    account_balance_wallet
-                </span>
+                <img
+                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    alt="Logo BBCashvia"
+                    class="sidebar__logo-img"
+                >
+
             </div>
 
-            <div class="brand-text">
-                <strong>BBCashvia</strong>
-                <span>KASVIA Synergy</span>
+            <div class="sidebar__brandtext">
+                <span class="sidebar__brandname">BBCashvia</span>
+                <span class="sidebar__brandsub">Kas Kelas Digital</span>
             </div>
 
         </div>
 
+        {{-- =================================================
+             NAVIGATION
+         ================================================== --}}
         <nav class="sidebar-nav">
 
+            {{-- MENU UTAMA --}}
             <div class="nav-section">
 
                 <div class="nav-section-title">
                     MENU UTAMA
                 </div>
 
-                <a href="/dashboard/viewer" class="nav-link">
+                <a
+                    href="/dashboard/viewer"
+                    class="nav-link"
+                >
                     <span class="material-symbols-outlined">
                         dashboard
                     </span>
-                    <span>Dashboard</span>
+
+                    <span>
+                        Dashboard
+                    </span>
                 </a>
 
             </div>
 
+            {{-- DATA & IURAN --}}
             <div class="nav-section">
 
                 <div class="nav-section-title">
                     DATA & IURAN
                 </div>
 
-                <a href="/viewer/siswa" class="nav-link">
+                <a
+                    href="/viewer/siswa"
+                    class="nav-link"
+                >
                     <span class="material-symbols-outlined">
                         groups
                     </span>
-                    <span>Siswa</span>
+
+                    <span>
+                        Siswa
+                    </span>
                 </a>
 
-                <a href="/viewer/iuran" class="nav-link">
+                <a
+                    href="/viewer/iuran"
+                    class="nav-link"
+                >
                     <span class="material-symbols-outlined">
                         receipt_long
                     </span>
-                    <span>Iuran</span>
+
+                    <span>
+                        Iuran
+                    </span>
                 </a>
 
             </div>
 
+            {{-- TRANSAKSI --}}
             <div class="nav-section">
 
                 <div class="nav-section-title">
                     TRANSAKSI
                 </div>
 
-                <a href="/viewer/transaksi" class="nav-link">
+                <a
+                    href="/viewer/transaksi"
+                    class="nav-link"
+                >
                     <span class="material-symbols-outlined">
                         payments
                     </span>
-                    <span>Transaksi</span>
-                </a>
 
-                <a href="/viewer/riwayat-transaksi" class="nav-link">
-                    <span class="material-symbols-outlined">
-                        history
+                    <span>
+                        Transaksi
                     </span>
-                    <span>Riwayat Transaksi</span>
                 </a>
 
             </div>
 
+            {{-- LAPORAN --}}
             <div class="nav-section">
 
                 <div class="nav-section-title">
                     LAPORAN
                 </div>
 
-                <a href="/viewer/laporan-kas"
-                    class="nav-link active"
-                    aria-current="page">
-
+                <a
+                    href="/viewer/laporan-kas"
+                    class="nav-link is-active"
+                >
                     <span class="material-symbols-outlined">
                         monitoring
                     </span>
 
-                    <span>Laporan Kas</span>
-
+                    <span>
+                        Laporan Kas
+                    </span>
                 </a>
 
             </div>
 
         </nav>
 
+        {{-- =================================================
+             SIDEBAR FOOTER
+         ================================================== --}}
         <div class="sidebar-footer">
 
             <div class="sidebar-user">
 
                 <div class="user-avatar">
-                    AR
+                    {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
 
                 <div class="user-info">
-                    <strong>Andi Ramadhan</strong>
-                    <span>Viewer</span>
+
+                    <span class="sidebar__username">
+                        {{ auth()->user()->name ?? 'Pengguna' }}
+                    </span>
+
+                    <span class="sidebar__userrole">
+                        Viewer • {{ auth()->user()->labelKelas() }}
+                    </span>
+
                 </div>
 
             </div>
 
-            <button type="button"
+            <button
+                type="button"
                 class="logout-button"
-                id="logoutButton">
-
+                id="logoutButton"
+            >
                 <span class="material-symbols-outlined">
                     logout
                 </span>
 
-                <span>Keluar</span>
-
+                <span>
+                    Keluar
+                </span>
             </button>
 
         </div>
 
     </aside>
 
-
+    {{-- =====================================================
+         MAIN AREA
+     ====================================================== --}}
     <div class="main-area">
 
+        {{-- =================================================
+             TOPBAR
+         ================================================== --}}
         <header class="topbar">
 
             <div class="topbar-left">
 
-                <button type="button"
+                <button
+                    type="button"
                     class="menu-toggle"
                     id="menuToggle"
-                    aria-label="Buka menu">
-
+                    aria-label="Buka menu"
+                >
                     <span class="material-symbols-outlined">
                         menu
                     </span>
-
                 </button>
 
                 <div class="page-heading">
                     <span>Laporan Kas</span>
-                    <strong>Ringkasan Keuangan</strong>
+                    <strong>Laporan Keuangan</strong>
                 </div>
 
             </div>
-
 
             <div class="topbar-right">
 
@@ -193,63 +250,66 @@
                         school
                     </span>
 
-                    <span>XI RPL 1</span>
+                    <span>
+                        {{ auth()->user()->labelKelas() }}
+                    </span>
 
                 </div>
 
-
                 <div class="profile-wrapper">
 
-                    <button type="button"
+                    <button
+                        type="button"
                         class="profile-button"
-                        id="profileButton">
+                        id="profileButton"
+                    >
+
 
                         <div class="profile-avatar">
-                            AR
+                            {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                         </div>
 
                         <div class="profile-text">
-                            <strong>Andi Ramadhan</strong>
-                            <span>Viewer</span>
+                            <strong>{{ auth()->user()->name ?? 'Pengguna' }}</strong>
+                            <span>Viewer • {{ auth()->user()->labelKelas() }}</span>
                         </div>
 
                         <span class="material-symbols-outlined profile-arrow">
                             expand_more
                         </span>
-
                     </button>
 
+                    <div
+                        class="profile-dropdown"
+                        id="profileDropdown"
+                    >
 
-                    <div class="profile-dropdown"
-                        id="profileDropdown">
 
                         <div class="profile-dropdown-head">
 
                             <div class="profile-avatar large">
-                                AR
+                                {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                             </div>
 
                             <div>
-                                <strong>Andi Ramadhan</strong>
-                                <span>andi@example.com</span>
+                                <strong>{{ auth()->user()->name ?? 'Pengguna' }}</strong>
+                                <span>Viewer • {{ auth()->user()->labelKelas() }}</span>
+                                <span>{{ auth()->user()->email ?? '-' }}</span>
                             </div>
 
                         </div>
 
 
-                        <div class="profile-dropdown-divider"></div>
-
-
-                        <button type="button"
+                        <button
+                            type="button"
                             id="dropdownLogout"
-                            class="dropdown-logout">
-
+                            class="dropdown-logout"
+                        >
                             <span class="material-symbols-outlined">
                                 logout
                             </span>
 
                             Keluar
-
                         </button>
 
                     </div>
@@ -260,22 +320,34 @@
 
         </header>
 
-
+        {{-- =================================================
+             CONTENT
+         ================================================== --}}
         <main class="content">
 
+        @include('partials.kelas-belum-ditetapkan')
+
+
+            {{-- =================================================
+                 PAGE INTRO
+             ================================================== --}}
             <section class="page-intro">
 
                 <div>
 
-                    <span class="page-eyebrow">
-                        LAPORAN KAS
-                    </span>
+                    <nav class="page-eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/viewer">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Laporan Kas</span>
+                    </nav>
 
-                    <h1>Laporan Kas</h1>
+                    <h1>
+                        Laporan Kas
+                    </h1>
 
                     <p>
-                        Pantau ringkasan pemasukan, pengeluaran,
-                        dan saldo kas kelas XI RPL 1.
+                        Rekapitulasi pemasukan, pengeluaran, dan saldo kas kelas
+                        berdasarkan transaksi yang tercatat.
                     </p>
 
                 </div>
@@ -283,435 +355,274 @@
             </section>
 
 
-            <!-- INFORMASI LAPORAN -->
-
-            <section class="panel report-information">
-
-                <div class="panel-header">
-
-                    <div>
-                        <span class="panel-eyebrow">
-                            PERIODE LAPORAN
-                        </span>
-
-                        <h2>Ringkasan Kas Kelas</h2>
-                    </div>
-
-                    <span class="class-badge">
-                        XI RPL 1
-                    </span>
-
-                </div>
+            {{-- =================================================
+                 CONTENT
+             ================================================== --}}
+            <section class="page-content">
 
 
-                <div class="report-filter">
+                {{-- =================================================
+                     LAPORAN TRANSAKSI (TABEL + FILTER)
+                 ================================================== --}}
+                <section class="panel">
 
-                    <div class="filter-item">
+                    <div class="panel-header">
 
-                        <label for="periodFilter">
-                            Periode
-                        </label>
-
-                        <select id="periodFilter"
-                            class="filter-select">
-
-                            <option value="oktober-2026">
-                                Oktober 2026
-                            </option>
-
-                            <option value="september-2026">
-                                September 2026
-                            </option>
-
-                            <option value="agustus-2026">
-                                Agustus 2026
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div class="report-period-info">
-
-                        <span class="material-symbols-outlined">
-                            calendar_month
-                        </span>
 
                         <div>
-                            <strong id="periodTitle">
-                                Oktober 2026
-                            </strong>
 
-                            <span>
-                                Tahun Ajaran 2026/2027
+
+                            <span class="panel-eyebrow">
+                                REKAP TRANSAKSI
                             </span>
+
+                            <h2>
+                                Laporan Transaksi
+                            </h2>
+
+                        </div>
+
+
+                        <div class="panel-count">
+
+                            <span id="tableCount">
+                                0
+                            </span>
+                            transaksi
+
                         </div>
 
                     </div>
 
-                </div>
+                    <div class="filter-area">
 
-            </section>
-
-
-            <!-- RINGKASAN KEUANGAN -->
-
-            <section class="stats-grid">
-
-                <article class="stat-card">
-
-                    <div class="stat-icon blue">
-
-                        <span class="material-symbols-outlined">
-                            account_balance
-                        </span>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span class="stat-label">
-                            Saldo Awal
-                        </span>
-
-                        <strong id="openingBalance">
-                            Rp480.000
-                        </strong>
-
-                        <span class="stat-meta">
-                            saldo sebelum periode
-                        </span>
-
-                    </div>
-
-                </article>
-
-
-                <article class="stat-card">
-
-                    <div class="stat-icon green">
-
-                        <span class="material-symbols-outlined">
-                            trending_up
-                        </span>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span class="stat-label">
-                            Total Pemasukan
-                        </span>
-
-                        <strong id="incomeAmount">
-                            Rp720.000
-                        </strong>
-
-                        <span class="stat-meta">
-                            dana masuk
-                        </span>
-
-                    </div>
-
-                </article>
-
-
-                <article class="stat-card">
-
-                    <div class="stat-icon orange">
-
-                        <span class="material-symbols-outlined">
-                            trending_down
-                        </span>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span class="stat-label">
-                            Total Pengeluaran
-                        </span>
-
-                        <strong id="expenseAmount">
-                            Rp185.000
-                        </strong>
-
-                        <span class="stat-meta">
-                            dana keluar
-                        </span>
-
-                    </div>
-
-                </article>
-
-
-                <article class="stat-card">
-
-                    <div class="stat-icon purple">
-
-                        <span class="material-symbols-outlined">
-                            savings
-                        </span>
-
-                    </div>
-
-                    <div class="stat-content">
-
-                        <span class="stat-label">
-                            Saldo Akhir
-                        </span>
-
-                        <strong id="closingBalance">
-                            Rp1.015.000
-                        </strong>
-
-                        <span class="stat-meta">
-                            saldo akhir periode
-                        </span>
-
-                    </div>
-
-                </article>
-
-            </section>
-
-
-            <!-- DETAIL KAS -->
-
-            <section class="panel">
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <span class="panel-eyebrow">
-                            DETAIL LAPORAN
-                        </span>
-
-                        <h2>Rincian Pemasukan & Pengeluaran</h2>
-
-                    </div>
-
-                </div>
-
-
-                <div class="report-summary-grid">
-
-                    <div class="summary-box income-box">
-
-                        <div class="summary-box-icon">
+                        <div class="filter-control">
 
                             <span class="material-symbols-outlined">
-                                arrow_downward
+                                calendar_today
                             </span>
+
+                            <select id="periodFilter">
+                            </select>
 
                         </div>
 
-                        <div>
-
-                            <span>
-                                Pemasukan
-                            </span>
-
-                            <strong>
-                                Rp720.000
-                            </strong>
-
-                            <small>
-                                dari iuran dan pemasukan kas
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="summary-box expense-box">
-
-                        <div class="summary-box-icon">
+                        <div class="filter-control">
 
                             <span class="material-symbols-outlined">
-                                arrow_upward
+                                monitoring
                             </span>
 
-                        </div>
+                            <select id="statusFilter">
 
-                        <div>
+                                <option value="all">
+                                    Pemasukan & Pengeluaran
+                                </option>
 
-                            <span>
-                                Pengeluaran
-                            </span>
+                                <option value="pemasukan">
+                                    Pemasukan
+                                </option>
 
-                            <strong>
-                                Rp185.000
-                            </strong>
+                                <option value="pengeluaran">
+                                    Pengeluaran
+                                </option>
 
-                            <small>
-                                untuk kebutuhan kelas
-                            </small>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="summary-box balance-box">
-
-                        <div class="summary-box-icon">
-
-                            <span class="material-symbols-outlined">
-                                account_balance_wallet
-                            </span>
-
-                        </div>
-
-                        <div>
-
-                            <span>
-                                Saldo Akhir
-                            </span>
-
-                            <strong>
-                                Rp1.015.000
-                            </strong>
-
-                            <small>
-                                posisi kas kelas
-                            </small>
+                            </select>
 
                         </div>
 
                     </div>
 
-                </div>
-
-            </section>
-
-
-            <!-- RINCIAN TRANSAKSI -->
-
-            <section class="panel">
-
-                <div class="panel-header">
-
-                    <div>
-
-                        <span class="panel-eyebrow">
-                            TRANSAKSI PERIODE
-                        </span>
-
-                        <h2>Rincian Transaksi</h2>
-
-                    </div>
-
-                </div>
+                    {{-- TABLE --}}
+                    <div class="table-wrapper">
 
 
-                <div class="table-wrapper">
+                    <table class="data-table">
 
-                    <table class="report-table">
 
                         <thead>
 
+
                             <tr>
+
+
                                 <th>No</th>
-                                <th>No. Bukti</th>
+
                                 <th>Tanggal</th>
+
                                 <th>Jenis</th>
+
                                 <th>Kategori</th>
+
                                 <th>Keterangan</th>
+
                                 <th>Nominal</th>
+
                             </tr>
 
                         </thead>
 
-                        <tbody id="reportTableBody"></tbody>
+
+                        <tbody id="laporanKasTableBody">
+                        </tbody>
 
                     </table>
 
                 </div>
 
+                {{-- =================================================
+                     EMPTY STATE
+                 ================================================== --}}
+                <div
+                    class="empty-state"
+                    id="emptyState"
+                >
 
-                <div class="table-footer">
 
-                    <span id="tableCount">
-                        Menampilkan 6 transaksi
+                    <div class="empty-icon">
+
+
+                        <span class="material-symbols-outlined">
+                            search_off
+                        </span>
+
+                    </div>
+
+
+                    <strong>
+                        Transaksi tidak ditemukan untuk filter ini
+                    </strong>
+
+
+                    <span>
+                        Coba pilih periode atau jenis transaksi yang lain.
                     </span>
 
                 </div>
 
+                </section>
 
-                <div class="empty-state" id="emptyState">
+                {{-- =================================================
+                     SUMMARY / RUMUS
+                 ================================================== --}}
+                <section class="panel panel--ringkasan">
 
-                    <div class="empty-icon">
+                    <div class="panel__head">
 
-                        <span class="material-symbols-outlined">
-                            monitoring
-                        </span>
+
+                        <div>
+
+
+                            <div class="panel__eyebrow">
+                                Ringkasan Keuangan
+                            </div>
+
+                            <div class="panel__title">
+                                Posisi Kas - {{ auth()->user()->labelKelas() }}
+                            </div>
+
+                            <div class="panel__sub">
+                                Perhitungan saldo kas berdasarkan transaksi yang tercatat.
+                            </div>
+
+                        </div>
 
                     </div>
 
-                    <h3>
-                        Belum ada transaksi
-                    </h3>
 
-                    <p>
-                        Belum terdapat transaksi pada periode
-                        yang dipilih.
-                    </p>
+                    <div class="rumus">
 
-                </div>
+
+                        <div class="rumus__item">
+
+
+                            <div class="rumus__label">
+                                Total Pemasukan
+                            </div>
+
+                            <div
+                                class="rumus__value rumus__value--in"
+                                id="rumusPemasukan"
+                            >
+                                Rp 0
+                            </div>
+
+                        </div>
+
+
+                        <div class="rumus__operator">
+                            −
+                        </div>
+
+
+                        <div class="rumus__item">
+
+
+                            <div class="rumus__label">
+                                Total Pengeluaran
+                            </div>
+
+                            <div
+                                class="rumus__value rumus__value--out"
+                                id="rumusPengeluaran"
+                            >
+                                Rp 0
+                            </div>
+
+                        </div>
+
+
+                        <div class="rumus__operator rumus__operator--sama">
+                            =
+                        </div>
+
+
+                        <div class="rumus__item rumus__item--hasil">
+
+
+                            <div class="rumus__label">
+                                Saldo Saat Ini
+                            </div>
+
+                            <div
+                                class="rumus__value"
+                                id="rumusSaldo"
+                            >
+                                Rp 0
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+                {{-- =================================================
+                     FOOTER
+                 ================================================== --}}
+                <footer class="page-footer">
+
+
+                    <span>
+                        BBCashvia
+                    </span>
+
+                    <span>
+                        ·
+                    </span>
+
+                    <span>
+                        KASVIA Synergy
+                    </span>
+
+                </footer>
 
             </section>
-
-
-            <!-- CATATAN -->
-
-            <section class="panel note-panel">
-
-                <div class="note-content">
-
-                    <div class="note-icon">
-
-                        <span class="material-symbols-outlined">
-                            info
-                        </span>
-
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Informasi Laporan
-                        </strong>
-
-                        <p>
-                            Laporan kas bersifat informatif dan
-                            hanya dapat dilihat oleh Viewer.
-                            Data yang ditampilkan berasal dari
-                            aktivitas kas kelas pada periode
-                            yang dipilih.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-            <footer class="page-footer">
-
-                <span>BBCashvia</span>
-                <span>•</span>
-                <span>KASVIA Synergy</span>
-
-            </footer>
 
         </main>
 
     </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Riwayat Transaksi — BBCashvia</title>
+    <title>Riwayat Transaksi - BBCashvia</title>
 
     <meta name="description"
-        content="Halaman Riwayat Transaksi BBCashvia — telusuri seluruh riwayat pemasukan dan pengeluaran kas kelas dengan pencarian, filter, dan detail transaksi lengkap.">
+        content="Halaman Riwayat Transaksi BBCashvia - telusuri seluruh riwayat pemasukan dan pengeluaran kas kelas dengan pencarian, filter, dan detail transaksi lengkap.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,7 +21,9 @@
 
     @vite([
         'resources/css/admin-riwayat-transaksi.css',
-        'resources/js/admin-riwayat-transaksi.js'
+        'resources/js/admin-riwayat-transaksi.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
 </head>
 
@@ -109,15 +111,15 @@
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
-                <div class="sidebar__avatar" aria-hidden="true">AN</div>
+                <div class="sidebar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
 
                 <div class="sidebar__userinfo">
-                    <span class="sidebar__username">Azis N.</span>
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Administrator' }}</span>
                     <span class="sidebar__userrole">Admin</span>
                 </div>
             </div>
 
-            <a href="/" class="sidebar__logout">
+            <a href="/logout" class="sidebar__logout">
                 <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 <span>Keluar</span>
             </a>
@@ -139,7 +141,7 @@
 
                 <div class="topbar__title">
                     <h1>Riwayat Transaksi</h1>
-                    <p id="topbarDate">—</p>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -156,11 +158,11 @@
                     <button type="button" class="topbar__profile" id="profileBtn" aria-haspopup="true"
                         aria-expanded="false">
 
-                        <span class="topbar__avatar" aria-hidden="true">AN</span>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
 
                         <span class="topbar__profileinfo">
-                            <span class="topbar__profilename">Azis N.</span>
-                            <span class="topbar__profilerole">Admin</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Admin • {{ auth()->user()->labelKelas() }}</span>
                         </span>
 
                         <span class="material-symbols-outlined topbar__chevron" aria-hidden="true">
@@ -172,11 +174,12 @@
                     <div class="dropdown" id="profileMenu" role="menu">
 
                         <div class="dropdown__head">
-                            <span class="dropdown__name">Azis N.</span>
-                            <span class="dropdown__mail">azinun@bbcashvia.sch.id</span>
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
-                        <a href="/" class="dropdown__item dropdown__item--danger" role="menuitem">
+                        <a href="/logout" class="dropdown__item dropdown__item--danger" role="menuitem">
                             <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                             <span>Keluar</span>
                         </a>
@@ -196,12 +199,16 @@
 
                 <div class="page-head__text">
 
-                    <p class="page-head__eyebrow">Panel Admin • Kas Kelas</p>
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/admin">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Riwayat Transaksi</span>
+                    </nav>
 
                     <h2 class="page-head__title">Riwayat Transaksi</h2>
 
                     <p class="page-head__sub">
-                        Telusuri seluruh riwayat pemasukan dan pengeluaran kas kelas — gunakan pencarian
+                        Telusuri seluruh riwayat pemasukan dan pengeluaran kas kelas - gunakan pencarian
                         dan filter untuk menemukan transaksi, lalu buka detailnya untuk rincian lengkap.
                     </p>
 
@@ -222,7 +229,7 @@
 
                     <div>
                         <p class="sum-card__label">Total Pemasukan</p>
-                        <p class="sum-card__value" id="sumMasuk">—</p>
+                        <p class="sum-card__value" id="sumMasuk">-</p>
                         <p class="sum-card__note" id="sumMasukNote">sesuai filter</p>
                     </div>
 
@@ -239,7 +246,7 @@
 
                     <div>
                         <p class="sum-card__label">Total Pengeluaran</p>
-                        <p class="sum-card__value" id="sumKeluar">—</p>
+                        <p class="sum-card__value" id="sumKeluar">-</p>
                         <p class="sum-card__note" id="sumKeluarNote">sesuai filter</p>
                     </div>
 
@@ -256,7 +263,7 @@
 
                     <div>
                         <p class="sum-card__label">Total Transaksi</p>
-                        <p class="sum-card__value" id="sumJumlah">—</p>
+                        <p class="sum-card__value" id="sumJumlah">-</p>
                         <p class="sum-card__note" id="sumJumlahNote">sesuai filter</p>
                     </div>
 
@@ -313,9 +320,6 @@
 
                         <select id="filterBulan">
                             <option value="semua">Semua Bulan</option>
-                            <option value="2026-10">Oktober 2026</option>
-                            <option value="2026-09">September 2026</option>
-                            <option value="2026-08">Agustus 2026</option>
                         </select>
 
                     </label>
@@ -347,7 +351,7 @@
                         <h3 class="panel__title">Riwayat Lengkap</h3>
 
                         <p class="panel__sub" id="tabelInfo">
-                            — transaksi ditampilkan
+                            - transaksi ditampilkan
                         </p>
 
                     </div>
@@ -367,7 +371,7 @@
                                 <th scope="col">Kategori</th>
                                 <th scope="col">Tanggal</th>
                                 <th scope="col" class="th-r">Nominal</th>
-                                <th scope="col">Petugas</th>
+                                <th scope="col">Dicatat oleh</th>
                                 <th scope="col" class="th-c">Aksi</th>
                             </tr>
 
@@ -402,7 +406,7 @@
 
 
             <footer class="content__foot">
-                BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
+                BBCashvia - Kas Kelas Digital • Seluruh data ditampilkan langsung dari database.
             </footer>
 
         </main>
@@ -427,6 +431,13 @@
                         TRX-0000
                     </h3>
 
+                    <!--
+                        Status pembayaran (hasil hitungan backend dari
+                        akumulasi pembayaran iuran, bukan kolom database).
+                        Tersembunyi untuk transaksi non-iuran.
+                    -->
+                    <span class="badge badge--ok" id="detailStatusBayar" hidden></span>
+
                 </div>
 
                 <button type="button"
@@ -449,27 +460,27 @@
 
                     <div class="detail-item">
                         <span class="detail-item__label">Jenis</span>
-                        <span class="detail-item__value" id="detailJenis">—</span>
+                        <span class="detail-item__value" id="detailJenis">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Kategori</span>
-                        <span class="detail-item__value" id="detailKategori">—</span>
+                        <span class="detail-item__value" id="detailKategori">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Kelas</span>
-                        <span class="detail-item__value" id="detailKelas">—</span>
+                        <span class="detail-item__value" id="detailKelas">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Tanggal</span>
-                        <span class="detail-item__value" id="detailTanggal">—</span>
+                        <span class="detail-item__value" id="detailTanggal">-</span>
                     </div>
 
                     <div class="detail-item">
                         <span class="detail-item__label">Waktu</span>
-                        <span class="detail-item__value" id="detailWaktu">—</span>
+                        <span class="detail-item__value" id="detailWaktu">-</span>
                     </div>
 
                     <div class="detail-item">
@@ -479,7 +490,7 @@
 
                     <div class="detail-item">
                         <span class="detail-item__label">Dicatat oleh</span>
-                        <span class="detail-item__value" id="detailPetugas">—</span>
+                        <span class="detail-item__value" id="detailPetugas">-</span>
                     </div>
 
                 </div>
@@ -489,7 +500,38 @@
 
                     <span>Keterangan</span>
 
-                    <p id="detailKeterangan">—</p>
+                    <p id="detailKeterangan">-</p>
+
+                </div>
+
+
+                <!--
+                    Rincian pembayaran/pengeluaran yang terhubung
+                    dengan transaksi utama (satu pembayaran multi-iuran
+                    tetap tampil sebagai satu transaksi utama).
+                    Disembunyikan bila transaksi hanya punya satu baris.
+                -->
+                <div class="detail-rincian" id="detailRincian" hidden>
+
+                    <p class="detail-rincian__title">
+
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            receipt_long
+                        </span>
+
+                        Rincian Transaksi
+
+                    </p>
+
+                    <div class="detail-rincian__list" id="detailRincianList"></div>
+
+                    <div class="detail-rincian__total">
+
+                        <span>Total rincian</span>
+
+                        <b id="detailRincianTotal">-</b>
+
+                    </div>
 
                 </div>
 
@@ -509,7 +551,7 @@
 
                     <div class="uang-rincian__baris">
                         <span>Jumlah yang harus dibayar</span>
-                        <b id="rincianTagihan">—</b>
+                        <b id="rincianTagihan">-</b>
                     </div>
 
 
@@ -519,7 +561,7 @@
                             Jumlah uang yang diterima Bendahara
                         </span>
 
-                        <b id="rincianDiterima">—</b>
+                        <b id="rincianDiterima">-</b>
 
                     </div>
 
@@ -528,7 +570,7 @@
 
                         <span>Jumlah kembalian</span>
 
-                        <b id="rincianKembalian">—</b>
+                        <b id="rincianKembalian">-</b>
 
                     </div>
 
@@ -539,7 +581,7 @@
                             Jumlah uang yang masuk ke kas
                         </span>
 
-                        <b id="rincianMasukKas">—</b>
+                        <b id="rincianMasukKas">-</b>
 
                     </div>
 
@@ -562,6 +604,7 @@
 
     </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 
 </html>

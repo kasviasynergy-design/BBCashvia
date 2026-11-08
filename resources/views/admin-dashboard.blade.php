@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Dashboard Admin — BBCashvia</title>
+    <title>Dashboard Admin - BBCashvia</title>
 
     <meta name="description"
-        content="Dashboard Admin BBCashvia — Sistem kas kelas digital: kelola iuran, transaksi kas, dan laporan keuangan kelas.">
+        content="Dashboard Admin BBCashvia - Sistem kas kelas digital: kelola iuran, transaksi kas, dan laporan keuangan kelas.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,8 +23,13 @@
 
     @vite([
         'resources/css/admin-dashboard.css',
-        'resources/js/admin-dashboard.js'
+        'resources/js/admin-dashboard.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
+    <style>
+        /*! tailwindcss v4.0.7 | MIT License | https://tailwindcss.com */@layer theme{:root,:host{--primary:#2BA19E;--primary-dark:#237A77;--primary-soft:#D4F1F9;--success:#2BA19E;--success-soft:#D4F1F9;--warning:#F4D98E;--warning-soft:#F4D98E;--bg:#FFFDFF;--surface:#FFFFFF;--surface-soft:#D4F1F9;--border:#A5DBE3;--sidebar-active:#D4F1F9;--sidebar-active-text:#2BA19E;}}
+    </style>
 </head>
 
 <body>
@@ -146,15 +151,15 @@
         <div class="sidebar__foot">
 
             <div class="sidebar__user">
-                <div class="sidebar__avatar" aria-hidden="true">AN</div>
+                <div class="sidebar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</div>
 
                 <div class="sidebar__userinfo">
-                    <span class="sidebar__username">Azis N.</span>
+                    <span class="sidebar__username">{{ auth()->user()->name ?? 'Administrator' }}</span>
                     <span class="sidebar__userrole">Admin</span>
                 </div>
             </div>
 
-            <a href="/" class="sidebar__logout">
+            <a href="/logout" class="sidebar__logout">
                 <span class="material-symbols-outlined" aria-hidden="true">logout</span>
                 <span>Keluar</span>
             </a>
@@ -186,7 +191,7 @@
 
                 <div class="topbar__title">
                     <h1>Dashboard</h1>
-                    <p id="topbarDate">—</p>
+                    <p id="topbarDate">-</p>
                 </div>
 
             </div>
@@ -209,11 +214,11 @@
                         aria-haspopup="true"
                         aria-expanded="false">
 
-                        <span class="topbar__avatar" aria-hidden="true">AN</span>
+                        <span class="topbar__avatar" aria-hidden="true">{{ strtoupper(mb_substr(auth()->user()->name ?? 'A', 0, 2)) }}</span>
 
                         <span class="topbar__profileinfo">
-                            <span class="topbar__profilename">Azis N.</span>
-                            <span class="topbar__profilerole">Admin</span>
+                            <span class="topbar__profilename">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="topbar__profilerole">Admin • {{ auth()->user()->labelKelas() }}</span>
                         </span>
 
                         <span
@@ -228,12 +233,13 @@
                     <div class="dropdown" id="profileMenu" role="menu">
 
                         <div class="dropdown__head">
-                            <span class="dropdown__name">Azis N.</span>
-                            <span class="dropdown__mail">azinun@bbcashvia.sch.id</span>
+                            <span class="dropdown__name">{{ auth()->user()->name ?? 'Administrator' }}</span>
+                            <span class="dropdown__mail">Admin • {{ auth()->user()->labelKelas() }}</span>
+                            <span class="dropdown__mail">{{ auth()->user()->email ?? '-' }}</span>
                         </div>
 
                         <a
-                            href="/"
+                            href="/logout"
                             class="dropdown__item dropdown__item--danger"
                             role="menuitem">
 
@@ -264,12 +270,12 @@
 
                 <div class="hero__text">
 
-                    <p class="hero__eyebrow">
-                        Panel Admin • Kas Kelas
-                    </p>
+                    <nav class="hero__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <span aria-current="page">Beranda</span>
+                    </nav>
 
                     <h2 class="hero__title">
-                        <span id="greeting">Selamat datang</span>, Azis
+                        <span id="greeting">Selamat datang</span>, {{ auth()->user()->name ?? "Administrator" }}
                     </h2>
 
                     <p class="hero__sub">
@@ -295,7 +301,7 @@
                         <span
                             class="material-symbols-outlined"
                             aria-hidden="true">
-                            sell
+                            receipt_long
                         </span>
 
                         <span>Kelola Iuran</span>
@@ -317,7 +323,7 @@
 
                         <div>
                             <p class="stat-card__label">Total Kas</p>
-                            <p class="stat-card__value" id="kpiTotalKas">—</p>
+                            <p class="stat-card__value" id="kpiTotalKas">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--kas">
@@ -343,7 +349,7 @@
 
                         <div>
                             <p class="stat-card__label">Total Pemasukan</p>
-                            <p class="stat-card__value" id="kpiPemasukan">—</p>
+                            <p class="stat-card__value" id="kpiPemasukan">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--in">
@@ -381,7 +387,7 @@
 
                         <div>
                             <p class="stat-card__label">Total Pengeluaran</p>
-                            <p class="stat-card__value" id="kpiPengeluaran">—</p>
+                            <p class="stat-card__value" id="kpiPengeluaran">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--out">
@@ -419,7 +425,7 @@
 
                         <div>
                             <p class="stat-card__label">Total Iuran</p>
-                            <p class="stat-card__value" id="kpiIuran">—</p>
+                            <p class="stat-card__value" id="kpiIuran">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--iuran">
@@ -449,7 +455,7 @@
                         <p
                             class="stat-card__progressmeta"
                             id="kpiIuranMeta">
-                            —
+                            -
                         </p>
 
                     </div>
@@ -463,7 +469,7 @@
 
                         <div>
                             <p class="stat-card__label">Jumlah Siswa</p>
-                            <p class="stat-card__value" id="kpiSiswa">—</p>
+                            <p class="stat-card__value" id="kpiSiswa">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--siswa">
@@ -479,7 +485,7 @@
                     <p
                         class="stat-card__foot"
                         id="kpiSiswaMeta">
-                        —
+                        -
                     </p>
 
                 </article>
@@ -491,7 +497,7 @@
 
                         <div>
                             <p class="stat-card__label">Total Transaksi</p>
-                            <p class="stat-card__value" id="kpiTransaksi">—</p>
+                            <p class="stat-card__value" id="kpiTransaksi">-</p>
                         </div>
 
                         <span class="stat-card__icon stat-card__icon--trx">
@@ -507,7 +513,7 @@
                     <p
                         class="stat-card__foot"
                         id="kpiTrxMeta">
-                        —
+                        -
                     </p>
 
                 </article>
@@ -533,7 +539,7 @@
                         </h3>
 
                         <p class="panel__sub">
-                            Perhitungan saldo dari awal periode hingga hari ini.
+                            Perhitungan kas berdasarkan seluruh pemasukan dan pengeluaran.
                         </p>
 
                     </div>
@@ -546,35 +552,13 @@
                     <div class="rumus__item">
 
                         <p class="rumus__label">
-                            Saldo Awal
-                        </p>
-
-                        <p
-                            class="rumus__value"
-                            id="rumusAwal">
-                            —
-                        </p>
-
-                    </div>
-
-
-                    <span
-                        class="rumus__operator"
-                        aria-hidden="true">
-                        +
-                    </span>
-
-
-                    <div class="rumus__item">
-
-                        <p class="rumus__label">
                             Total Pemasukan
                         </p>
 
                         <p
                             class="rumus__value rumus__value--in"
                             id="rumusMasuk">
-                            —
+                            -
                         </p>
 
                     </div>
@@ -596,7 +580,7 @@
                         <p
                             class="rumus__value rumus__value--out"
                             id="rumusKeluar">
-                            —
+                            -
                         </p>
 
                     </div>
@@ -618,7 +602,7 @@
                         <p
                             class="rumus__value"
                             id="rumusSekarang">
-                            —
+                            -
                         </p>
 
                     </div>
@@ -814,7 +798,7 @@
 
             <footer class="content__foot">
 
-                BBCashvia — Kas Kelas Digital • Data yang tampil merupakan data simulasi untuk pengembangan tampilan.
+                BBCashvia - Kas Kelas Digital • Seluruh data ditampilkan langsung dari database.
 
             </footer>
 
@@ -822,6 +806,7 @@
 
     </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 
 </html>

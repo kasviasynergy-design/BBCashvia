@@ -19,8 +19,10 @@ use App\Http\Controllers\Api\DashboardController;
 // Halaman login
 Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
 Route::get('/login', [AuthController::class, 'showLoginForm']);
-Route::post('/login', [AuthController::class, 'login']);
+// Maksimal 5 percobaan login per menit per IP sebagai penangkal brute force.
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/logout', [AuthController::class, 'logout']);
 
 // Ganti password
 Route::get('/change-password', function () {
@@ -42,40 +44,68 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | DATA BACA (SEMUA ROLE YANG SUDAH LOGIN)
+    |--------------------------------------------------------------------------
+    | Dipakai halaman bendahara & viewer untuk membaca data nyata dari
+    | database tanpa membuka endpoint admin (yang bersifat baca-tulis).
+    */
+
+    Route::middleware('role:admin,bendahara,viewer')->group(function () {
+        Route::get('/data/dashboard', [DashboardController::class, 'index'])
+            ->name('data.dashboard');
+        Route::get('/data/dashboard/chart', [DashboardController::class, 'chart'])
+            ->name('data.dashboard.chart');
+        Route::get('/data/dashboard/recent', [DashboardController::class, 'recent'])
+            ->name('data.dashboard.recent');
+        Route::get('/data/siswa', [SiswaController::class, 'index'])
+            ->name('data.siswa');
+        Route::get('/data/kelas', [KelasController::class, 'index'])
+            ->name('data.kelas');
+        Route::get('/data/iuran', [IuranController::class, 'index'])
+            ->name('data.iuran');
+        Route::get('/data/transaksi', [TransaksiController::class, 'index'])
+            ->name('data.transaksi');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
     | HALAMAN ADMIN
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboard/admin', function () {
-        return view('admin-dashboard');
-    })->name('admin.dashboard');
+    Route::middleware('role:admin')->group(function () {
 
-    Route::get('/admin/transaksi', function () {
-        return view('admin-transaksi');
-    });
+        Route::get('/dashboard/admin', function () {
+            return view('admin-dashboard');
+        })->name('admin.dashboard');
 
-    Route::get('/admin/iuran', function () {
-        return view('admin-iuran');
-    });
+        Route::get('/admin/transaksi', function () {
+            return view('admin-transaksi');
+        });
 
-    Route::get('/admin/siswa', function () {
-        $siswa = Siswa::with('kelas')->get();
-        $kelas = \App\Models\Kelas::orderBy('nama_kelas')
-            ->get(['id_kelas', 'nama_kelas']);
+        Route::get('/admin/iuran', function () {
+            return view('admin-iuran');
+        });
 
-        return view('admin-siswa', compact('siswa', 'kelas'));
-    });
+        Route::get('/admin/siswa', function () {
+            $siswa = Siswa::with('kelas')->get();
+            $kelas = \App\Models\Kelas::orderBy('nama_kelas')
+                ->get(['id_kelas', 'nama_kelas']);
 
-    Route::get('/admin/laporan-kas', function () {
-        return view('admin-laporan-kas');
-    });
+            return view('admin-siswa', compact('siswa', 'kelas'));
+        });
 
-    Route::get('/admin/riwayat-transaksi', function () {
-        return view('admin-riwayat-transaksi');
-    });
+        Route::get('/admin/laporan-kas', function () {
+            return view('admin-laporan-kas');
+        });
 
-    Route::get('/admin/manajemen-pengguna', function () {
-        return view('admin-manajemen-pengguna');
+        Route::get('/admin/riwayat-transaksi', function () {
+            return view('admin-riwayat-transaksi');
+        });
+
+        Route::get('/admin/manajemen-pengguna', function () {
+            return view('admin-manajemen-pengguna');
+        });
     });
 
 
@@ -102,6 +132,19 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/{id}', [UserController::class, 'destroy'])
                 ->name('destroy');
         });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | TOKEN CSRF TERBARU (ADMIN)
+    |--------------------------------------------------------------------------
+    | Dipakai JavaScript untuk mengambil token sesi yang masih berlaku
+    | sebelum request tulis, sehingga token lama di halaman tidak dipakai.
+    */
+
+    Route::get('/admin/api/csrf-token', function () {
+        return response()->json(['token' => csrf_token()]);
+    })->middleware('role:admin')->name('admin.api.csrf-token');
 
 
     /*
@@ -219,6 +262,11 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [TransaksiController::class, 'index'])
                 ->name('index');
 
+            // Daftar kategori bersama (harus didaftarkan sebelum
+            // rute /{id} agar tidak tertangkap sebagai id).
+            Route::get('/kategori', [TransaksiController::class, 'kategori'])
+                ->name('kategori');
+
             Route::post('/', [TransaksiController::class, 'store'])
                 ->name('store');
 
@@ -235,34 +283,128 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | API BENDAHARA
+    |--------------------------------------------------------------------------
+    | Bendahara mengelola operasional kas: siswa, iuran, dan transaksi.
+    | Endpoint ini memakai controller yang sama dengan admin agar
+    | perilakunya konsisten.
+    */
+
+    Route::prefix('bendahara/api')
+        ->middleware('role:admin,bendahara')
+        ->name('bendahara.api.')
+        ->group(function () {
+
+            // Dashboard
+            Route::get('/dashboard', [DashboardController::class, 'index'])
+                ->name('dashboard');
+            Route::get('/dashboard/chart', [DashboardController::class, 'chart'])
+                ->name('dashboard.chart');
+            Route::get('/dashboard/recent', [DashboardController::class, 'recent'])
+                ->name('dashboard.recent');
+
+            // Siswa
+            Route::get('/siswa', [SiswaController::class, 'index'])
+                ->name('siswa.index');
+            Route::post('/siswa', [SiswaController::class, 'store'])
+                ->name('siswa.store');
+            Route::put('/siswa/{id}', [SiswaController::class, 'update'])
+                ->name('siswa.update');
+            Route::delete('/siswa/{id}', [SiswaController::class, 'destroy'])
+                ->name('siswa.destroy');
+
+            // Kelas
+            Route::get('/kelas', [KelasController::class, 'index'])
+                ->name('kelas.index');
+
+            // Iuran
+            Route::get('/iuran', [IuranController::class, 'index'])
+                ->name('iuran.index');
+            Route::post('/iuran', [IuranController::class, 'store'])
+                ->name('iuran.store');
+            Route::put('/iuran/{id}', [IuranController::class, 'update'])
+                ->name('iuran.update');
+            Route::delete('/iuran/{id}', [IuranController::class, 'destroy'])
+                ->name('iuran.destroy');
+
+            // Transaksi
+            Route::get('/transaksi', [TransaksiController::class, 'index'])
+                ->name('transaksi.index');
+            Route::get('/transaksi/kategori', [TransaksiController::class, 'kategori'])
+                ->name('transaksi.kategori');
+            Route::post('/transaksi', [TransaksiController::class, 'store'])
+                ->name('transaksi.store');
+            Route::get('/transaksi/{id}', [TransaksiController::class, 'show'])
+                ->name('transaksi.show');
+            Route::put('/transaksi/{id}', [TransaksiController::class, 'update'])
+                ->name('transaksi.update');
+            Route::delete('/transaksi/{id}', [TransaksiController::class, 'destroy'])
+                ->name('transaksi.destroy');
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | API TAMBAH UNTUK VIEWER
+    |--------------------------------------------------------------------------
+    | Viewer (wali kelas / siswa) dapat MENAMBAH siswa, iuran, dan
+    | transaksi untuk kelasnya sendiri. Endpoint ini menunjuk controller
+    | yang sama dengan admin/bendahara; kelas otomatis diikat oleh
+    | trait MembatasiKelas.
+    */
+
+    Route::prefix('viewer/api')
+        ->middleware('role:viewer')
+        ->name('viewer.api.')
+        ->group(function () {
+
+            Route::get('/transaksi/kategori', [TransaksiController::class, 'kategori'])
+                ->name('transaksi.kategori');
+
+            Route::post('/siswa', [SiswaController::class, 'store'])
+                ->name('siswa.store');
+
+            Route::post('/iuran', [IuranController::class, 'store'])
+                ->name('iuran.store');
+
+            Route::post('/transaksi', [TransaksiController::class, 'store'])
+                ->name('transaksi.store');
+        });
+
+
+    /*
+    |--------------------------------------------------------------------------
     | DASHBOARD BENDAHARA
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboard/bendahara', function () {
-        return view('bendahara-dashboard');
-    })->name('bendahara.dashboard');
+    Route::middleware('role:bendahara')->group(function () {
 
-    Route::get('/bendahara/siswa', function () {
-        $siswa = Siswa::with('kelas')->get();
+        Route::get('/dashboard/bendahara', function () {
+            return view('bendahara-dashboard');
+        })->name('bendahara.dashboard');
 
-        return view('bendahara-siswa', compact('siswa'));
-    });
+        Route::get('/bendahara/siswa', function () {
+            $siswa = Siswa::with('kelas')->get();
 
-    Route::get('/bendahara/iuran', function () {
-        return view('bendahara-iuran');
-    });
+            return view('bendahara-siswa', compact('siswa'));
+        });
 
-    Route::get('/bendahara/transaksi', function () {
-        return view('bendahara-transaksi');
-    });
+        Route::get('/bendahara/iuran', function () {
+            return view('bendahara-iuran');
+        });
 
-    Route::get('/bendahara/laporan-kas', function () {
-        return view('bendahara-laporan-kas');
-    });
+        Route::get('/bendahara/transaksi', function () {
+            return view('bendahara-transaksi');
+        });
 
-    Route::get('/bendahara/riwayat-transaksi', function () {
-        return view('bendahara-riwayat-transaksi');
+        Route::get('/bendahara/laporan-kas', function () {
+            return view('bendahara-laporan-kas');
+        });
+
+        Route::get('/bendahara/riwayat-transaksi', function () {
+            return view('bendahara-riwayat-transaksi');
+        });
     });
 
 
@@ -272,28 +414,31 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/dashboard/viewer', function () {
-        return view('viewer-dashboard');
-    })->name('viewer.dashboard');
+    Route::middleware('role:viewer')->group(function () {
 
-    Route::get('/viewer/siswa', function () {
-        return view('viewer-siswa');
-    });
+        Route::get('/dashboard/viewer', function () {
+            return view('viewer-dashboard');
+        })->name('viewer.dashboard');
 
-    Route::get('/viewer/iuran', function () {
-        return view('viewer-iuran');
-    });
+        Route::get('/viewer/siswa', function () {
+            return view('viewer-siswa');
+        });
 
-    Route::get('/viewer/transaksi', function () {
-        return view('viewer-transaksi');
-    });
+        Route::get('/viewer/iuran', function () {
+            return view('viewer-iuran');
+        });
 
-    Route::get('/viewer/riwayat-transaksi', function () {
-        return view('viewer-riwayat-transaksi');
-    });
+        Route::get('/viewer/transaksi', function () {
+            return view('viewer-transaksi');
+        });
 
-    Route::get('/viewer/laporan-kas', function () {
-        return view('viewer-laporan-kas');
+        Route::get('/viewer/riwayat-transaksi', function () {
+            return view('viewer-riwayat-transaksi');
+        });
+
+        Route::get('/viewer/laporan-kas', function () {
+            return view('viewer-laporan-kas');
+        });
     });
 
 });
@@ -301,14 +446,17 @@ Route::middleware(['auth'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| PREVIEW UI — DEVELOPMENT ONLY
+| PREVIEW UI - DEVELOPMENT ONLY
 |--------------------------------------------------------------------------
+| Hanya aktif di lingkungan lokal agar tidak dapat diakses di produksi.
 */
 
-Route::get('/preview/admin', function () {
-    return view('admin-dashboard');
-});
+if (app()->environment('local')) {
+    Route::get('/preview/admin', function () {
+        return view('admin-dashboard');
+    });
 
-Route::get('/preview/viewer', function () {
-    return view('viewer-dashboard');
-});
+    Route::get('/preview/viewer', function () {
+        return view('viewer-dashboard');
+    });
+}

@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Transaksi | BBCashvia</title>
+    <title>Transaksi - BBCashvia</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,11 +17,16 @@
 
     @vite([
         'resources/css/bendahara-transaksi.css',
-        'resources/js/bendahara-transaksi.js'
+        'resources/js/bendahara-transaksi.js',
+        'resources/css/konfirmasi-logout.css',
+        'resources/js/konfirmasi-logout.js'
     ])
+    <style>
+        /*! tailwindcss v4.0.7 | MIT License | https://tailwindcss.com */@layer theme{:root,:host{--primary:#2BA19E;--primary-dark:#237A77;--primary-soft:#D4F1F9;--success:#2BA19E;--success-soft:#D4F1F9;--warning:#F4D98E;--warning-soft:#F4D98E;--bg:#FFFDFF;--surface:#FFFFFF;--surface-soft:#D4F1F9;--border:#A5DBE3;--sidebar-active:#D4F1F9;--sidebar-active-text:#2BA19E;}}
+    </style>
 </head>
 
-<body>
+<body data-kelas-label="{{ auth()->user()->labelKelas() }}">
 
 <div class="app-shell">
 
@@ -118,17 +124,17 @@
             <div class="sidebar__user">
 
                 <div class="sidebar__avatar">
-                    SN
+                    {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                 </div>
 
                 <div class="sidebar__userinfo">
 
                     <span class="sidebar__username">
-                        Siti Nurhaliza
+                        {{ auth()->user()->name ?? 'Pengguna' }}
                     </span>
 
                     <span class="sidebar__userrole">
-                        Bendahara • XI RPL 1
+                        Bendahara • {{ auth()->user()->labelKelas() }}
                     </span>
 
                 </div>
@@ -147,11 +153,6 @@
         </div>
 
     </aside>
-
-    <div
-        class="sidebar-backdrop"
-        id="sidebarBackdrop"
-    ></div>
 
     <div
         class="sidebar-backdrop"
@@ -192,7 +193,7 @@
                     </h1>
 
                     <p id="topbarDate">
-                        Selasa, 6 Oktober 2026
+                        Memuat tanggal...
                     </p>
 
                 </div>
@@ -225,17 +226,17 @@
                     >
 
                         <span class="topbar__avatar">
-                            SN
+                            {{ strtoupper(mb_substr(auth()->user()->name ?? 'U', 0, 2)) }}
                         </span>
 
                         <span class="topbar__profileinfo">
 
                             <span class="topbar__profilename">
-                                Siti Nurhaliza
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </span>
 
                             <span class="topbar__profilerole">
-                                Bendahara • XI RPL 1
+                                Bendahara • {{ auth()->user()->labelKelas() }}
                             </span>
 
                         </span>
@@ -255,15 +256,15 @@
                         <div class="dropdown__head">
 
                             <span class="dropdown__name">
-                                Siti Nurhaliza
-                            </span>
-
-                            <span class="topbar__profilerole">
-                                Bendahara • XI RPL 1
+                                {{ auth()->user()->name ?? 'Pengguna' }}
                             </span>
 
                             <span class="dropdown__mail">
-                                siti.nurhaliza@gmail.com
+                                Bendahara • {{ auth()->user()->labelKelas() }}
+                            </span>
+
+                            <span class="dropdown__mail">
+                                {{ auth()->user()->email ?? '-' }}
                             </span>
 
                         </div>
@@ -300,42 +301,59 @@
 
         <main class="content">
 
-            <!-- HERO -->
+        @include('partials.kelas-belum-ditetapkan')
 
-            <section class="page-hero">
 
-                <div>
+            {{-- PAGE HEADER --}}
+            <section class="page-head">
 
-                    <p class="page-eyebrow">
-                        TRANSAKSI
-                    </p>
+                <div class="page-head__text">
 
-                    <h2>
-                        Catatan Transaksi
-                    </h2>
+                    <nav class="page-head__eyebrow breadcrumb" aria-label="Breadcrumb">
+                        <a class="breadcrumb__link" href="/dashboard/bendahara">Beranda</a>
+                        <span class="breadcrumb__sep" aria-hidden="true">›</span>
+                        <span aria-current="page">Data Transaksi</span>
+                    </nav>
 
-                    <p class="page-description">
-                        Catat dan kelola pemasukan serta pengeluaran kas kelas XI RPL 1.
+                    <h2 class="page-head__title">Data Transaksi</h2>
+
+                    <p class="page-head__sub">
+                        Catat dan kelola pemasukan serta pengeluaran kas {{ auth()->user()->labelKelas() }}.
                     </p>
 
                 </div>
 
+                <div class="page-head__actions">
 
-                <button
-                    type="button"
-                    class="btn btn--primary"
-                    id="btnTambahTransaksi"
-                >
+                    <button
+                        type="button"
+                        class="btn btn--secondary"
+                        id="btnTambahBanyak"
+                    >
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            playlist_add
+                        </span>
+                        <span>
+                            Catat Banyak
+                        </span>
 
-                    <span class="material-symbols-outlined">
-                        add
-                    </span>
+                    </button>
 
-                    <span>
-                        Tambah Transaksi
-                    </span>
+                    <button
+                        type="button"
+                        class="btn btn--primary"
+                        id="btnTambahTransaksi"
+                    >
+                        <span class="material-symbols-outlined">
+                            add
+                        </span>
+                        <span>
+                            Catat Transaksi
+                        </span>
 
-                </button>
+                    </button>
+
+                </div>
 
             </section>
 
@@ -587,6 +605,10 @@
 
                                 <th>
                                     Metode
+                                </th>
+
+                                <th>
+                                    Dicatat oleh
                                 </th>
 
                                 <th class="text-right">
@@ -881,6 +903,40 @@
                 </div>
 
 
+                <!-- INFO TAGIHAN: PEMBAYARAN SEBELUMNYA & SISA (CICILAN) -->
+
+                <div
+                    class="form-row"
+                    id="infoTagihanGroup"
+                >
+
+                    <div class="form-group">
+
+                        <label for="inputSisaTagihan">
+                            Sisa Tagihan
+                        </label>
+
+                        <div class="money-input">
+
+                            <span>
+                                Rp
+                            </span>
+
+                            <input
+                                type="text"
+                                id="inputSisaTagihan"
+                                placeholder="0"
+                                inputmode="numeric"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
                 <!-- KATEGORI -->
 
                 <div class="form-group">
@@ -923,10 +979,36 @@
                                 </strong>
 
                                 <small>
-                                    Hitung uang diterima, kembalian, dan uang yang masuk kas.
+                                    Hitung pembayaran saat ini, kembalian, dan uang yang masuk kas. Nominal boleh penuh atau cicilan.
                                 </small>
 
                             </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="inputNominalBayar">
+                            Nominal Pembayaran Saat Ini
+                            <span class="required">*</span>
+                        </label>
+
+                        <div class="money-input">
+
+                            <span>
+                                Rp
+                            </span>
+
+                            <input
+                                type="text"
+                                id="inputNominalBayar"
+                                placeholder="0"
+                                inputmode="numeric"
+                                autocomplete="off"
+                            >
 
                         </div>
 
@@ -995,8 +1077,10 @@
                         class="uang-box__hint"
                         id="uangHint"
                     >
-                        Contoh: tagihan Rp10.000 dan uang diterima Rp20.000 →
-                        kembalian Rp10.000 dan uang masuk kas Rp10.000.
+                        Pembayaran boleh penuh (lunas) atau sebagian
+                        (cicilan). Contoh: tagihan Rp50.000, pembayaran
+                        Rp30.000, uang diterima Rp40.000 → kembalian
+                        Rp10.000 dan uang masuk kas Rp30.000.
                     </p>
 
                 </div>
@@ -1116,6 +1200,124 @@
 
 
 <!-- =========================================================
+     MODAL CATAT BANYAK TRANSAKSI (BENDAHARA)
+========================================================= -->
+
+<div
+    class="modal-backdrop"
+    id="modalFormBanyak"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal modal--lebar"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalBanyakTitle"
+    >
+
+        <div class="modal__head">
+
+            <div>
+
+                <p class="modal__eyebrow" id="modalBanyakEyebrow">
+                    BANYAK TRANSAKSI
+                </p>
+
+                <h3
+                    class="modal__title"
+                    id="modalBanyakTitle"
+                >
+                    Catat Beberapa Transaksi
+                </h3>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="modal__close"
+                data-tutup-modal="modalFormBanyak"
+                aria-label="Tutup"
+            >
+
+                <span class="material-symbols-outlined" aria-hidden="true">
+                    close
+                </span>
+
+            </button>
+
+        </div>
+
+        <form class="modal__body" id="formTransaksiBanyak" novalidate>
+
+            <div class="field">
+
+                <div class="banyak-head">
+
+                    <span class="field__label">
+                        Daftar Transaksi <b class="wajib">*</b>
+                    </span>
+
+                    <button
+                        type="button"
+                        class="btn btn--ghost btn--sm"
+                        id="btnTambahBaris"
+                    >
+
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            add
+                        </span>
+
+                        <span>
+                            Tambah Baris
+                        </span>
+
+                    </button>
+
+                </div>
+
+                <div class="banyak-body" id="isiBarisTransaksi"></div>
+
+            </div>
+
+            <p class="form-error" id="formBanyakError" hidden></p>
+
+            <div class="modal__foot">
+
+                <button
+                    type="button"
+                    class="btn btn--ghost"
+                    data-tutup-modal="modalFormBanyak"
+                >
+                    Batal
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn--primary"
+                    id="btnSimpanBanyak"
+                >
+
+                    <span class="material-symbols-outlined" aria-hidden="true">
+                        save
+                    </span>
+
+                    <span>
+                        Simpan Semua Transaksi
+                    </span>
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- =========================================================
      MODAL DETAIL
 ========================================================= -->
 
@@ -1188,7 +1390,7 @@
                     </span>
 
                     <strong id="detailMetode">
-                        —
+                        -
                     </strong>
 
                 </div>
@@ -1204,7 +1406,7 @@
                     </span>
 
                     <strong id="detailSiswa">
-                        —
+                        -
                     </strong>
 
                 </div>
@@ -1220,7 +1422,7 @@
                     </span>
 
                     <strong id="detailIuran">
-                        —
+                        -
                     </strong>
 
                 </div>
@@ -1233,7 +1435,7 @@
                     </span>
 
                     <strong id="detailKategori">
-                        —
+                        -
                     </strong>
 
                 </div>
@@ -1246,7 +1448,7 @@
                     </span>
 
                     <strong id="detailTanggal">
-                        —
+                        -
                     </strong>
 
                 </div>
@@ -1255,11 +1457,11 @@
                 <div class="detail-item">
 
                     <span>
-                        Petugas
+                        Dicatat oleh
                     </span>
 
                     <strong id="detailPetugas">
-                        Bendahara
+                        -
                     </strong>
 
                 </div>
@@ -1274,7 +1476,7 @@
                 </span>
 
                 <p id="detailKeterangan">
-                    —
+                    -
                 </p>
 
             </div>
@@ -1458,5 +1660,6 @@
 
 </div>
 
+    @include('partials.konfirmasi-logout')
 </body>
 </html>

@@ -1,120 +1,137 @@
+// BBCASHVIA - modul bersama S3-07 (pengaman simpan ganda).
+import {
+    kunciIdempoten,
+    kunciTombolSimpan,
+} from "./simpan-guard.js";
+
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
     /*
     |--------------------------------------------------------------------------
-    | DATA DEMO SISWA
+    | ENDPOINT + STATE
     |--------------------------------------------------------------------------
-    | Sementara hanya XI RPL 1.
-    | Nanti diganti dengan data dari database Laravel.
-    |--------------------------------------------------------------------------
-    */
-
-    const SISWA = [
-        {
-            id: 1,
-            nama: "Azis Nugraha",
-            nisn: "0061234567",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 2,
-            nama: "Budi Setiawan",
-            nisn: "0061234568",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 3,
-            nama: "Citra Lestari",
-            nisn: "0061234569",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 4,
-            nama: "Dimas Pratama",
-            nisn: "0061234570",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 5,
-            nama: "Eka Putri",
-            nisn: "0061234571",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 6,
-            nama: "Fajar Ramadhan",
-            nisn: "0061234572",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 7,
-            nama: "Gita Maharani",
-            nisn: "0061234573",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 8,
-            nama: "Hendra Wijaya",
-            nisn: "0061234574",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 9,
-            nama: "Intan Permata",
-            nisn: "0061234575",
-            kelas: "XI RPL 1"
-        },
-        {
-            id: 10,
-            nama: "Joko Saputra",
-            nisn: "0061234576",
-            kelas: "XI RPL 1"
-        }
-    ];
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | DATA IURAN DEMO
-    |--------------------------------------------------------------------------
-    | pembayaran hanya digunakan untuk menampilkan status pembayaran.
-    | Pencatatan pembayaran sebenarnya nanti dilakukan melalui Transaksi.
+    | Seluruh data berasal dari database melalui endpoint /bendahara/api/*.
+    | Tidak ada data dummy.
     |--------------------------------------------------------------------------
     */
 
-    let iuranData = [
-        {
-            id: 1,
-            nama: "Kas Kelas",
-            frekuensi: "mingguan",
-            jatuhTempo: "2026-10-10",
-            nominal: 10000,
-            status: "aktif",
-            keterangan: "Kas rutin kelas setiap minggu.",
-            pembayaran: [1, 2, 4, 6, 8, 10]
-        },
-        {
-            id: 2,
-            nama: "Kas Bulanan",
-            frekuensi: "bulanan",
-            jatuhTempo: "2026-10-31",
-            nominal: 25000,
-            status: "aktif",
-            keterangan: "Iuran kas bulanan kelas.",
-            pembayaran: [1, 2, 3, 5, 7]
-        },
-        {
-            id: 3,
-            nama: "Class Meeting",
-            frekuensi: "insidental",
-            jatuhTempo: "2026-10-20",
-            nominal: 50000,
-            status: "aktif",
-            keterangan: "Iuran kegiatan class meeting.",
-            pembayaran: [1, 2, 5, 8]
+    const API_IURAN = "/bendahara/api/iuran";
+    const API_SISWA = "/bendahara/api/siswa";
+    const API_TRANSAKSI = "/bendahara/api/transaksi";
+
+    let SISWA = [];
+
+    let iuranData = [];
+
+    let transaksiData = [];
+
+    let csrfToken = "";
+
+    const bacaCsrf = () => {
+        const meta =
+            document.querySelector('meta[name="csrf-token"]');
+
+        return meta ? meta.getAttribute("content") : "";
+    };
+
+    const ambilJSON = async (url) => {
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                headers: {
+                    "Accept": "application/json",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                credentials: "same-origin",
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
         }
-    ];
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+            throw new Error(hasil?.message || "Gagal mengambil data dari server.");
+        }
+
+        return hasil;
+    };
+
+    const kirimJSON = async (url, method, payload) => {
+        let respons;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        try {
+            respons = await fetch(url, {
+                method,
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": csrfToken,
+                    // S3-07: POST dibawa kunci idempotensi untuk
+                    // pengaman simpan ganda di backend.
+                    ...(String(method).toUpperCase() === "POST"
+                        ? { "X-Idempotency-Key": kunciIdempoten() }
+                        : {}),
+                },
+                credentials: "same-origin",
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error?.name === "AbortError") throw new Error("Permintaan melebihi waktu tunggu (timeout). Periksa koneksi, lalu coba lagi.");
+            throw new Error("Tidak dapat terhubung ke server.");
+        }
+        clearTimeout(timeoutId);
+
+        let hasil = {};
+        try {
+            hasil = await respons.json();
+        } catch {
+            /* bukan JSON */
+        }
+
+        if (!respons.ok) {
+            if (respons.status >= 500) throw new Error("Terjadi gangguan pada server. Coba lagi beberapa saat.");
+            if (respons.status === 419) throw new Error("Sesi berakhir. Muat ulang halaman lalu coba lagi.");
+            if (respons.status === 401 || respons.status === 403) throw new Error("Akses ditolak. Pastikan kamu sudah login.");
+
+            if (hasil?.errors) {
+                const pesan = Object.values(hasil.errors)
+                    .flat()
+                    .filter(Boolean);
+
+                if (pesan.length) {
+                    throw new Error(pesan.join(" "));
+                }
+            }
+
+            throw new Error(
+                hasil?.message || "Terjadi kesalahan saat menyimpan."
+            );
+        }
+
+        return hasil;
+    };
 
 
     /*
@@ -171,8 +188,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const cariIuran =
         document.getElementById("cariIuran");
 
-    const filterFrekuensi =
-        document.getElementById("filterFrekuensi");
+    const filterKategori =
+        document.getElementById("filterKategori");
 
     const filterStatusIuran =
         document.getElementById("filterStatusIuran");
@@ -227,8 +244,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputNamaIuran =
         document.getElementById("inputNamaIuran");
 
-    const inputFrekuensi =
-        document.getElementById("inputFrekuensi");
+    const inputKategori =
+        document.getElementById("inputKategori");
 
     const inputJatuhTempo =
         document.getElementById("inputJatuhTempo");
@@ -261,8 +278,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const detailIuranSub =
         document.getElementById("detailIuranSub");
 
-    const detailFrekuensi =
-        document.getElementById("detailFrekuensi");
+    const detailKategori =
+        document.getElementById("detailKategori");
 
     const detailJatuhTempo =
         document.getElementById("detailJatuhTempo");
@@ -363,13 +380,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    function getFrekuensiLabel(value) {
+    function getKategoriLabel(value) {
         const labels = {
             harian: "Harian",
             mingguan: "Mingguan",
             bulanan: "Bulanan",
             tahunan: "Tahunan",
-            insidental: "Insidental"
+            insidental: "Insidental",
+            "sekali bayar": "Sekali Bayar"
         };
 
         return labels[value] || value;
@@ -377,16 +395,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     function getJumlahLunas(iuran) {
-        if (!Array.isArray(iuran.pembayaran)) {
-            return 0;
-        }
+        return transaksiData.filter((t) => {
+            const arah = String(t.jenis || "").toUpperCase();
 
-        return iuran.pembayaran.length;
+            return (
+                arah === "PEMASUKAN" &&
+                String(t.id_iuran) === String(iuran.id_iuran)
+            );
+        }).length;
     }
 
 
     function getTotalSiswa() {
-        return SISWA.length;
+        if (SISWA.length) {
+            return SISWA.length;
+        }
+
+        return 0;
     }
 
 
@@ -399,10 +424,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     function getTotalTerkumpul(iuran) {
-        return (
-            Number(iuran.nominal) *
-            getJumlahLunas(iuran)
-        );
+        return transaksiData
+            .filter((t) => {
+                const arah = String(t.jenis || "").toUpperCase();
+
+                return (
+                    arah === "PEMASUKAN" &&
+                    String(t.id_iuran) === String(iuran.id_iuran)
+                );
+            })
+            .reduce(
+                (total, t) => total + (Number(t.nominal) || 0),
+                0
+            );
     }
 
 
@@ -424,9 +458,47 @@ document.addEventListener("DOMContentLoaded", () => {
     function getIuranById(id) {
         return iuranData.find(
             (iuran) =>
-                iuran.id === Number(id)
+                String(iuran.id_iuran) === String(id)
         );
     }
+
+
+    function siswaLunas(iuran, siswa) {
+        // Lunas bila akumulasi pembayaran pemasukan (cicilan) sudah
+        // mencapai nominal iuran.
+        const terbayar = hitungDibayarPasangan(
+            siswa.id_siswa,
+            iuran.id_iuran
+        );
+
+        const tagihan = Number(iuran.nominal) || 0;
+
+        return (
+            tagihan > 0 &&
+            terbayar >= tagihan
+        );
+    }
+
+
+    const petakanSiswa = (s) => ({
+        id_siswa: s.id_siswa,
+        nama: s.nama ?? "-",
+        nisn: s.nis ?? "-",
+        kelas: s.kelas || "-"
+    });
+
+
+    const petakanIuran = (i) => ({
+        id_iuran: i.id_iuran,
+        nama: i.nama_iuran ?? "-",
+        /* Kategori ditampilkan apa adanya dari database - bukan
+           dikonversi paksa ke nilai default (kategori hoax tiap hover). */
+        kategori: String(i.kategori ?? "").toLowerCase(),
+        jatuhTempo: i.jatuh_tempo ? String(i.jatuh_tempo).slice(0, 10) : "",
+        nominal: Number(i.nominal) || 0,
+        status: String(i.status || "aktif").toLowerCase(),
+        keterangan: i.keterangan || ""
+    });
 
 
     function getInitials(nama) {
@@ -630,12 +702,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
         showToast(
             "Keluar",
-            "Simulasi logout. Nanti akan diarahkan ke halaman login.",
+            "Anda akan diarahkan ke halaman login.",
             "logout"
         );
 
         setTimeout(() => {
-            window.location.href = "/";
+            window.location.href = "/logout";
         }, 900);
     }
 
@@ -814,9 +886,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     .toLowerCase()
                 : "";
 
-        const frekuensi =
-            filterFrekuensi
-                ? filterFrekuensi.value
+        const filterKategoriVal =
+            filterKategori
+                ? filterKategori.value
                     .trim()
                     .toLowerCase()
                 : "semua";
@@ -842,9 +914,9 @@ document.addEventListener("DOMContentLoaded", () => {
                         iuran.keterangan || ""
                     ).toLowerCase();
 
-                const dataFrekuensi =
+                const dataKategori =
                     String(
-                        iuran.frekuensi || ""
+                        iuran.kategori || ""
                     ).toLowerCase();
 
                 const dataStatus =
@@ -859,10 +931,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     keterangan.includes(keyword);
 
 
-                const matchesFrekuensi =
-                    frekuensi === "semua" ||
-                    frekuensi === "" ||
-                    dataFrekuensi === frekuensi;
+                const matchesKategori =
+                    filterKategoriVal === "semua" ||
+                    filterKategoriVal === "" ||
+                    dataKategori === filterKategoriVal;
 
 
                 const matchesStatus =
@@ -873,7 +945,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 return (
                     matchesKeyword &&
-                    matchesFrekuensi &&
+                    matchesKategori &&
                     matchesStatus
                 );
             }
@@ -987,8 +1059,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>
                         <span class="frequency-badge">
                             ${escapeHTML(
-                                getFrekuensiLabel(
-                                    iuran.frekuensi
+                                getKategoriLabel(
+                                    iuran.kategori
                                 )
                             )}
                         </span>
@@ -1040,9 +1112,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     <td>
                         <span
-                            class="status-badge status-badge--${escapeHTML(
-                                iuran.status
-                            )}"
+                            class="status-badge status-badge--${
+                                iuran.status === "aktif"
+                                    ? "aktif"
+                                    : "selesai"
+                            }"
                         >
                             <span class="status-dot"></span>
 
@@ -1050,7 +1124,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 iuran.status ===
                                 "aktif"
                                     ? "Aktif"
-                                    : "Nonaktif"
+                                    : "Selesai"
                             }
                         </span>
                     </td>
@@ -1064,7 +1138,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 class="icon-btn"
                                 title="Detail"
                                 data-action="detail"
-                                data-id="${iuran.id}"
+                                data-id="${iuran.id_iuran}"
                             >
                                 <span class="material-symbols-outlined">
                                     visibility
@@ -1076,10 +1150,22 @@ document.addEventListener("DOMContentLoaded", () => {
                                 class="icon-btn"
                                 title="Edit"
                                 data-action="edit"
-                                data-id="${iuran.id}"
+                                data-id="${iuran.id_iuran}"
                             >
                                 <span class="material-symbols-outlined">
                                     edit
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                class="icon-btn icon-btn--danger"
+                                title="Hapus"
+                                data-action="delete"
+                                data-id="${iuran.id_iuran}"
+                            >
+                                <span class="material-symbols-outlined">
+                                    delete
                                 </span>
                             </button>
 
@@ -1099,7 +1185,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
-    | TAMBAHAN — SINKRONISASI EMPTY STATE
+    | TAMBAHAN - SINKRONISASI EMPTY STATE
     |--------------------------------------------------------------------------
     */
 
@@ -1145,8 +1231,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         formIuran.reset();
 
-        if (inputFrekuensi) {
-            inputFrekuensi.value =
+        if (inputKategori) {
+            inputKategori.value =
                 "mingguan";
         }
 
@@ -1176,7 +1262,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (modalIuranSub) {
             modalIuranSub.textContent =
-                "Tambahkan iuran baru untuk kelas XI RPL 1.";
+                "Tambahkan iuran baru untuk kelas ini.";
         }
 
         openModal(
@@ -1217,7 +1303,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         editingIuranId =
-            iuran.id;
+            iuran.id_iuran;
 
 
         if (modalIuranTitle) {
@@ -1227,7 +1313,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (modalIuranSub) {
             modalIuranSub.textContent =
-                "Perbarui data iuran kelas XI RPL 1.";
+                "Perbarui data iuran kelas ini.";
         }
 
 
@@ -1236,9 +1322,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 iuran.nama;
         }
 
-        if (inputFrekuensi) {
-            inputFrekuensi.value =
-                iuran.frekuensi;
+        if (inputKategori) {
+            inputKategori.value =
+                iuran.kategori;
         }
 
         if (inputJatuhTempo) {
@@ -1275,6 +1361,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
+    | PERHITUNGAN PEMBAYARAN
+    |--------------------------------------------------------------------------
+    */
+
+    // Total pembayaran pemasukan yang sudah tercatat untuk
+    // pasangan (siswa, iuran) tertentu dari data transaksi asli.
+    const hitungDibayarPasangan = (idSiswa, idIuran) =>
+        transaksiData
+            .filter((t) => {
+                const arah = String(t.jenis || "").toUpperCase();
+
+                return (
+                    (arah === "PEMASUKAN" || arah === "M") &&
+                    String(t.id_siswa ?? "") === String(idSiswa) &&
+                    String(t.id_iuran ?? "") === String(idIuran)
+                );
+            })
+            .reduce(
+                (total, t) => total + (Number(t.nominal) || 0),
+                0
+            );
+
+    /*
+    |--------------------------------------------------------------------------
     | SIMPAN IURAN
     |--------------------------------------------------------------------------
     */
@@ -1283,10 +1393,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
         formIuran.addEventListener(
             "submit",
-            (event) => {
+            async (event) => {
 
                 event.preventDefault();
 
+
+                // S3-07: kunci tombol simpan saat proses (teks
+                // "Memproses...", tidak dapat diklik dua kali via klik
+                // maupun Enter). null = masih diproses, boleh henti.
+                const tombolSimpan = formIuran.querySelector(
+                    'button[type="submit"]'
+                );
+
+                const pemulihanTombol = kunciTombolSimpan(tombolSimpan);
+
+                if (!pemulihanTombol) return;
+
+                try {
 
                 const nama =
                     inputNamaIuran
@@ -1341,96 +1464,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
 
-                /*
-                |--------------------------------------------------------------------------
-                | EDIT
-                |--------------------------------------------------------------------------
-                */
-
-                if (editingIuranId) {
-
-                    const iuran =
-                        getIuranById(
-                            editingIuranId
-                        );
-
-                    if (!iuran) {
-                        return;
-                    }
-
-
-                    iuran.nama =
-                        nama;
-
-                    iuran.frekuensi =
-                        inputFrekuensi
-                            ? inputFrekuensi.value
-                            : "mingguan";
-
-                    iuran.jatuhTempo =
-                        jatuhTempo;
-
-                    iuran.nominal =
-                        nominal;
-
-                    iuran.status =
-                        inputStatusIuran
-                            ? inputStatusIuran.value
-                            : "aktif";
-
-                    iuran.keterangan =
-                        inputKeteranganIuran
-                            ? inputKeteranganIuran.value.trim()
-                            : "";
-
-
-                    closeModal(
-                        modalIuran
-                    );
-
-                    renderSummary();
-                    renderIuran();
-                    syncIuranEmptyState();
-
-
-                    showToast(
-                        "Iuran diperbarui",
-                        "Data iuran berhasil diperbarui.",
-                        "check"
-                    );
-
-                    return;
-                }
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | TAMBAH
-                |--------------------------------------------------------------------------
-                */
-
-                const newId =
-                    iuranData.length
-                        ? Math.max(
-                            ...iuranData.map(
-                                (item) =>
-                                    item.id
-                            )
-                        ) + 1
-                        : 1;
-
-
-                iuranData.push({
-                    id: newId,
-                    nama: nama,
-                    frekuensi:
-                        inputFrekuensi
-                            ? inputFrekuensi.value
-                            : "mingguan",
-                    jatuhTempo:
-                        jatuhTempo,
-                    nominal:
-                        nominal,
+                const payload = {
+                    nama_iuran: nama,
+                    kategori:
+                        inputKategori
+                            ? inputKategori.value
+                            : "sekali bayar",
+                    jatuh_tempo: jatuhTempo,
+                    nominal: nominal,
                     status:
                         inputStatusIuran
                             ? inputStatusIuran.value
@@ -1438,25 +1479,61 @@ document.addEventListener("DOMContentLoaded", () => {
                     keterangan:
                         inputKeteranganIuran
                             ? inputKeteranganIuran.value.trim()
-                            : "",
-                    pembayaran: []
-                });
+                            : ""
+                };
 
 
-                closeModal(
-                    modalIuran
-                );
+                try {
 
-                renderSummary();
-                renderIuran();
-                syncIuranEmptyState();
+                    if (editingIuranId) {
 
+                        await kirimJSON(
+                            `${API_IURAN}/${editingIuranId}`,
+                            "PUT",
+                            payload
+                        );
 
-                showToast(
-                    "Iuran ditambahkan",
-                    "Iuran baru berhasil ditambahkan.",
-                    "check"
-                );
+                        closeModal(modalIuran);
+
+                        await muatData();
+
+                        showToast(
+                            "Iuran diperbarui",
+                            "Data iuran berhasil diperbarui.",
+                            "check"
+                        );
+
+                    } else {
+
+                        await kirimJSON(
+                            API_IURAN,
+                            "POST",
+                            payload
+                        );
+
+                        closeModal(modalIuran);
+
+                        await muatData();
+
+                        showToast(
+                            "Iuran ditambahkan",
+                            "Iuran baru berhasil ditambahkan.",
+                            "check"
+                        );
+                    }
+
+                } catch (err) {
+
+                    showFormError(
+                        formErrorIuran,
+                        err.message
+                    );
+                }
+                } finally {
+                    // S3-07: tombol pulih setelah proses apa pun
+                    // berakhir (sukses, gagal validasi, galat server).
+                    pemulihanTombol.pulihkan();
+                }
             }
         );
     }
@@ -1495,7 +1572,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
         selectedIuranId =
-            iuran.id;
+            iuran.id_iuran;
 
 
         if (detailIuranTitle) {
@@ -1507,14 +1584,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (detailIuranSub) {
             detailIuranSub.textContent =
                 iuran.keterangan ||
-                "Detail status pembayaran siswa kelas XI RPL 1.";
+                "Detail status pembayaran siswa kelas ini.";
         }
 
 
-        if (detailFrekuensi) {
-            detailFrekuensi.textContent =
-                getFrekuensiLabel(
-                    iuran.frekuensi
+        if (detailKategori) {
+            detailKategori.textContent =
+                getKategoriLabel(
+                    iuran.kategori
                 );
         }
 
@@ -1606,22 +1683,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 (siswa) => {
 
                     const lunas =
-                        Array.isArray(
-                            iuran.pembayaran
-                        ) &&
-                        iuran.pembayaran.includes(
-                            siswa.id
-                        );
+                        siswaLunas(iuran, siswa);
 
 
                     const matchesKeyword =
                         !keyword ||
-                        siswa.nama
+                        String(siswa.nama)
                             .toLowerCase()
                             .includes(
                                 keyword
                             ) ||
-                        siswa.nisn
+                        String(siswa.nisn)
                             .toLowerCase()
                             .includes(
                                 keyword
@@ -1671,12 +1743,7 @@ document.addEventListener("DOMContentLoaded", () => {
             (siswa, index) => {
 
                 const lunas =
-                    Array.isArray(
-                        iuran.pembayaran
-                    ) &&
-                    iuran.pembayaran.includes(
-                        siswa.id
-                    );
+                    siswaLunas(iuran, siswa);
 
 
                 const row =
@@ -1710,7 +1777,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 </strong>
 
                                 <span>
-                                    Siswa XI RPL 1
+                                    ${escapeHTML(siswa.kelas || "Siswa")}
                                 </span>
 
                             </div>
@@ -1758,31 +1825,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
                     </td>
 
-                    <td class="text-right">
-
-                        ${
-                            lunas
-                                ? `
-                                    <span class="action-done">
-                                        <span class="material-symbols-outlined">
-                                            check_circle
-                                        </span>
-
-                                        Selesai
-                                    </span>
-                                `
-                                : `
-                                    <span class="action-pending">
-                                        <span class="material-symbols-outlined">
-                                            schedule
-                                        </span>
-
-                                        Menunggu Pembayaran
-                                    </span>
-                                `
-                        }
-
-                    </td>
                 `;
 
 
@@ -1854,10 +1896,113 @@ document.addEventListener("DOMContentLoaded", () => {
                         id
                     );
                 }
+
+
+                if (action === "delete") {
+                    openDeleteIuran(
+                        id
+                    );
+                }
             }
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | HAPUS IURAN (disamakan dengan halaman Admin)
+    |--------------------------------------------------------------------------
+    */
+
+    let deletingIuranId = null;
+
+    function openDeleteIuran(id) {
+
+        const iuran =
+            getIuranById(id);
+
+        if (!iuran) {
+            return;
+        }
+
+        const modalHapusIuran =
+            document.getElementById(
+                "modalHapusIuran"
+            );
+
+        if (!modalHapusIuran) {
+            return;
+        }
+
+        deletingIuranId =
+            iuran.id_iuran;
+
+        document.getElementById("hapusIuranNama").textContent =
+            iuran.nama;
+
+        openModal(modalHapusIuran);
+    }
+
+    document
+        .getElementById("btnKonfirmasiHapus")
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                if (deletingIuranId === null) {
+                    return;
+                }
+
+                const id =
+                    deletingIuranId;
+                const tombol =
+                    document.getElementById(
+                        "btnKonfirmasiHapus"
+                    );
+
+                if (tombol) {
+                    tombol.disabled = true;
+                }
+
+                try {
+
+                    await kirimJSON(
+                        `${API_IURAN}/${id}`,
+                        "DELETE",
+                        null
+                    );
+
+                    deletingIuranId = null;
+
+                    closeModal(
+                        document.getElementById(
+                            "modalHapusIuran"
+                        )
+                    );
+
+                    showToast(
+                        "Iuran dihapus",
+                        "Iuran berhasil dihapus.",
+                        "check"
+                    );
+
+                    await muatData();
+
+                } catch (err) {
+
+                    showToast(
+                        "Gagal menghapus",
+                        err.message,
+                        "close"
+                    );
+
+                } finally {
+
+                    if (tombol) {
+                        tombol.disabled = false;
+                    }
+                }
+            }
+        );
 
     /*
     |--------------------------------------------------------------------------
@@ -1876,8 +2021,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
-    if (filterFrekuensi) {
-        filterFrekuensi.addEventListener(
+    if (filterKategori) {
+        filterKategori.addEventListener(
             "change",
             () => {
                 renderIuran();
@@ -1908,8 +2053,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         "";
                 }
 
-                if (filterFrekuensi) {
-                    filterFrekuensi.value =
+                if (filterKategori) {
+                    filterKategori.value =
                         "semua";
                 }
 
@@ -1999,12 +2144,69 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /*
     |--------------------------------------------------------------------------
+    | MUAT DATA DARI DATABASE
+    |--------------------------------------------------------------------------
+    */
+
+    const muatData = async () => {
+
+        const tbodyIuran = document.getElementById("isiTabelIuran");
+        if (tbodyIuran) {
+            tbodyIuran.innerHTML = Array.from({ length: 5 })
+                .map(() => `<tr class="skeleton-row"><td colspan="8"><div class="skeleton skeleton-text--lg"></div></td></tr>`)
+                .join("");
+        }
+
+        let hasilIuran = { data: [] };
+        let hasilSiswa = { data: [] };
+        let hasilTransaksi = { data: [] };
+
+        try {
+
+            [hasilIuran, hasilSiswa, hasilTransaksi] =
+                await Promise.all([
+                    ambilJSON(API_IURAN),
+                    ambilJSON(API_SISWA),
+                    ambilJSON(API_TRANSAKSI)
+                ]);
+
+        } catch (error) {
+
+            console.error(error);
+        }
+
+        SISWA = (Array.isArray(hasilSiswa?.data)
+            ? hasilSiswa.data
+            : []
+        ).map(petakanSiswa);
+
+        transaksiData = Array.isArray(hasilTransaksi?.data)
+            ? hasilTransaksi.data
+            : [];
+
+        iuranData = (Array.isArray(hasilIuran?.data)
+            ? hasilIuran.data
+            : []
+        ).map(petakanIuran);
+
+        renderSummary();
+        renderIuran();
+        syncIuranEmptyState();
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
     | INITIAL RENDER
     |--------------------------------------------------------------------------
     */
 
+    csrfToken = bacaCsrf();
+
     renderSummary();
     renderIuran();
     syncIuranEmptyState();
+
+    muatData();
 
 });

@@ -45,6 +45,10 @@ export default defineConfig({
                 'resources/css/bendahara-riwayat-transaksi.css',
                 'resources/js/bendahara-riwayat-transaksi.js',
 
+                // Komponen bersama: konfirmasi logout & overlay memuat
+                'resources/css/konfirmasi-logout.css',
+                'resources/js/konfirmasi-logout.js',
+
                 // Halaman viewer BBCashvia
                 'resources/css/viewer-dashboard.css',
                 'resources/js/viewer-dashboard.js',
