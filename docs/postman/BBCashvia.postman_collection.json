@@ -1,0 +1,500 @@
+{
+  "info": {
+    "name": "BBCashvia API",
+    "description": "Koleksi endpoint BBCashvia v1.0.0. Login terlebih dahulu (folder Auth) agar cookie session tersimpan. Untuk request tulis, jalankan GET CSRF Token lalu kirim header X-CSRF-TOKEN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:8000" },
+    { "key": "csrfToken", "value": "" },
+    { "key": "bearerToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Login berhasil', () => pm.expect(pm.response.json().success).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@bbcashvia.test\",\n  \"password\": \"Password123!\",\n  \"role\": \"admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/login"
+          }
+        },
+        {
+          "name": "CSRF Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const data = pm.response.json();",
+                  "if (data.token) { pm.collectionVariables.set('csrfToken', data.token); }",
+                  "pm.test('Token tersedia', () => pm.expect(data.token).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/csrf-token"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_password\": \"Rahasia123!\",\n  \"new_password_confirmation\": \"Rahasia123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/change-password"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Dashboard",
+      "item": [
+        {
+          "name": "KPI Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/dashboard"
+          }
+        },
+        {
+          "name": "Grafik 6 Bulan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/dashboard/chart"
+          }
+        },
+        {
+          "name": "Transaksi Terbaru",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/dashboard/recent"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Siswa",
+      "item": [
+        {
+          "name": "Daftar Siswa",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/siswa"
+          }
+        },
+        {
+          "name": "Tambah Siswa",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nis\": \"20240012\",\n  \"nama\": \"Ahmad Fauzi\",\n  \"id_kelas\": 3,\n  \"jenis_kelamin\": \"L\",\n  \"status\": \"Aktif\",\n  \"no_hp\": \"081234567890\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/siswa"
+          }
+        },
+        {
+          "name": "Ubah Siswa",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nis\": \"20240012\",\n  \"nama\": \"Ahmad Fauzi\",\n  \"id_kelas\": 3,\n  \"jenis_kelamin\": \"L\",\n  \"status\": \"Aktif\",\n  \"no_hp\": \"081234567890\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/siswa/1"
+          }
+        },
+        {
+          "name": "Hapus Siswa",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/api/siswa/1"
+          }
+        },
+        {
+          "name": "Tagihan Pribadi (Viewer)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/data/tagihan-pribadi"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Kelas",
+      "item": [
+        {
+          "name": "Daftar Kelas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/kelas"
+          }
+        },
+        {
+          "name": "Tambah Kelas",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kelas\": \"XII RPL 1\",\n  \"tingkat\": \"XII\",\n  \"tahun_ajaran\": \"2026/2027\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/kelas"
+          }
+        },
+        {
+          "name": "Ubah Kelas",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_kelas\": \"XII RPL 1\",\n  \"tingkat\": \"XII\",\n  \"tahun_ajaran\": \"2026/2027\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/kelas/1"
+          }
+        },
+        {
+          "name": "Hapus Kelas",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/api/kelas/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Iuran",
+      "item": [
+        {
+          "name": "Daftar Iuran",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/iuran"
+          }
+        },
+        {
+          "name": "Tambah Iuran",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_iuran\": \"Iuran Bulanan\",\n  \"keterangan\": \"Iuran kas bulanan\",\n  \"jatuh_tempo\": \"2026-11-30\",\n  \"id_kelas\": 3,\n  \"kategori\": \"bulanan\",\n  \"nominal\": 50000,\n  \"status\": \"aktif\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/iuran"
+          }
+        },
+        {
+          "name": "Ubah Iuran",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama_iuran\": \"Iuran Bulanan\",\n  \"kategori\": \"bulanan\",\n  \"nominal\": 50000,\n  \"status\": \"aktif\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/iuran/1"
+          }
+        },
+        {
+          "name": "Hapus Iuran",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/api/iuran/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Transaksi",
+      "item": [
+        {
+          "name": "Daftar Transaksi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/transaksi"
+          }
+        },
+        {
+          "name": "Daftar Kategori",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/transaksi/kategori"
+          }
+        },
+        {
+          "name": "Simpan Transaksi (Satu)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_siswa\": 1,\n  \"id_kelas\": 1,\n  \"id_iuran\": 1,\n  \"tanggal\": \"2026-11-08\",\n  \"nominal\": 50000,\n  \"jenis\": \"pemasukan\",\n  \"kategori\": \"Iuran\",\n  \"metode\": \"CH\",\n  \"keterangan\": \"Iuran bulan November\",\n  \"nama_pembayar\": \"Ahmad Fauzi\",\n  \"uang_diterima\": 100000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/transaksi"
+          }
+        },
+        {
+          "name": "Simpan Transaksi (Banyak)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transaksi\": [\n    {\n      \"id_siswa\": 1,\n      \"id_iuran\": 1,\n      \"tanggal\": \"2026-11-08\",\n      \"nominal\": 50000,\n      \"jenis\": \"pemasukan\",\n      \"kategori\": \"Iuran\"\n    },\n    {\n      \"id_siswa\": 2,\n      \"id_iuran\": 1,\n      \"tanggal\": \"2026-11-08\",\n      \"nominal\": 50000,\n      \"jenis\": \"pemasukan\",\n      \"kategori\": \"Iuran\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/transaksi"
+          }
+        },
+        {
+          "name": "Detail Transaksi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/transaksi/1"
+          }
+        },
+        {
+          "name": "Ubah Transaksi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nominal\": 60000,\n  \"keterangan\": \"Iuran November (revisi)\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/transaksi/1"
+          }
+        },
+        {
+          "name": "Hapus Transaksi",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/api/transaksi/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Pengguna",
+      "item": [
+        {
+          "name": "Daftar Pengguna",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": "{{baseUrl}}/admin/api/pengguna"
+          }
+        },
+        {
+          "name": "Tambah Pengguna",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Bendahara XII RPL 1\",\n  \"email\": \"bendahara3@bbcashvia.test\",\n  \"peran\": \"bendahara\",\n  \"jenis_viewer\": \"siswa\",\n  \"id_siswa\": 1,\n  \"id_kelas\": 1,\n  \"password\": \"Rahasia123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/pengguna"
+          }
+        },
+        {
+          "name": "Ubah Pengguna",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nama\": \"Bendahara XII RPL 1\",\n  \"email\": \"bendahara3@bbcashvia.test\",\n  \"peran\": \"bendahara\",\n  \"jenis_viewer\": \"siswa\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/admin/api/pengguna/1"
+          }
+        },
+        {
+          "name": "Hapus Pengguna",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "X-CSRF-TOKEN", "value": "{{csrfToken}}" }
+            ],
+            "url": "{{baseUrl}}/admin/api/pengguna/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. API Publik (Sanctum)",
+      "item": [
+        {
+          "name": "Profil Pemilik Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/user"
+          }
+        },
+        {
+          "name": "Daftar Transaksi",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/transaksi"
+          }
+        },
+        {
+          "name": "Tambah Transaksi",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{bearerToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tanggal\": \"2026-11-08\",\n  \"nominal\": 50000,\n  \"jenis\": \"pemasukan\",\n  \"kategori\": \"Iuran\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/transaksi"
+          }
+        }
+      ]
+    }
+  ]
+}
