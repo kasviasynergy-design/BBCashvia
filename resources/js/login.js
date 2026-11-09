@@ -1,5 +1,3 @@
-console.log("LOGIN JS BBCASHVIA TERLOAD");
-
 document.addEventListener("DOMContentLoaded", () => {
     // =========================================================
     // ELEMENT
@@ -527,8 +525,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (passwordError) passwordError.hidden = true;
 
     updateRoleInformation("admin");
-
-    console.log("Login JS BBCashvia berhasil dijalankan.");
 });
 
 

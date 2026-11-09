@@ -414,8 +414,4 @@ document.addEventListener("DOMContentLoaded", () => {
             confirmError.hidden = true;
         }
     });
-
-    console.log(
-        "Change Password JS BBCashvia berhasil dijalankan."
-    );
 });
