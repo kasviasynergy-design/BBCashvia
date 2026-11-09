@@ -82,7 +82,7 @@ Catatan penting:
 ```json
 {
   "email": "admin@bbcashvia.test",
-  "password": "Admin123!",
+  "password": "Password123!",
   "role": "admin"
 }
 ```
@@ -192,9 +192,9 @@ Akun demo (sesuaikan dengan data seeder pada database Anda):
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@bbcashvia.test` | `Admin123!` |
-| Bendahara | `bendahara@bbcashvia.test` | `Bendahara123!` |
-| Viewer | `viewer@bbcashvia.test` | `Viewer123!` |
+| Admin | `admin@bbcashvia.test` | `Password123!` |
+| Bendahara | `bendahara@bbcashvia.test` | `Password123!` |
+| Viewer | `viewer@bbcashvia.test` | `Password123!` |
 
 ---
 
@@ -1479,7 +1479,7 @@ Accept: application/json
 curl -c cookies.txt -X POST http://127.0.0.1:8000/login \
   -H "Accept: application/json" \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@bbcashvia.test","password":"Admin123!","role":"admin"}'
+  -d '{"email":"admin@bbcashvia.test","password":"Password123!","role":"admin"}'
 
 # 2. Ambil CSRF token
 curl -b cookies.txt http://127.0.0.1:8000/admin/api/csrf-token \
