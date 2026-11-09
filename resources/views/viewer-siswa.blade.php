@@ -22,6 +22,7 @@
     @vite([
         'resources/css/viewer-siswa.css',
         'resources/js/viewer-siswa.js',
+        'resources/js/tagihan-pribadi.js',
         'resources/css/konfirmasi-logout.css',
         'resources/js/konfirmasi-logout.js'
     ])
@@ -472,6 +473,9 @@
                 </div>
 
             </section>
+
+
+            @include('partials.tagihan-pribadi')
 
 
             {{-- =================================================

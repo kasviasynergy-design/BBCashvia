@@ -21,6 +21,7 @@
     @vite([
         'resources/css/bendahara-dashboard.css',
         'resources/js/bendahara-dashboard.js',
+        'resources/js/tagihan-pribadi.js',
         'resources/css/konfirmasi-logout.css',
         'resources/js/konfirmasi-logout.js'
     ])
@@ -674,6 +675,9 @@ css.com */@layer theme{:root,:host{--primary:#2BA19E;--primary-dark:#237A77;--pr
                 </div>
 
             </section>
+
+
+            @include('partials.tagihan-pribadi')
 
 
             {{-- =================================================

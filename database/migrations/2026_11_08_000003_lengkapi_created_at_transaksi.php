@@ -35,5 +35,6 @@ return new class extends Migration
     {
         // Tidak dikosongkan kembali: created_at yang sudah terisi
         // adalah data yang sah dan dibutuhkan tampilan jam.
+
     }
 };

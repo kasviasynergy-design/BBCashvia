@@ -74,10 +74,11 @@ class TransaksiController extends Controller
             $baris['nis'] = $t->siswa?->nis;
             $baris['nama_kelas'] = $t->kelas?->nama_kelas;
 
-            // Pencatat diambil dari relasi pengguna (id_user) dan bukan
-            // dari kolom `pic` kiriman klien. Data lama yang belum punya
-            // id_user tetap memakai `pic` sebagai cadangan.
-            $baris['dicatat_oleh'] = $t->user?->name ?: ($t->pic ?: null);
+            // Pencatat diambil dari snapshot `nama_petugas` (tahan
+            // terhadap akun yang sudah dihapus), lalu relasi pengguna,
+            // lalu `pic` sebagai cadangan data sangat lama.
+            $baris['dicatat_oleh'] = $t->nama_petugas
+                ?: ($t->user?->name ?: ($t->pic ?: null));
 
             // Status pembayaran (Lunas/Cicilan) dihitung dari
             // akumulasi seluruh pembayaran pasangan (id_siswa,
@@ -212,6 +213,7 @@ class TransaksiController extends Controller
         }
 
         $validated['id_user'] = auth()->id();
+        $validated['nama_petugas'] = auth()->user()?->name;
 
         // Kelas transaksi: non-admin dipaksa kelasnya sendiri; admin boleh
         // memilih, atau otomatis dari siswa terkait bila tidak diisi.
@@ -277,14 +279,15 @@ class TransaksiController extends Controller
      * Menyimpan beberapa transaksi sekaligus dalam satu transaksi
      * database. Bila satu baris gagal, tidak ada yang tersimpan.
      *
-     * Seluruh baris yang dikirim dalam SATU kali simpan dianggap
-     * satu kesatuan pembayaran/pencatatan, sehingga memakai SATU
-     * `no_bukti` bersama. Dengan begitu di Riwayat Kas seluruh
-     * baris itu tampil sebagai SATU transaksi utama (satu ID),
-     * sedangkan rinciannya dilihat pada modal detail.
+     * Baris dikelompokkan per SISWA: seluruh iuran milik satu siswa
+     * dalam satu kali simpan memakai satu `no_bukti`, sedangkan siswa
+     * lain mendapat nomor bukti sendiri. Dengan begitu setiap siswa
+     * memiliki satu transaksi utama dan riwayat yang terpisah, sementara
+     * pembayaran multi-iuran satu siswa tetap tampil sebagai satu grup.
      *
-     * Baris yang sudah membawa `no_bukti` sendiri (mis. pencatatan
-     * dari halaman iuran) tetap dihormati.
+     * Baris tanpa siswa (kas/pengeluaran umum) memakai satu nomor bukti
+     * bersama. Baris yang sudah membawa `no_bukti` sendiri tetap
+     * dihormati, tetapi tidak boleh dipakai dua siswa berbeda.
      *
      * @param  array<int, array<string, mixed>>  $baris
      */
@@ -300,16 +303,17 @@ class TransaksiController extends Controller
         }
 
         $idUser = auth()->id();
+        $namaPetugas = auth()->user()?->name;
 
-        // Satu nomor bukti untuk seluruh baris dalam satu kali simpan
-        // (kecuali baris yang sudah punya nomor bukti sendiri).
-        $noBuktiGrup = $this->buatNoBukti();
+        // Nomor bukti cadangan untuk baris tanpa siswa.
+        $noBuktiUmum = $this->buatNoBukti();
 
         $transaksi = DB::transaction(function () use (
             $baris,
             $idKelasDibatasi,
             $idUser,
-            $noBuktiGrup
+            $namaPetugas,
+            $noBuktiUmum
         ) {
             $hasil = [];
 
@@ -318,22 +322,58 @@ class TransaksiController extends Controller
             // juga tidak melebihi tagihan.
             $this->validasiSisaTagihan($baris);
 
+            $noBuktiPerSiswa = [];
+            $pemilikNoBukti = [];
+
             foreach ($baris as $item) {
                 // Kolom "Detail" tidak ada di tabel transaksi. Identitas
                 // pencatat juga diabaikan dari klien dan diisi dari sesi.
                 unset($item['Detail'], $item['pic'], $item['id_user']);
 
-                if (empty($item['no_bukti'])) {
-                    $item['no_bukti'] = $noBuktiGrup;
+                $idSiswa = !empty($item['id_siswa'])
+                    ? (int) $item['id_siswa']
+                    : null;
+
+                $kunciSiswa = $idSiswa !== null
+                    ? 'siswa:' . $idSiswa
+                    : 'umum';
+
+                $noBuktiEksplisit = trim((string) ($item['no_bukti'] ?? ''));
+
+                if ($noBuktiEksplisit !== '') {
+                    if (isset($pemilikNoBukti[$noBuktiEksplisit])
+                        && $pemilikNoBukti[$noBuktiEksplisit] !== $kunciSiswa) {
+                        throw new HttpResponseException(
+                            response()->json([
+                                'success' => false,
+                                'message' => 'Satu nomor bukti tidak boleh dipakai untuk siswa yang berbeda.',
+                                'errors' => [
+                                    'no_bukti' => ['Nomor bukti sudah dipakai siswa lain pada kiriman ini.'],
+                                ],
+                            ], 422)
+                        );
+                    }
+
+                    $pemilikNoBukti[$noBuktiEksplisit] = $kunciSiswa;
+                    $item['no_bukti'] = $noBuktiEksplisit;
+                } else {
+                    if (!isset($noBuktiPerSiswa[$kunciSiswa])) {
+                        $noBuktiPerSiswa[$kunciSiswa] = $kunciSiswa === 'umum'
+                            ? $noBuktiUmum
+                            : $this->buatNoBukti();
+                    }
+
+                    $item['no_bukti'] = $noBuktiPerSiswa[$kunciSiswa];
                 }
 
                 $item['id_user'] = $idUser;
+                $item['nama_petugas'] = $namaPetugas;
 
                 $idKelas = $idKelasDibatasi;
 
                 if ($idKelas === null) {
                     $idKelas = $item['id_kelas']
-                        ?? $this->kelasDariSiswa($item['id_siswa'] ?? null);
+                        ?? $this->kelasDariSiswa($idSiswa);
                 }
 
                 $item['id_kelas'] = $idKelas;
@@ -351,18 +391,32 @@ class TransaksiController extends Controller
                 $this->simpanDetail($transaksiBaru);
 
                 $hasil[] = $transaksiBaru;
-
             }
 
             return $hasil;
         });
 
+        $buktiPerSiswa = collect($transaksi)
+            ->groupBy(fn (Transaksi $t) => $t->id_siswa !== null
+                ? (string) $t->id_siswa
+                : 'umum')
+            ->map(fn ($grup) => $grup->first()->no_bukti);
+
+        $buktiUnik = collect($transaksi)
+            ->pluck('no_bukti')
+            ->filter()
+            ->unique()
+            ->values();
+
         return response()->json([
             'success' => true,
-            'message' => count($transaksi) . ' baris transaksi berhasil disimpan dalam 1 transaksi utama.',
+            'message' => count($transaksi) . ' baris transaksi berhasil disimpan untuk '
+                . $buktiPerSiswa->count() . ' kelompok pembayaran.',
             'data' => $transaksi,
             'jumlah' => count($transaksi),
-            'no_bukti' => $noBuktiGrup,
+            // Dipertahankan untuk kiriman satu kelompok (perilaku lama).
+            'no_bukti' => $buktiUnik->count() === 1 ? $buktiUnik->first() : null,
+            'no_bukti_per_siswa' => $buktiPerSiswa,
         ], 201);
     }
 
@@ -418,9 +472,9 @@ class TransaksiController extends Controller
         $data['nis'] = $transaksi->siswa?->nis;
         $data['nama_kelas'] = $transaksi->kelas?->nama_kelas;
 
-        // Pencatat dari relasi user; `pic` hanya cadangan data lama.
-        $data['dicatat_oleh'] = $transaksi->user?->name
-            ?: ($transaksi->pic ?: null);
+        // Pencatat dari snapshot; `pic` hanya cadangan data lama.
+        $data['dicatat_oleh'] = $transaksi->nama_petugas
+            ?: ($transaksi->user?->name ?: ($transaksi->pic ?: null));
 
         // Status pembayaran (Lunas/Cicilan) + sisa tagihan tiap rincian.
         $status = $this->lengkapiStatusRincian($data['rincian'], $anggota);

@@ -45,12 +45,43 @@ trait MembatasiKelas
     {
         $query = Siswa::query();
         $idKelas = $this->kelasDibatasi($request);
+        $idSiswa = $this->siswaSendiri($request);
+
+        if ($idSiswa === -1) {
+            // Viewer Siswa tanpa tautan: jangan bocorkan seluruh kelas.
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($idSiswa !== null) {
+            return $query->where('id_siswa', $idSiswa);
+        }
 
         if ($idKelas !== null) {
             $query->where('id_kelas', $idKelas);
         }
 
         return $query;
+    }
+
+    /**
+     * Identitas siswa milik pengguna yang sedang login.
+     *
+     * Mengembalikan -1 untuk Viewer Siswa yang belum tertaut ke
+     * `siswa`, agar query mengembalikan data kosong (bukan seluruh
+     * kelas). Bendahara tetap mengelola seluruh kelas walau punya
+     * tagihan pribadi.
+     */
+    protected function siswaSendiri(Request $request): ?int
+    {
+        $user = $request->user();
+
+        if ($user && $user->hanyaDataSendiri()) {
+            return $user->id_siswa !== null
+                ? (int) $user->id_siswa
+                : -1;
+        }
+
+        return null;
     }
 
     /**
@@ -64,6 +95,17 @@ trait MembatasiKelas
     {
         $query = Transaksi::query();
         $idKelas = $this->kelasDibatasi($request);
+        $idSiswa = $this->siswaSendiri($request);
+
+        if ($idSiswa === -1) {
+            // Viewer Siswa tanpa tautan: tidak ada transaksi yang boleh
+            // dilihat sebelum identitasnya ditetapkan Admin.
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($idSiswa !== null) {
+            return $query->where('id_siswa', $idSiswa);
+        }
 
         if ($idKelas !== null) {
             $query->where('id_kelas', $idKelas);

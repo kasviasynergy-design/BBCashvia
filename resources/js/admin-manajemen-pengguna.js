@@ -179,7 +179,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? hasil.kelas
                     : [];
 
+            DAFTAR_SISWA =
+                Array.isArray(hasil.siswa)
+                    ? hasil.siswa
+                    : [];
+
             isiPilihanKelas();
+            isiPilihanSiswa();
 
             DATA_PENGGUNA = data.map((user) => ({
                 db_id: user.db_id,
@@ -189,6 +195,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 peran: String(user.peran || "").toLowerCase(),
                 jenis_viewer: user.jenis_viewer ?? null,
                 jenis_viewer_label: user.jenis_viewer_label ?? null,
+                id_siswa: user.id_siswa ?? null,
+                nis: user.nis ?? null,
+                nama_siswa: user.nama_siswa ?? null,
                 id_kelas: user.id_kelas ?? null,
                 kelas: user.kelas ?? null,
                 login: user.login || null,
@@ -258,6 +267,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputJenisViewer = document.getElementById("inputJenisViewer");
     const fieldJenisViewer = document.getElementById("fieldJenisViewer");
     const hintJenisViewer = document.getElementById("hintJenisViewer");
+    const inputSiswa = document.getElementById("inputSiswa");
+    const fieldDataSiswa = document.getElementById("fieldDataSiswa");
+    const hintDataSiswa = document.getElementById("hintDataSiswa");
     const inputPassword = document.getElementById("inputPassword");
 
     const togglePassword = document.getElementById("togglePassword");
@@ -279,6 +291,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* Daftar kelas dari API untuk pilihan kelas pengguna. */
     let DAFTAR_KELAS = [];
+
+    /* Daftar siswa dari API untuk penautan identitas akun. */
+    let DAFTAR_SISWA = [];
 
 
     /* =========================================================
@@ -341,6 +356,124 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /*
+     * Isi pilihan Data Siswa. Siswa yang sudah tertaut ke akun lain
+     * dinonaktifkan agar satu siswa tidak memiliki dua akun. Saat
+     * mengedit, siswa milik akun itu sendiri tetap dapat dipilih.
+     */
+    function isiPilihanSiswa(idTerpilih = null) {
+        if (!inputSiswa) return;
+
+        const nilaiLama = idTerpilih !== null
+            ? String(idTerpilih)
+            : inputSiswa.value;
+
+        inputSiswa.innerHTML = `
+            <option value="">- Pilih siswa -</option>
+            ${DAFTAR_SISWA.map((siswa) => {
+                const terpakai =
+                    siswa.tertaut &&
+                    String(siswa.id_siswa) !== String(nilaiLama);
+
+                return `
+                    <option
+                        value="${escapeHtml(siswa.id_siswa)}"
+                        ${terpakai ? "disabled" : ""}
+                    >
+                        ${escapeHtml(siswa.nama)}
+                        • ${escapeHtml(siswa.nis)}
+                        • ${escapeHtml(siswa.kelas || "Tanpa kelas")}
+                        ${terpakai ? "(sudah tertaut)" : ""}
+                    </option>
+                `;
+            }).join("")}
+        `;
+
+        const cocok = DAFTAR_SISWA.some(
+            (siswa) => String(siswa.id_siswa) === String(nilaiLama)
+        );
+
+        inputSiswa.value = cocok ? nilaiLama : "";
+    }
+
+
+    function siswaTerpilih() {
+        if (!inputSiswa || !inputSiswa.value) return null;
+
+        return DAFTAR_SISWA.find(
+            (siswa) => String(siswa.id_siswa) === String(inputSiswa.value)
+        ) || null;
+    }
+
+
+    /* Apakah peran saat ini wajib memiliki identitas siswa? */
+    function peranButuhSiswa() {
+        const peran = inputPeran?.value;
+        const jenis = inputJenisViewer?.value || "siswa";
+
+        return peran === "bendahara"
+            || (peran === "viewer" && jenis === "siswa");
+    }
+
+
+    /*
+     * Tampilkan Data Siswa hanya untuk Bendahara / Viewer Siswa.
+     * Nama dan kelas mengikuti siswa terpilih (backend juga menegakkan
+     * aturan ini), sehingga tampilan dan data tersimpan konsisten.
+     */
+    function sesuaikanFieldDataSiswa() {
+        if (!fieldDataSiswa || !inputPeran) return;
+
+        const butuh = peranButuhSiswa();
+
+        fieldDataSiswa.style.display = butuh ? "" : "none";
+
+        if (inputSiswa) {
+            inputSiswa.disabled = !butuh;
+            inputSiswa.required = butuh;
+
+            if (!butuh) {
+                inputSiswa.value = "";
+            }
+        }
+
+        if (!butuh) {
+            if (inputNama) inputNama.readOnly = false;
+            if (inputKelas) inputKelas.disabled = inputPeran.value === "admin";
+            if (hintDataSiswa) {
+                hintDataSiswa.textContent =
+                    "Data siswa hanya diperlukan untuk Bendahara dan Viewer Siswa.";
+            }
+            return;
+        }
+
+        if (hintDataSiswa) {
+            hintDataSiswa.textContent =
+                "Wajib dipilih. Nama serta kelas akun mengikuti data siswa agar tagihan pribadi tepat.";
+        }
+
+        const siswa = siswaTerpilih();
+
+        if (siswa) {
+            if (inputNama) {
+                inputNama.value = siswa.nama;
+                inputNama.readOnly = true;
+            }
+
+            if (inputKelas) {
+                inputKelas.value = siswa.id_kelas !== null
+                    && siswa.id_kelas !== undefined
+                    ? String(siswa.id_kelas)
+                    : "";
+                inputKelas.disabled = true;
+            }
+        } else {
+            if (inputNama) inputNama.readOnly = false;
+            if (inputKelas) inputKelas.disabled = false;
+        }
+    }
+
+
+    /*
      * Aturan jenis pengguna mengikuti peran:
      *
      *  - Admin     : tidak memiliki jenis pengguna (field disembunyikan).
@@ -363,6 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 inputJenisViewer.value = "siswa";
                 inputJenisViewer.disabled = true;
             }
+            sesuaikanFieldDataSiswa();
             return;
         }
 
@@ -379,6 +513,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 hint.textContent =
                     "Bendahara kelas merupakan siswa yang mengelola keuangan kelas.";
             }
+            sesuaikanFieldDataSiswa();
             return;
         }
 
@@ -390,6 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
             hint.textContent =
                 "Viewer dapat berupa siswa atau wali kelas; keduanya hanya melihat data.";
         }
+        sesuaikanFieldDataSiswa();
     }
 
 
@@ -750,6 +886,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         <td>
                             <div class="login-cell">
+                                ${escapeHtml(user.nis || "-")}
+                            </div>
+                        </td>
+
+
+                        <td>
+                            <div class="login-cell">
                                 ${escapeHtml(kelasLabel(user))}
                             </div>
                         </td>
@@ -990,8 +1133,19 @@ document.addEventListener("DOMContentLoaded", () => {
             inputKelas.value = "";
         }
 
+        if (inputSiswa) {
+            inputSiswa.value = "";
+        }
+
+        if (inputNama) {
+            inputNama.readOnly = false;
+        }
+
+        isiPilihanSiswa();
+
         sesuaikanFieldKelas();
         sesuaikanFieldJenisViewer();
+        sesuaikanFieldDataSiswa();
     }
 
 
@@ -1041,6 +1195,15 @@ document.addEventListener("DOMContentLoaded", () => {
         inputEmail.value = user.email;
         inputPeran.value = user.peran;
 
+        isiPilihanSiswa(user.id_siswa);
+
+        if (inputSiswa) {
+            inputSiswa.value =
+                user.id_siswa !== null && user.id_siswa !== undefined
+                    ? String(user.id_siswa)
+                    : "";
+        }
+
         if (inputKelas) {
             inputKelas.value =
                 user.id_kelas !== null && user.id_kelas !== undefined
@@ -1055,6 +1218,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sesuaikanFieldKelas();
         sesuaikanFieldJenisViewer();
+        sesuaikanFieldDataSiswa();
 
 
         inputPassword.value = "";
@@ -1163,13 +1327,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
     inputPeran?.addEventListener(
         "change",
-        sesuaikanFieldKelas
+        () => {
+            sesuaikanFieldKelas();
+            sesuaikanFieldJenisViewer();
+            sesuaikanFieldDataSiswa();
+        }
     );
 
 
     inputPeran?.addEventListener(
         "change",
         sesuaikanFieldJenisViewer
+    );
+
+
+    inputJenisViewer?.addEventListener(
+        "change",
+        sesuaikanFieldDataSiswa
+    );
+
+
+    inputSiswa?.addEventListener(
+        "change",
+        sesuaikanFieldDataSiswa
     );
 
 
@@ -1245,6 +1425,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         ? "siswa"
                         : null;
 
+            const siswa = peranButuhSiswa()
+                ? siswaTerpilih()
+                : null;
+
+            const idSiswa = siswa
+                ? siswa.id_siswa
+                : null;
+
             const password =
                 inputPassword.value;
 
@@ -1308,6 +1496,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
 
                 inputPeran.focus();
+
+                return;
+            }
+
+
+            /* IDENTITAS SISWA */
+
+            if (peranButuhSiswa() && !siswa) {
+
+                showFormError(
+                    "Pilih Data Siswa untuk Bendahara atau Viewer Siswa."
+                );
+
+                inputSiswa?.focus();
 
                 return;
             }
@@ -1387,13 +1589,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                 const payload = {
-                    nama,
+                    nama: siswa ? siswa.nama : nama,
                     email,
                     peran,
                     jenis_viewer: jenisPengguna,
-                    id_kelas: peran === "admin"
-                        ? null
-                        : (inputKelas?.value || null)
+                    id_siswa: idSiswa,
+                    id_kelas: siswa
+                        ? siswa.id_kelas
+                        : (peran === "admin"
+                            ? null
+                            : (inputKelas?.value || null))
                 };
 
 
@@ -1442,13 +1647,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     csrfBaru: true,
                     body: JSON.stringify({
-                        nama,
+                        nama: siswa ? siswa.nama : nama,
                         email,
                         peran,
                         jenis_viewer: jenisPengguna,
-                        id_kelas: peran === "admin"
-                            ? null
-                            : (inputKelas?.value || null),
+                        id_siswa: idSiswa,
+                        id_kelas: siswa
+                            ? siswa.id_kelas
+                            : (peran === "admin"
+                                ? null
+                                : (inputKelas?.value || null)),
                         password
                     })
                 });

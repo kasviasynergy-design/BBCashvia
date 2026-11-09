@@ -309,6 +309,30 @@
                             </span>
                         </li>
 
+                        <li>
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                check_circle
+                            </span>
+
+                            <span>
+                                Bendahara dan Viewer Siswa wajib ditautkan
+                                ke satu data siswa. Satu siswa hanya boleh
+                                memiliki satu akun aktif.
+                            </span>
+                        </li>
+
+                        <li>
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                check_circle
+                            </span>
+
+                            <span>
+                                Menghapus akun tidak menghapus data siswa
+                                maupun riwayat transaksi. Nama pencatat
+                                tetap tersimpan pada riwayat.
+                            </span>
+                        </li>
+
                     </ul>
 
                 </div>
@@ -522,6 +546,8 @@
                                 <th>Peran</th>
 
                                 <th>Jenis Pengguna</th>
+
+                                <th>NIS Induk</th>
 
                                 <th>Kelas</th>
 
@@ -741,6 +767,26 @@
                     </div>
 
 
+                    <div class="field field--full" id="fieldDataSiswa">
+
+                        <label for="inputSiswa">
+                            Data Siswa
+                        </label>
+
+                        <select id="inputSiswa">
+                            <option value="">
+                                - Pilih siswa -
+                            </option>
+                        </select>
+
+                        <span class="field__hint" id="hintDataSiswa">
+                            Wajib untuk Bendahara dan Viewer Siswa. Nama serta
+                            kelas akun mengikuti data siswa yang dipilih.
+                        </span>
+
+                    </div>
+
+
                     <div class="field field--full" id="fieldKelas">
 
                         <label for="inputKelas">
@@ -895,8 +941,9 @@
 
                     <p>
                         Akun ini akan dihapus dari Manajemen Pengguna.
-                        Jika pengguna lupa password, akun dapat dibuat
-                        kembali oleh Admin dengan password baru.
+                        Data siswa, transaksi, dan riwayat keuangan
+                        <strong>tidak ikut dihapus</strong>. Nama pengguna
+                        tetap tersimpan sebagai pencatat pada riwayat.
                     </p>
 
                 </div>

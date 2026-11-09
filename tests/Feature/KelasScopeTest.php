@@ -121,12 +121,20 @@ class KelasScopeTest extends TestCase
     {
         $kelas = Kelas::create(['nama_kelas' => 'UJI SET', 'tingkat' => 'XI']);
 
+        $siswa = Siswa::create([
+            'nis' => 'SET' . substr(uniqid(), -8),
+            'nama_siswa' => 'Siswa Set Kelas',
+            'id_kelas' => $kelas->id_kelas,
+            'status' => 'Aktif',
+        ]);
+
         $admin = $this->userWithRole('admin');
 
         $res = $this->actingAs($admin)->postJson('/admin/api/pengguna', [
             'nama' => 'Bendahara Baru',
             'email' => 'baru' . uniqid() . '@example.test',
             'peran' => 'bendahara',
+            'id_siswa' => $siswa->id_siswa,
             'id_kelas' => $kelas->id_kelas,
             'password' => 'Rahasia#123',
         ]);
@@ -139,6 +147,7 @@ class KelasScopeTest extends TestCase
 
         $user = User::find($res->json('data.db_id'));
         $this->assertSame($kelas->id_kelas, (int) $user->id_kelas);
+        $this->assertSame((int) $siswa->id_siswa, (int) $user->id_siswa);
     }
 
     public function test_admin_tidak_terikat_kelas(): void

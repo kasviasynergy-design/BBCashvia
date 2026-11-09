@@ -134,6 +134,75 @@ class SiswaController extends Controller
     }
 
     /**
+     * Tagihan pribadi pengguna yang sedang login.
+     *
+     * Identitas siswa TIDAK diambil dari parameter klien. Sumbernya
+     * hanya `users.id_siswa` milik sesi, sehingga Viewer Siswa tidak
+     * dapat membuka tagihan siswa lain dengan mengganti URL.
+     *
+     * Iuran global (id_kelas NULL) ikut dihitung karena berlaku untuk
+     * semua siswa; iuran kelas lain tidak pernah dicampurkan.
+     */
+    public function tagihanPribadi(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $idSiswa = $user?->id_siswa;
+
+        if ($idSiswa === null) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Akun ini tidak memiliki identitas siswa, sehingga tidak ada tagihan pribadi.',
+                'data' => null,
+            ]);
+        }
+
+        $siswa = Siswa::with([
+            'kelas',
+            'transaksi' => fn ($q) => $q->orderByDesc('tanggal')
+                ->orderByDesc('id_transaksi'),
+        ])->find((int) $idSiswa);
+
+        if (!$siswa) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data siswa yang tertaut pada akun tidak ditemukan.',
+                'data' => null,
+            ]);
+        }
+
+        $ringkasan = $this->ringkasanIuran($siswa, null, true);
+
+        $riwayat = $siswa->transaksi
+            ->filter(fn ($t) => Transaksi::jenisMasuk($t->jenis))
+            ->map(function (Transaksi $t) {
+                return [
+                    'id_transaksi' => $t->id_transaksi,
+                    'tanggal' => $t->tanggal?->format('Y-m-d'),
+                    'nominal' => (float) $t->nominal,
+                    'keterangan' => $t->keterangan,
+                    'kategori' => $t->kategori,
+                    'periode' => $t->periode,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_siswa' => $siswa->id_siswa,
+                'nis' => $siswa->nis,
+                'nama' => $siswa->nama_siswa,
+                'id_kelas' => $siswa->id_kelas,
+                'kelas' => $siswa->kelas?->nama_kelas ?? '',
+                'status' => $siswa->status,
+                'riwayat' => $riwayat,
+                ...$ringkasan,
+            ],
+        ]);
+    }
+
+    /**
      * Menambahkan siswa.
      */
     public function store(Request $request): JsonResponse
@@ -367,6 +436,17 @@ class SiswaController extends Controller
             return response()->json([
                 'message' => 'Data siswa tidak ditemukan.',
             ], 404);
+        }
+
+        // Jangan hapus identitas siswa yang masih dipakai akun pengguna.
+        // Akun harus ditautkan ulang/dilepas oleh Admin lebih dulu agar
+        // login tidak kehilangan identitas secara diam-diam.
+        $akunTertaut = \App\Models\User::where('id_siswa', $siswa->id_siswa)->exists();
+
+        if ($akunTertaut) {
+            return response()->json([
+                'message' => 'Siswa tidak dapat dihapus karena masih tertaut ke akun pengguna. Lepaskan tautan akun tersebut terlebih dahulu.',
+            ], 422);
         }
 
         if ($siswa->transaksi()->exists()) {

@@ -546,6 +546,29 @@ document.addEventListener("DOMContentLoaded", () => {
             0
         );
 
+    // Dapatkan sisa tagihan untuk satu baris transaksi di form "banyak"
+    const hitungSisaTagihanBaris = (barisElement) => {
+        const idSiswa = barisElement.querySelector(".baris-siswa")?.value || "";
+        const idIuran = barisElement.querySelector(".baris-iuran")?.value || "";
+
+        if (!idSiswa || !idIuran) {
+            return 0;
+        }
+
+        const iuran = DATA_IURAN.find(
+            (item) => String(item.id) === String(idIuran)
+        );
+
+        if (!iuran) {
+            return 0;
+        }
+
+        const tagihan = Number(iuran.nominal) || 0;
+        const terbayar = hitungTerbayar(idSiswa, idIuran);
+
+        return Math.max(tagihan - terbayar, 0);
+    };
+
     const perbaruiInfoPembayaran = () => {
 
         const inputSiswa =
@@ -637,7 +660,11 @@ document.addEventListener("DOMContentLoaded", () => {
         id_siswa: s.id_siswa,
         nis: s.nis ?? "",
         nama: s.nama ?? "-",
-        kelas: s.kelas || "-"
+        kelas: s.kelas || "-",
+        id_kelas: s.id_kelas ?? null,
+        rincian_iuran: Array.isArray(s.rincian_iuran)
+            ? s.rincian_iuran
+            : []
     });
 
 
@@ -1213,6 +1240,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
     };
+    /* =====================================================
+       LIVE MONEY PER BARIS (BANYAK TRANSAKSI)
+     ===================================================== */
+
+    const hitungUangLiveBaris = (barisElement) => {
+
+        const nominalInput =
+            barisElement.querySelector(".baris-nominal");
+
+        const sisaEl =
+            barisElement.querySelector(".baris-sisa-tagihan");
+
+        if (!nominalInput || !sisaEl) return;
+
+        const nominalBayar = parseAngka(nominalInput.value);
+        const tagihanAwal = parseAngka(sisaEl.dataset.tagihanAwal || "0");
+        const sisaBaru = Math.max(tagihanAwal - nominalBayar, 0);
+        const kembalian = Math.max(nominalBayar - tagihanAwal, 0);
+
+        sisaEl.value = new Intl.NumberFormat("id-ID").format(sisaBaru);
+
+        // Set tagihan awal jika belum diset (dari iuran pertama kali dipilih)
+        if (!sisaEl.dataset.tagihanAwal) {
+            sisaEl.dataset.tagihanAwal = tagihanAwal;
+        }
+
+        return {
+            sisa: sisaBaru,
+            kembalian
+        };
+
+    };
+
 
 
     /* =====================================================
@@ -2710,6 +2770,119 @@ document.addEventListener("DOMContentLoaded", () => {
     ========================================================= */
     let nomorBaris = 0;
 
+    const formatNilaiInput = (nilai) => String(Math.max(0, Math.floor(Number(nilai) || 0)))
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+    const isiPilihanSiswaBaris = (baris) => {
+        const pilih = baris.querySelector(".baris-siswa");
+        if (!pilih) return;
+
+        pilih.innerHTML = `
+            <option value="">- Tanpa siswa (kas umum) -</option>
+            ${DATA_SISWA.map((siswa) => `
+                <option value="${escapeHtml(siswa.id_siswa)}">
+                    ${escapeHtml(siswa.nama)} • ${escapeHtml(siswa.nis)}
+                </option>
+            `).join("")}
+        `;
+    };
+
+    /*
+     * Iuran yang ditampilkan hanya iuran aktif yang berlaku untuk
+     * siswa terpilih: iuran kelasnya sendiri atau iuran global
+     * (id_kelas NULL). Baris tanpa siswa hanya menampilkan iuran global.
+     */
+    const isiPilihanIuranBaris = (baris, idTerpilih = "") => {
+        const pilih = baris.querySelector(".baris-iuran");
+        if (!pilih) return;
+
+        const idSiswa = baris.querySelector(".baris-siswa")?.value || "";
+        const siswa = DATA_SISWA.find(
+            (item) => String(item.id_siswa) === String(idSiswa)
+        );
+
+        const daftar = DATA_IURAN.filter((iuran) => {
+            if (iuran.status !== "aktif") return false;
+
+            if (iuran.id_kelas === null || iuran.id_kelas === undefined) {
+                return true;
+            }
+
+            return siswa
+                && String(iuran.id_kelas) === String(siswa.id_kelas);
+        });
+
+        pilih.innerHTML = `
+            <option value="">- Tanpa iuran -</option>
+            ${daftar.map((iuran) => `
+                <option value="${escapeHtml(iuran.id)}">
+                    ${escapeHtml(iuran.nama)} • ${formatRupiah(iuran.nominal)}
+                </option>
+            `).join("")}
+        `;
+
+        if (idTerpilih && [...pilih.options].some(
+            (option) => option.value === String(idTerpilih)
+        )) {
+            pilih.value = String(idTerpilih);
+        }
+    };
+
+    /*
+     * Saat iuran dipilih, nominal diisi dengan SISA tagihan siswa
+     * untuk iuran tersebut (bukan nominal penuh), sehingga cicilan
+     * sebelumnya tidak tertagih dua kali. Nilai tetap dapat diubah
+     * menjadi pembayaran sebagian.
+     */
+    const isiNominalDariIuran = (baris) => {
+        const idIuran = baris.querySelector(".baris-iuran")?.value || "";
+        const idSiswa = baris.querySelector(".baris-siswa")?.value || "";
+        const nominal = baris.querySelector(".baris-nominal");
+        const sisaTagihanEl = baris.querySelector(".baris-sisa-tagihan");
+
+        if (!idIuran || !idSiswa || !nominal || !sisaTagihanEl) return;
+
+        const iuran = DATA_IURAN.find(
+            (item) => String(item.id) === String(idIuran)
+        );
+
+        if (!iuran) {
+            nominal.value = formatNilaiInput(0);
+            sisaTagihanEl.value = "";
+            return;
+        }
+
+        const tagihan = Number(iuran.nominal) || 0;
+
+        // Sisa tagihan dihitung dari akumulasi transaksi pemasukan yang
+        // sudah tercatat untuk pasangan (siswa, iuran). Ini mencegah
+        // cicilan sebelumnya ikut tertagih dua kali.
+        const terbayar = hitungTerbayar(idSiswa, idIuran);
+        const sisa = Math.max(tagihan - terbayar, 0);
+
+        nominal.value = formatNilaiInput(sisa);
+        sisaTagihanEl.value = new Intl.NumberFormat("id-ID").format(sisa);
+    };
+
+    const sesuaikanBarisJenis = (baris) => {
+        const jenis = baris.querySelector(".baris-jenis")?.value || "masuk";
+        const siswa = baris.querySelector(".baris-siswa");
+        const iuran = baris.querySelector(".baris-iuran");
+
+        const pemasukan = jenis === "masuk";
+
+        if (siswa) siswa.disabled = !pemasukan;
+        if (iuran) iuran.disabled = !pemasukan;
+
+        if (!pemasukan) {
+            // Pengeluaran tidak boleh membawa relasi siswa/iuran.
+            if (siswa) siswa.value = "";
+            if (iuran) iuran.value = "";
+        }
+
+        isiPilihanIuranBaris(baris);
+    };
+
     const barisBanyakHtml = (index) => `
         <div class="baris-transaksi" data-baris="${index}">
             <div class="baris-transaksi__head">
@@ -2722,6 +2895,20 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
 
             <div class="form-grid">
+                <label class="field">
+                    <span class="field__label">Data Siswa</span>
+                    <select class="baris-siswa">
+                        <option value="">- Tanpa siswa (kas umum) -</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Iuran</span>
+                    <select class="baris-iuran">
+                        <option value="">- Tanpa iuran -</option>
+                    </select>
+                </label>
+
                 <label class="field">
                     <span class="field__label">Jenis <b class="wajib">*</b></span>
                     <select class="baris-jenis">
@@ -2738,6 +2925,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 <label class="field">
                     <span class="field__label">Tanggal <b class="wajib">*</b></span>
                     <input type="date" class="baris-tanggal">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Sisa Tagihan</span>
+                    <div class="money-input">
+                        <span>Rp</span>
+                        <input type="text" class="baris-sisa-tagihan" inputmode="numeric" placeholder="0" readonly>
+                    </div>
                 </label>
 
                 <label class="field">
@@ -2765,7 +2960,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const nilaiLama = pilih.value;
 
         pilih.innerHTML = daftar
-            .map((k) => `<option value="${escapeHtml(k)}">${escapeHtml(labelKategori(k))}</option>`)
+            .map((k) => `<option value="${escapeHtml(k.value)}">${escapeHtml(k.label)}</option>`)
             .join("");
 
         if ([...pilih.options].some((o) => o.value === nilaiLama)) {
@@ -2783,6 +2978,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const baris = wadah.querySelector(`[data-baris="${index}"]`);
         if (!baris) return;
 
+        isiPilihanSiswaBaris(baris);
+        isiPilihanIuranBaris(baris);
         isiKategoriBaris(baris);
 
         const tanggal = baris.querySelector(".baris-tanggal");
@@ -2797,10 +2994,50 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const jenis = baris.querySelector(".baris-jenis");
-        jenis?.addEventListener("change", () => isiKategoriBaris(baris));
+        jenis?.addEventListener("change", () => {
+            isiKategoriBaris(baris);
+            sesuaikanBarisJenis(baris);
+            // Reset sisa tagihan dan nominal when jenis changes
+            const sisaEl = baris.querySelector(".baris-sisa-tagihan");
+            if (sisaEl) sisaEl.value = "";
+        });
 
-        const keterangan = baris.querySelector(".baris-keterangan");
-        if (keterangan) keterangan.focus();
+        // Siswa menentukan iuran mana yang berlaku (kelasnya atau global).
+        baris.querySelector(".baris-siswa")?.addEventListener("change", () => {
+            isiPilihanIuranBaris(baris);
+            isiNominalDariIuran(baris);
+        });
+
+        // Memilih iuran mengisi nominal dengan SISA tagihan; nilainya
+        // tetap dapat diubah menjadi pembayaran sebagian (cicilan).
+        baris.querySelector(".baris-iuran")?.addEventListener("change", () => {
+            isiNominalDariIuran(baris);
+        });
+
+        // Update sisa tagihan ketika nominal berubah
+        const nominalInput = baris.querySelector(".baris-nominal");
+        const sisaEl = baris.querySelector(".baris-sisa-tagihan");
+        if (nominalInput && sisaEl) {
+            nominalInput.addEventListener("input", (e) => {
+                const nominalBayar = parseAngka(nominalInput.value);
+                const tagihanAwal = parseAngka(sisaEl.dataset.tagihanAwal || "0");
+                const sisaBaru = Math.max(tagihanAwal - nominalBayar, 0);
+                const kembalian = Math.max(nominalBayar - tagihanAwal, 0);
+                sisaEl.value = new Intl.NumberFormat("id-ID").format(sisaBaru);
+                // Simpan tagihan awal jika belum diset
+                if (!sisaEl.dataset.tagihanAwal) {
+                    sisaEl.dataset.tagihanAwal = tagihanAwal;
+                }
+                hitungUangLiveBaris(baris);
+            });
+        }
+
+        const siswa = baris.querySelector(".baris-siswa");
+        if (siswa) {
+            siswa.focus();
+        } else {
+            baris.querySelector(".baris-keterangan")?.focus();
+        }
     };
 
     const perbaruiNomorBaris = () => {
@@ -2842,20 +3079,48 @@ document.addEventListener("DOMContentLoaded", () => {
             const nominal = parseAngka(baris.querySelector(".baris-nominal")?.value || "");
             const keterangan = (baris.querySelector(".baris-keterangan")?.value || "").trim();
 
+            const pemasukan = jenis === "masuk";
+
+            // Relasi siswa/iuran hanya sah untuk pemasukan. Baris
+            // pengeluaran selalu disimpan sebagai kas umum.
+            const idSiswa = pemasukan
+                ? (baris.querySelector(".baris-siswa")?.value || "")
+                : "";
+            const idIuran = pemasukan
+                ? (baris.querySelector(".baris-iuran")?.value || "")
+                : "";
+
+            const siswa = idSiswa
+                ? DATA_SISWA.find(
+                    (item) => String(item.id_siswa) === String(idSiswa)
+                )
+                : null;
+
             if (!tanggal) galat.push(`Baris ${nomor}: tanggal wajib diisi`);
             if (!kategori) galat.push(`Baris ${nomor}: kategori wajib dipilih`);
             if (nominal <= 0) galat.push(`Baris ${nomor}: nominal wajib lebih dari 0`);
             if (!keterangan) galat.push(`Baris ${nomor}: keterangan wajib diisi`);
 
-            if (tanggal && kategori && nominal > 0 && keterangan) {
+            // Iuran tidak boleh dicatat tanpa siswa karena sisa tagihan
+            // tidak dapat dihitung dan riwayat tidak dapat dipisahkan.
+            if (idIuran && !idSiswa) {
+                galat.push(`Baris ${nomor}: pilih siswa untuk pembayaran iuran`);
+            }
+
+            if (tanggal && kategori && nominal > 0 && keterangan
+                && !(idIuran && !idSiswa)) {
                 data.push({
                     tanggal: `${tanggal} 00:00:00`,
-                    jenis: jenis === "masuk" ? "pemasukan" : "pengeluaran",
+                    jenis: pemasukan ? "pemasukan" : "pengeluaran",
                     kategori,
                     nominal,
                     uang_diterima: nominal,
                     keterangan,
-                    metode: "CH"
+                    metode: "CH",
+                    id_siswa: idSiswa ? Number(idSiswa) : null,
+                    id_iuran: idIuran ? Number(idIuran) : null,
+                    id_kelas: siswa?.id_kelas ?? null,
+                    nama_pembayar: siswa?.nama || ""
                 });
             }
         });
@@ -2892,8 +3157,18 @@ document.addEventListener("DOMContentLoaded", () => {
             const hasil = await kirimJSON(API_TRANSAKSI, "POST", { transaksi: data });
 
             const jumlah = hasil.jumlah ?? data.length;
+            const kelompok = hasil.no_bukti_per_siswa
+                ? Object.keys(hasil.no_bukti_per_siswa).length
+                : 1;
+
             tutupModal("modalFormBanyak");
-            tampilkanToast(`${jumlah} transaksi berhasil dicatat`);
+
+            tampilkanToast(
+                kelompok > 1
+                    ? `${jumlah} transaksi dicatat untuk ${kelompok} siswa/grup`
+                    : `${jumlah} transaksi berhasil dicatat`
+            );
+
             await muatData();
         } catch (error) {
             if (kotakGalat) {

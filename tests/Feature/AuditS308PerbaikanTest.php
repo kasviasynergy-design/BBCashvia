@@ -335,7 +335,7 @@ class AuditS308PerbaikanTest extends TestCase
             ->assertStatus(409);
     }
 
-    public function test_pengguna_dengan_transaksi_tidak_dapat_dihapus(): void
+    public function test_pengguna_dengan_transaksi_dihapus_dan_riwayat_tetap_utuh(): void
     {
         $this->butuhMysql();
 
@@ -351,8 +351,10 @@ class AuditS308PerbaikanTest extends TestCase
             'id_kelas' => $kelas->id_kelas,
         ]);
 
+        $noBukti = 'S308U-' . substr(uniqid(), -8);
+
         Transaksi::create([
-            'no_bukti' => 'S308U-' . substr(uniqid(), -8),
+            'no_bukti' => $noBukti,
             'id_user' => $user->id_users,
             'tanggal' => '2026-11-08 10:00:00',
             'nominal' => 1000,
@@ -365,7 +367,35 @@ class AuditS308PerbaikanTest extends TestCase
 
         $this->actingAs($admin)
             ->deleteJson('/admin/api/pengguna/' . $user->id_users)
-            ->assertStatus(409);
+            ->assertOk();
+
+        // Akun benar-benar hilang...
+        $this->assertDatabaseMissing('users', [
+            'id_users' => $user->id_users,
+        ]);
+
+        // ...tetapi transaksi, nominal, dan nama pencatat tetap ada.
+        $transaksi = DB::table('transaksi')->where('no_bukti', $noBukti)->first();
+
+        $this->assertNotNull($transaksi);
+        $this->assertNull($transaksi->id_user);
+        $this->assertSame('Pengguna Uji S308', $transaksi->nama_petugas);
+        $this->assertEquals(1000, $transaksi->nominal);
+    }
+
+    public function test_akun_sendiri_tidak_dapat_dihapus(): void
+    {
+        $this->butuhMysql();
+
+        $admin = $this->admin();
+
+        $this->actingAs($admin)
+            ->deleteJson('/admin/api/pengguna/' . $admin->id_users)
+            ->assertStatus(422);
+
+        $this->assertDatabaseHas('users', [
+            'id_users' => $admin->id_users,
+        ]);
     }
 
     public function test_iuran_yang_sudah_dipakai_tidak_boleh_pindah_kelas(): void

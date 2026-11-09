@@ -59,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
             ->name('data.dashboard.recent');
         Route::get('/data/siswa', [SiswaController::class, 'index'])
             ->name('data.siswa');
+        Route::get('/data/tagihan-pribadi', [SiswaController::class, 'tagihanPribadi'])
+            ->name('data.tagihan-pribadi');
         Route::get('/data/kelas', [KelasController::class, 'index'])
             ->name('data.kelas');
         Route::get('/data/iuran', [IuranController::class, 'index'])
