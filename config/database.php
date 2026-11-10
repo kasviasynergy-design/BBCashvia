@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'mysql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -32,6 +32,9 @@ return [
 
     'connections' => [
 
+        // Koneksi SQLite tetap disediakan untuk pengujian otomatis
+        // (phpunit.xml memakai DB_CONNECTION=sqlite). Koneksi ini
+        // BUKAN default aplikasi.
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),

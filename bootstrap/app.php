@@ -19,6 +19,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Railway berada di balik reverse proxy HTTPS. Tanpa ini,
+        // Laravel mengira request memakai http sehingga URL/asset bisa
+        // menjadi http (mixed content) dan redirect bisa salah skema.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
