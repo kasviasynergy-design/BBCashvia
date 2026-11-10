@@ -1,11 +1,11 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "RAILPACK",
-    "buildCommand": "npm run build && php artisan storage:link --force"
+    "builder": "NIXPACKS",
+    "buildCommand": "mkdir -p storage/framework/sessions storage/framework/views storage/framework/cache storage/framework/testing storage/logs bootstrap/cache && chmod -R a+rw storage bootstrap/cache && npm run build"
   },
   "deploy": {
-    "startCommand": "php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan serve --host=0.0.0.0 --port=${PORT}",
+    "startCommand": "php artisan optimize:clear && php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=${PORT}",
     "preDeployCommand": [
       "php artisan config:clear",
       "php artisan migrate --force"
