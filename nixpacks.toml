@@ -1,5 +1,6 @@
 # Nixpacks sudah mendeteksi Laravel (composer.json) dan Vite (package.json).
 # Biarkan fase install tetap default: composer install + npm ci.
+# Node dikunci lewat .nvmrc (22.12.0) karena Vite 7 membutuhkan Node >= 20.19.
 #
 # Nixpacks menambahkan cache BuildKit di node_modules/.cache pada fase build.
 # Jika npm ci dijalankan di fase build, npm mencoba menghapus folder cache yang
