@@ -14,12 +14,6 @@ WORKDIR /app
 # Copy composer dan npm files
 COPY composer.json package.json ./
 
-# Copy .env file
-COPY .env .env
-
-# Copy certificate
-COPY storage/certs/isrgrootx1.pem storage/certs/isrgrootx1.pem
-
 # Copy seluruh source code ke container
 COPY . .
 
