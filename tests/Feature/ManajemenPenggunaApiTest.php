@@ -2,14 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class ManajemenPenggunaApiTest extends TestCase
 {
-    use DatabaseTransactions;
+    /**
+     * Kelas uji yang selalu tersedia. Jangan memakai ID hardcode seperti 4
+     * karena database baru hanya memiliki tiga kelas dari KelasSeeder.
+     */
+    private function kelasUji(): Kelas
+    {
+        return Kelas::firstOrCreate(
+            ['nama_kelas' => 'UJI MANAJEMEN PENGGUNA'],
+            ['tingkat' => 'XI', 'tahun_ajaran' => '2026/2027']
+        );
+    }
 
     public function test_index_pengguna_menyertakan_kelas(): void
     {
@@ -62,7 +72,7 @@ class ManajemenPenggunaApiTest extends TestCase
                 'email' => 'bendahara' . uniqid() . '@example.test',
                 'peran' => 'bendahara',
                 'jenis_viewer' => 'wali_kelas',
-                'id_kelas' => 4,
+                'id_kelas' => $this->kelasUji()->id_kelas,
                 'password' => 'Rahasia#1',
             ])
             ->assertStatus(422)
@@ -97,7 +107,7 @@ class ManajemenPenggunaApiTest extends TestCase
                 'email' => $email,
                 'peran' => 'bendahara',
                 'id_siswa' => $siswa->id_siswa,
-                'id_kelas' => 4,
+                'id_kelas' => $this->kelasUji()->id_kelas,
                 'password' => 'Rahasia#1',
             ])
             ->assertCreated()
@@ -164,7 +174,7 @@ class ManajemenPenggunaApiTest extends TestCase
                 'email' => $email,
                 'peran' => 'viewer',
                 'jenis_viewer' => 'wali_kelas',
-                'id_kelas' => 4,
+                'id_kelas' => $this->kelasUji()->id_kelas,
                 'password' => 'Rahasia#1',
             ])
             ->assertCreated()
@@ -175,7 +185,7 @@ class ManajemenPenggunaApiTest extends TestCase
             'role' => 'viewer',
             'jenis_viewer' => 'wali_kelas',
             'id_siswa' => null,
-            'id_kelas' => 4,
+            'id_kelas' => $this->kelasUji()->id_kelas,
         ]);
     }
 
@@ -236,7 +246,7 @@ class ManajemenPenggunaApiTest extends TestCase
                 'email' => $email,
                 'peran' => 'admin',
                 'jenis_viewer' => 'wali_kelas',
-                'id_kelas' => 4,
+                'id_kelas' => $this->kelasUji()->id_kelas,
                 'password' => 'Rahasia#1',
             ])
             ->assertCreated();

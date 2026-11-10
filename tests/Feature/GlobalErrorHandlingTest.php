@@ -16,8 +16,8 @@ use Tests\TestCase;
  * memakai halaman kustom untuk permintaan web, JSON untuk endpoint
  * API/data, dan tercatat di berkas log khusus (app-error.log).
  *
- * Tak memakai DatabaseTransactions: skenario uji di sini tidak
- * memerlukan data tersimpan (pola user sementara dari KelasScopeTest).
+ * Skenario uji di sini tidak bergantung pada data seeder dan memakai
+ * pola user sementara seperti KelasScopeTest.
  */
 class GlobalErrorHandlingTest extends TestCase
 {

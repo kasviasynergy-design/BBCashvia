@@ -6,7 +6,6 @@ use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -14,11 +13,10 @@ use Tests\TestCase;
  * Uji endpoint iuran (/admin/api/iuran) dan alur pencatatan
  * pembayaran iuran menjadi transaksi nyata.
  *
- * Menggunakan DatabaseTransactions sehingga perubahan di-rollback.
+ * Menggunakan RefreshDatabase sehingga perubahan di-rollback.
  */
 class IuranApiTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function admin(): User
     {

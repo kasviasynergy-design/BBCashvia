@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -15,7 +14,6 @@ use Tests\TestCase;
  */
 class KategoriTransaksiTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function butuhMysql(): void
     {

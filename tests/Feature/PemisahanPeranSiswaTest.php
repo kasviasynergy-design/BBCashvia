@@ -6,7 +6,6 @@ use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
@@ -21,11 +20,10 @@ use Tests\TestCase;
  * - satu kali simpan banyak transaksi memisahkan bukti per siswa;
  * - identitas siswa tidak dapat dihapus selama masih tertaut akun.
  *
- * Semua perubahan database di-rollback (DatabaseTransactions).
+ * Semua perubahan database di-rollback (RefreshDatabase).
  */
 class PemisahanPeranSiswaTest extends TestCase
 {
-    use DatabaseTransactions;
 
     protected function setUp(): void
     {

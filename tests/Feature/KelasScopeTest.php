@@ -6,12 +6,10 @@ use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 class KelasScopeTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function userWithRole(string $role, ?int $idKelas = null): User
     {

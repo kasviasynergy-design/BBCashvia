@@ -1273,14 +1273,20 @@ class TransaksiController extends Controller
         $tagihanIuran = Iuran::whereIn('id_iuran', $idsIuran)
             ->pluck('nominal', 'id_iuran');
 
+        // Jangan memakai CONCAT(): fungsi itu tidak ada di SQLite yang
+        // dipakai test suite. Grouping per kolom lalu menyusun kunci di
+        // PHP tetap menghasilkan data yang sama di MySQL dan SQLite.
         $terbayar = DB::table('transaksi')
             ->whereIn('id_siswa', $idsSiswa)
             ->whereIn('id_iuran', $idsIuran)
             ->where('jenis', Transaksi::JENIS_MASUK)
-            ->selectRaw("CONCAT(id_siswa, '|', id_iuran) AS kunci")
-            ->addSelect(DB::raw('SUM(nominal) AS total'))
-            ->groupBy('kunci')
-            ->pluck('total', 'kunci');
+            ->select('id_siswa', 'id_iuran')
+            ->selectRaw('SUM(nominal) AS total')
+            ->groupBy('id_siswa', 'id_iuran')
+            ->get()
+            ->mapWithKeys(fn ($baris) => [
+                $baris->id_siswa . '|' . $baris->id_iuran => (float) $baris->total,
+            ]);
 
         $hasil = [];
 

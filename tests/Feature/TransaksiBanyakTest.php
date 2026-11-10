@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -16,7 +15,6 @@ use Tests\TestCase;
  */
 class TransaksiBanyakTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function butuhMysql(): void
     {

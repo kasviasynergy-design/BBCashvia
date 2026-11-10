@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 
 /**
@@ -17,7 +16,6 @@ use Tests\TestCase;
  */
 class SiswaIdorTest extends TestCase
 {
-    use DatabaseTransactions;
 
     /** User uji dengan peran & kelas tertentu. */
     private function userWithRole(string $role, ?int $idKelas = null): User

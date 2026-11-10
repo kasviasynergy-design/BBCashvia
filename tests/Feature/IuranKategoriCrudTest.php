@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Kelas;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -21,7 +20,6 @@ use Tests\TestCase;
  */
 class IuranKategoriCrudTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function buatUser(
         string $role,

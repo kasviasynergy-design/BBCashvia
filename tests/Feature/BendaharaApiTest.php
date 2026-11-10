@@ -5,18 +5,16 @@ namespace Tests\Feature;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
  * Uji endpoint /bendahara/api/* yang dipakai halaman bendahara.
  * Hanya dapat diakses admin & bendahara. Menggunakan
- * DatabaseTransactions sehingga perubahan di-rollback otomatis.
+ * RefreshDatabase sehingga perubahan di-rollback otomatis.
  */
 class BendaharaApiTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function butuhMysql(): void
     {

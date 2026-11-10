@@ -67,7 +67,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-BeYYA5PS.css",
+    "file": "assets/app-DtkOOwiQ.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -333,6 +333,12 @@
     "file": "assets/login-BGkEmfvI.js",
     "name": "login",
     "src": "resources/js/login.js",
+    "isEntry": true
+  },
+  "resources/js/tagihan-pribadi.js": {
+    "file": "assets/tagihan-pribadi-BqqUCZLV.js",
+    "name": "tagihan-pribadi",
+    "src": "resources/js/tagihan-pribadi.js",
     "isEntry": true
   },
   "resources/js/viewer-dashboard.js": {

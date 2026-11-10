@@ -4,18 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
  * Uji transaksi end-to-end pada koneksi MySQL asli.
- * Menggunakan DatabaseTransactions sehingga seluruh perubahan
+ * Menggunakan RefreshDatabase sehingga seluruh perubahan
  * di-rollback otomatis (tidak mengubah data secara permanen).
  */
 class TransaksiApiTest extends TestCase
 {
-    use DatabaseTransactions;
 
     private function butuhMysql(): void
     {
