@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -17,14 +16,6 @@ use Tests\TestCase;
  */
 class KategoriTransaksiApiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -32,8 +23,6 @@ class KategoriTransaksiApiTest extends TestCase
 
     public function test_endpoint_kategori_admin_mengembalikan_masuk_dan_keluar(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->getJson('/admin/api/transaksi/kategori');
 
@@ -59,8 +48,6 @@ class KategoriTransaksiApiTest extends TestCase
 
     public function test_endpoint_kategori_memberi_label_tampilan(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->getJson('/admin/api/transaksi/kategori');
 
@@ -76,8 +63,6 @@ class KategoriTransaksiApiTest extends TestCase
 
     public function test_bendahara_juga_bisa_ambil_kategori(): void
     {
-        $this->butuhMysql();
-
         $bendahara = User::whereRaw('LOWER(role) = ?', ['bendahara'])->first();
 
         if (! $bendahara) {
@@ -109,8 +94,6 @@ class KategoriTransaksiApiTest extends TestCase
      */
     public function test_semua_kategori_endpoint_bisa_disimpan(): void
     {
-        $this->butuhMysql();
-
         $semua = [
             ['jenis' => 'pemasukan', 'kategori' => 'Iuran'],
             ['jenis' => 'pemasukan', 'kategori' => 'kas'],
@@ -126,7 +109,7 @@ class KategoriTransaksiApiTest extends TestCase
                 ->postJson('/admin/api/transaksi', [
                     'jenis' => $baris['jenis'],
                     'kategori' => $baris['kategori'],
-                    'keterangan' => 'Uji kategori ' . $baris['kategori'],
+                    'keterangan' => 'Uji kategori '.$baris['kategori'],
                     'tanggal' => '2026-10-19',
                     'nominal' => 1000 + $i,
                     'uang_diterima' => 1000 + $i,
@@ -143,8 +126,6 @@ class KategoriTransaksiApiTest extends TestCase
      */
     public function test_kategori_salah_jenis_ditolak(): void
     {
-        $this->butuhMysql();
-
         // Kategori pengeluaran dikirim sebagai pemasukan.
         $this->actingAs($this->admin())
             ->postJson('/admin/api/transaksi', [

@@ -24,16 +24,11 @@ use Tests\TestCase;
  */
 class PemisahanPeranSiswaTest extends TestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-
-        if (!Schema::hasColumn('users', 'id_siswa')) {
+        if (! Schema::hasColumn('users', 'id_siswa')) {
             $this->markTestSkipped('Migrasi users.id_siswa belum diterapkan.');
         }
     }
@@ -46,7 +41,7 @@ class PemisahanPeranSiswaTest extends TestCase
     private function buatKelas(string $prefix): Kelas
     {
         return Kelas::create([
-            'nama_kelas' => $prefix . ' ' . substr(uniqid(), -6),
+            'nama_kelas' => $prefix.' '.substr(uniqid(), -6),
             'tingkat' => 'XI',
             'tahun_ajaran' => '2026/2027',
         ]);
@@ -55,7 +50,7 @@ class PemisahanPeranSiswaTest extends TestCase
     private function buatSiswa(Kelas $kelas, string $nama): Siswa
     {
         return Siswa::create([
-            'nis' => 'PRN' . substr(uniqid(), -8),
+            'nis' => 'PRN'.substr(uniqid(), -8),
             'nama_siswa' => $nama,
             'id_kelas' => $kelas->id_kelas,
             'status' => 'Aktif',
@@ -66,7 +61,7 @@ class PemisahanPeranSiswaTest extends TestCase
     {
         return (int) DB::table('iuran')->insertGetId([
             'id_kelas' => $kelas->id_kelas,
-            'nama_iuran' => $nama . ' ' . substr(uniqid(), -6),
+            'nama_iuran' => $nama.' '.substr(uniqid(), -6),
             'kategori' => 'bulanan',
             'nominal' => $nominal,
             'status' => 'aktif',
@@ -82,7 +77,7 @@ class PemisahanPeranSiswaTest extends TestCase
     ): User {
         return User::create([
             'name' => $nama,
-            'email' => strtolower($peran) . uniqid() . '@example.test',
+            'email' => strtolower($peran).uniqid().'@example.test',
             'password' => 'Rahasia#123',
             'role' => $peran,
             'jenis_viewer' => $jenisViewer,
@@ -158,7 +153,7 @@ class PemisahanPeranSiswaTest extends TestCase
 
         // Tagihan pribadi berasal dari sesi, bukan parameter URL.
         $resTagihan = $this->actingAs($viewer)
-            ->getJson('/data/tagihan-pribadi?id_siswa=' . $lain->id_siswa)
+            ->getJson('/data/tagihan-pribadi?id_siswa='.$lain->id_siswa)
             ->assertOk();
 
         $this->assertSame(
@@ -327,7 +322,7 @@ class PemisahanPeranSiswaTest extends TestCase
         $this->buatAkun('bendahara', 'siswa', $kelas, $siswa);
 
         $this->actingAs($admin)
-            ->deleteJson('/bendahara/api/siswa/' . $siswa->id_siswa)
+            ->deleteJson('/bendahara/api/siswa/'.$siswa->id_siswa)
             ->assertStatus(422);
 
         $this->assertDatabaseHas('siswa', [

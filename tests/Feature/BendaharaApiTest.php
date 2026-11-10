@@ -2,10 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Siswa;
+use App\Models\Kelas;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -15,16 +14,6 @@ use Tests\TestCase;
  */
 class BendaharaApiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped(
-                'Uji ini memerlukan koneksi MySQL (database bbcashvia).'
-            );
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -32,7 +21,15 @@ class BendaharaApiTest extends TestCase
 
     private function bendahara(): User
     {
-        return User::whereRaw('LOWER(role) = ?', ['bendahara'])->firstOrFail();
+        $bendahara = User::whereRaw('LOWER(role) = ?', ['bendahara'])->firstOrFail();
+
+        // Bendahara harus terikat kelas agar dapat menulis data.
+        if (! $bendahara->id_kelas) {
+            $bendahara->id_kelas = Kelas::query()->value('id_kelas');
+            $bendahara->save();
+        }
+
+        return $bendahara;
     }
 
     private function viewer(): User
@@ -42,8 +39,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_bendahara_dapat_membaca_transaksi(): void
     {
-        $this->butuhMysql();
-
         $this->actingAs($this->bendahara())
             ->getJson('/bendahara/api/transaksi')
             ->assertOk()
@@ -52,8 +47,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_bendahara_dapat_membuat_transaksi(): void
     {
-        $this->butuhMysql();
-
         $jumlahAwal = Transaksi::count();
 
         $this->actingAs($this->bendahara())
@@ -73,8 +66,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_bendahara_dapat_membuat_dan_menghapus_iuran(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->bendahara())
             ->postJson('/bendahara/api/iuran', [
                 'nama_iuran' => 'Iuran Uji Otomatis',
@@ -99,8 +90,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_bendahara_dapat_membuat_dan_menghapus_siswa(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->bendahara())
             ->postJson('/bendahara/api/siswa', [
                 'nis' => '99999999',
@@ -123,8 +112,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_viewer_tidak_dapat_mengakses_api_bendahara(): void
     {
-        $this->butuhMysql();
-
         $this->actingAs($this->viewer())
             ->getJson('/bendahara/api/transaksi')
             ->assertForbidden();
@@ -140,8 +127,6 @@ class BendaharaApiTest extends TestCase
 
     public function test_tamu_diarahkan_ke_login(): void
     {
-        $this->butuhMysql();
-
         $this->getJson('/bendahara/api/transaksi')
             ->assertUnauthorized();
     }

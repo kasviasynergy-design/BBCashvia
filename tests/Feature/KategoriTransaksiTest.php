@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -14,14 +13,6 @@ use Tests\TestCase;
  */
 class KategoriTransaksiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -43,8 +34,6 @@ class KategoriTransaksiTest extends TestCase
     #[DataProvider('kategoriUiProvider')]
     public function test_kategori_ui_disimpan_sesuai_enum(string $kirim, string $harus, string $jenis): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->postJson('/admin/api/transaksi', [
                 'jenis' => $jenis,
@@ -53,12 +42,12 @@ class KategoriTransaksiTest extends TestCase
                 'nominal' => 5000,
                 'uang_diterima' => 5000,
                 'kategori' => $kirim,
-                'keterangan' => 'Uji kategori ' . $kirim,
+                'keterangan' => 'Uji kategori '.$kirim,
             ]);
 
         $respons->assertCreated();
 
-        $dibuat = Transaksi::where('keterangan', 'Uji kategori ' . $kirim)
+        $dibuat = Transaksi::where('keterangan', 'Uji kategori '.$kirim)
             ->firstOrFail();
 
         $this->assertSame($harus, $dibuat->kategori);
@@ -66,8 +55,6 @@ class KategoriTransaksiTest extends TestCase
 
     public function test_kategori_tidak_dikenal_ditolak(): void
     {
-        $this->butuhMysql();
-
         $this->actingAs($this->admin())
             ->postJson('/admin/api/transaksi', [
                 'jenis' => 'pemasukan',

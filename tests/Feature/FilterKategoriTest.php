@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Transaksi;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -26,13 +27,6 @@ class FilterKategoriTest extends TestCase
         'resources/js/bendahara-laporan-kas.js',
     ];
 
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     /**
      * Ambil nilai enum kategori langsung dari struktur tabel.
      *
@@ -40,6 +34,12 @@ class FilterKategoriTest extends TestCase
      */
     private function enumsKategori(): array
     {
+        // SQLite tidak mendukung SHOW COLUMNS. Di sana daftar kategori
+        // bersumber dari konstanta model yang juga dipakai aplikasi.
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            return Transaksi::KATEGORI;
+        }
+
         $baris = DB::selectOne("SHOW COLUMNS FROM transaksi LIKE 'kategori'");
         $tipe = (string) ($baris->Type ?? '');
 
@@ -76,8 +76,6 @@ class FilterKategoriTest extends TestCase
 
     public function test_enum_kategori_database_terbaca(): void
     {
-        $this->butuhMysql();
-
         $enum = $this->enumsKategori();
 
         $this->assertNotEmpty($enum, 'Enum kategori transaksi harus terbaca.');
@@ -96,8 +94,6 @@ class FilterKategoriTest extends TestCase
     #[DataProvider('fileJsProvider')]
     public function test_kategori_filter_js_cocok_dengan_database(string $file): void
     {
-        $this->butuhMysql();
-
         $enum = array_map('strtolower', $this->enumsKategori());
         $nilaiJs = $this->nilaiKategoriJs($file);
 
@@ -110,7 +106,7 @@ class FilterKategoriTest extends TestCase
                 '/transaksi/kategori',
                 (string) $isi,
                 "$file tidak punya daftar kategori dan juga tidak "
-                . 'mengambil dari endpoint /transaksi/kategori.'
+                .'mengambil dari endpoint /transaksi/kategori.'
             );
 
             return;

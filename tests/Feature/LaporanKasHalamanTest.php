@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -16,14 +15,6 @@ use Tests\TestCase;
  */
 class LaporanKasHalamanTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -31,8 +22,6 @@ class LaporanKasHalamanTest extends TestCase
 
     public function test_halaman_laporan_kas_admin_terbuka(): void
     {
-        $this->butuhMysql();
-
         $this->actingAs($this->admin())
             ->get('/admin/laporan-kas')
             ->assertOk()
@@ -42,8 +31,6 @@ class LaporanKasHalamanTest extends TestCase
 
     public function test_skrip_laporan_kas_tidak_memaksa_elemen_tombol(): void
     {
-        $this->butuhMysql();
-
         $berkas = resource_path('js/admin-laporan-kas.js');
         $isi = file_get_contents($berkas);
 

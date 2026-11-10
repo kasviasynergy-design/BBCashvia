@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -15,14 +14,6 @@ use Tests\TestCase;
  */
 class LaporanKasApiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -30,8 +21,6 @@ class LaporanKasApiTest extends TestCase
 
     public function test_laporan_kas_mengambil_data_transaksi_dari_api(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->getJson('/admin/api/transaksi');
 
@@ -61,8 +50,6 @@ class LaporanKasApiTest extends TestCase
 
     public function test_kategori_transaksi_cocok_dengan_filter_laporan(): void
     {
-        $this->butuhMysql();
-
         $data = $this->actingAs($this->admin())
             ->getJson('/admin/api/transaksi')
             ->json('data');

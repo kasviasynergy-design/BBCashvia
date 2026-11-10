@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -14,16 +13,6 @@ use Tests\TestCase;
  */
 class TransaksiApiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped(
-                'Uji ini memerlukan koneksi MySQL (database bbcashvia).'
-            );
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -49,8 +38,6 @@ class TransaksiApiTest extends TestCase
 
     public function test_admin_dapat_membuat_transaksi(): void
     {
-        $this->butuhMysql();
-
         $jumlahAwal = Transaksi::count();
 
         $respons = $this->actingAs($this->admin())
@@ -68,8 +55,6 @@ class TransaksiApiTest extends TestCase
 
     public function test_metode_tidak_valid_ditolak(): void
     {
-        $this->butuhMysql();
-
         $payload = $this->payloadValid();
         $payload['metode'] = 'Tunai';
 
@@ -81,8 +66,6 @@ class TransaksiApiTest extends TestCase
 
     public function test_bendahara_tidak_dapat_membuat_transaksi_admin(): void
     {
-        $this->butuhMysql();
-
         $this->actingAs($this->bendahara())
             ->postJson('/admin/api/transaksi', $this->payloadValid())
             ->assertForbidden();

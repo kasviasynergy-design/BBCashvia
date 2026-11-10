@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Kelas;
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -18,14 +18,6 @@ use Tests\TestCase;
  */
 class TransaksiCrudTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -33,7 +25,15 @@ class TransaksiCrudTest extends TestCase
 
     private function bendahara(): User
     {
-        return User::whereRaw('LOWER(role) = ?', ['bendahara'])->firstOrFail();
+        $bendahara = User::whereRaw('LOWER(role) = ?', ['bendahara'])->firstOrFail();
+
+        // Bendahara harus terikat kelas agar dapat menulis data.
+        if (! $bendahara->id_kelas) {
+            $bendahara->id_kelas = Kelas::query()->value('id_kelas');
+            $bendahara->save();
+        }
+
+        return $bendahara;
     }
 
     /**
@@ -44,7 +44,7 @@ class TransaksiCrudTest extends TestCase
         $res = $this->actingAs($user)->postJson($prefixUrl, [
             'jenis' => 'pemasukan',
             'kategori' => 'kas',
-            'keterangan' => 'Uji CRUD ' . $prefix,
+            'keterangan' => 'Uji CRUD '.$prefix,
             'tanggal' => '2026-10-19',
             'nominal' => 10000,
             'uang_diterima' => 10000,
@@ -58,8 +58,6 @@ class TransaksiCrudTest extends TestCase
 
     public function test_tambah_transaksi_masuk_ke_database(): void
     {
-        $this->butuhMysql();
-
         $id = $this->buatTransaksi($this->admin(), 'tambah');
 
         $this->assertDatabaseHas('transaksi', [
@@ -71,8 +69,6 @@ class TransaksiCrudTest extends TestCase
 
     public function test_tambah_transaksi_mencatat_pengguna_yang_login(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
 
         $res = $this->actingAs($admin)->postJson('/admin/api/transaksi', [
@@ -100,20 +96,18 @@ class TransaksiCrudTest extends TestCase
         $this->assertNotSame('Palsu', (string) $res->json('data.pic'));
 
         $this->actingAs($admin)
-            ->getJson('/admin/api/transaksi/' . $id)
+            ->getJson('/admin/api/transaksi/'.$id)
             ->assertOk()
             ->assertJsonPath('data.dicatat_oleh', $admin->name);
     }
 
     public function test_ubah_transaksi_tidak_mengubah_pencatat_asli(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $id = $this->buatTransaksi($admin, 'pencatat');
 
         $this->actingAs($admin)
-            ->putJson('/admin/api/transaksi/' . $id, [
+            ->putJson('/admin/api/transaksi/'.$id, [
                 'keterangan' => 'Pencatat tetap',
                 'nominal' => 15000,
                 'uang_diterima' => 15000,
@@ -130,24 +124,20 @@ class TransaksiCrudTest extends TestCase
 
     public function test_lihat_detail_transaksi(): void
     {
-        $this->butuhMysql();
-
         $id = $this->buatTransaksi($this->admin(), 'detail');
 
         $this->actingAs($this->admin())
-            ->getJson('/admin/api/transaksi/' . $id)
+            ->getJson('/admin/api/transaksi/'.$id)
             ->assertOk()
             ->assertJsonPath('data.id_transaksi', $id);
     }
 
     public function test_ubah_transaksi_mengubah_database(): void
     {
-        $this->butuhMysql();
-
         $id = $this->buatTransaksi($this->admin(), 'ubah');
 
         $this->actingAs($this->admin())
-            ->putJson('/admin/api/transaksi/' . $id, [
+            ->putJson('/admin/api/transaksi/'.$id, [
                 'keterangan' => 'Sudah diubah',
                 'nominal' => 25000,
                 'uang_diterima' => 25000,
@@ -162,12 +152,10 @@ class TransaksiCrudTest extends TestCase
 
     public function test_hapus_transaksi_menghapus_dari_database(): void
     {
-        $this->butuhMysql();
-
         $id = $this->buatTransaksi($this->admin(), 'hapus');
 
         $this->actingAs($this->admin())
-            ->deleteJson('/admin/api/transaksi/' . $id)
+            ->deleteJson('/admin/api/transaksi/'.$id)
             ->assertOk();
 
         $this->assertDatabaseMissing('transaksi', [
@@ -177,8 +165,6 @@ class TransaksiCrudTest extends TestCase
 
     public function test_bendahara_dapat_crud_transaksi_kelasnya(): void
     {
-        $this->butuhMysql();
-
         $bendahara = $this->bendahara();
 
         $id = $this->buatTransaksi(
@@ -189,7 +175,7 @@ class TransaksiCrudTest extends TestCase
 
         // Ubah lewat endpoint bendahara.
         $this->actingAs($bendahara)
-            ->putJson('/bendahara/api/transaksi/' . $id, [
+            ->putJson('/bendahara/api/transaksi/'.$id, [
                 'keterangan' => 'Diubah bendahara',
                 'nominal' => 15000,
                 'uang_diterima' => 15000,
@@ -209,7 +195,7 @@ class TransaksiCrudTest extends TestCase
 
         // Hapus lewat endpoint bendahara.
         $this->actingAs($bendahara)
-            ->deleteJson('/bendahara/api/transaksi/' . $id)
+            ->deleteJson('/bendahara/api/transaksi/'.$id)
             ->assertOk();
 
         $this->assertDatabaseMissing('transaksi', [

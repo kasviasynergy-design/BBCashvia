@@ -24,14 +24,6 @@ use Tests\TestCase;
  */
 class AuditS308PerbaikanTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -40,7 +32,7 @@ class AuditS308PerbaikanTest extends TestCase
     private function buatKelas(string $prefix): Kelas
     {
         return Kelas::create([
-            'nama_kelas' => $prefix . ' ' . substr(uniqid(), -6),
+            'nama_kelas' => $prefix.' '.substr(uniqid(), -6),
             'tingkat' => 'XI',
             'tahun_ajaran' => '2026/2027',
         ]);
@@ -49,7 +41,7 @@ class AuditS308PerbaikanTest extends TestCase
     private function buatSiswa(Kelas $kelas, string $nama = 'Siswa Uji S308'): Siswa
     {
         return Siswa::create([
-            'nis' => 'S308' . substr(uniqid(), -8),
+            'nis' => 'S308'.substr(uniqid(), -8),
             'nama_siswa' => $nama,
             'id_kelas' => $kelas->id_kelas,
             'status' => 'Aktif',
@@ -60,7 +52,7 @@ class AuditS308PerbaikanTest extends TestCase
     {
         return (int) DB::table('iuran')->insertGetId([
             'id_kelas' => $kelas->id_kelas,
-            'nama_iuran' => $nama . ' ' . substr(uniqid(), -6),
+            'nama_iuran' => $nama.' '.substr(uniqid(), -6),
             'kategori' => 'bulanan',
             'nominal' => $nominal,
             'status' => 'aktif',
@@ -112,8 +104,6 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_cicilan_tidak_otomatis_lunas_sampai_terkumpul_penuh(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $kelas = $this->buatKelas('UJI S308 CICIL');
         $siswa = $this->buatSiswa($kelas);
@@ -141,8 +131,6 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_dashboard_memakai_target_iuran_nyata_dan_hitungan_cicilan(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
 
         $awal = $this->actingAs($admin)
@@ -192,8 +180,6 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_iuran_global_dihitung_untuk_admin(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
 
         $awal = $this->actingAs($admin)
@@ -203,7 +189,7 @@ class AuditS308PerbaikanTest extends TestCase
 
         DB::table('iuran')->insert([
             'id_kelas' => null,
-            'nama_iuran' => 'Iuran Global S308 ' . substr(uniqid(), -6),
+            'nama_iuran' => 'Iuran Global S308 '.substr(uniqid(), -6),
             'kategori' => 'tahunan',
             'nominal' => 5000,
             'status' => 'aktif',
@@ -227,8 +213,6 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_ubah_transaksi_menyelaraskan_detail_iuran(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $kelas = $this->buatKelas('UJI S308 DETAIL');
         $siswa = $this->buatSiswa($kelas);
@@ -256,7 +240,7 @@ class AuditS308PerbaikanTest extends TestCase
             'nominal' => 10000,
         ]);
 
-        $this->actingAs($admin)->putJson('/admin/api/transaksi/' . $idTransaksi, [
+        $this->actingAs($admin)->putJson('/admin/api/transaksi/'.$idTransaksi, [
             'id_iuran' => $iuranB,
             'nominal' => 20000,
             'uang_diterima' => 20000,
@@ -276,7 +260,7 @@ class AuditS308PerbaikanTest extends TestCase
         );
 
         // Melepas iuran harus menghapus rincian lama.
-        $this->actingAs($admin)->putJson('/admin/api/transaksi/' . $idTransaksi, [
+        $this->actingAs($admin)->putJson('/admin/api/transaksi/'.$idTransaksi, [
             'id_iuran' => null,
         ])->assertOk();
 
@@ -287,10 +271,8 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_mode_banyak_menolak_no_bukti_yang_sudah_ada(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
-        $noBukti = 'S308-' . substr(uniqid(), -8);
+        $noBukti = 'S308-'.substr(uniqid(), -8);
 
         $this->actingAs($admin)->postJson('/admin/api/transaksi', [
             'no_bukti' => $noBukti,
@@ -322,34 +304,30 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_kelas_dengan_iuran_tidak_dapat_dihapus(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $kelas = $this->buatKelas('UJI S308 HAPUS KELAS');
         $this->buatIuran($kelas, 10000);
 
         $this->actingAs($admin)
-            ->deleteJson('/admin/api/kelas/' . $kelas->id_kelas)
+            ->deleteJson('/admin/api/kelas/'.$kelas->id_kelas)
             ->assertStatus(409);
     }
 
     public function test_pengguna_dengan_transaksi_dihapus_dan_riwayat_tetap_utuh(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $kelas = $this->buatKelas('UJI S308 HAPUS USER');
 
         $user = User::create([
             'name' => 'Pengguna Uji S308',
-            'email' => 's308' . uniqid() . '@example.test',
+            'email' => 's308'.uniqid().'@example.test',
             'password' => 'Rahasia#123',
             'role' => 'bendahara',
             'jenis_viewer' => 'siswa',
             'id_kelas' => $kelas->id_kelas,
         ]);
 
-        $noBukti = 'S308U-' . substr(uniqid(), -8);
+        $noBukti = 'S308U-'.substr(uniqid(), -8);
 
         Transaksi::create([
             'no_bukti' => $noBukti,
@@ -364,7 +342,7 @@ class AuditS308PerbaikanTest extends TestCase
         ]);
 
         $this->actingAs($admin)
-            ->deleteJson('/admin/api/pengguna/' . $user->id_users)
+            ->deleteJson('/admin/api/pengguna/'.$user->id_users)
             ->assertOk();
 
         // Akun benar-benar hilang...
@@ -383,12 +361,10 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_akun_sendiri_tidak_dapat_dihapus(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
 
         $this->actingAs($admin)
-            ->deleteJson('/admin/api/pengguna/' . $admin->id_users)
+            ->deleteJson('/admin/api/pengguna/'.$admin->id_users)
             ->assertStatus(422);
 
         $this->assertDatabaseHas('users', [
@@ -398,8 +374,6 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_iuran_yang_sudah_dipakai_tidak_boleh_pindah_kelas(): void
     {
-        $this->butuhMysql();
-
         $admin = $this->admin();
         $kelasA = $this->buatKelas('UJI S308 IURAN A');
         $kelasB = $this->buatKelas('UJI S308 IURAN B');
@@ -408,7 +382,7 @@ class AuditS308PerbaikanTest extends TestCase
 
         $this->catatPembayaran($admin, $siswa, $idIuran, 10000);
 
-        $this->actingAs($admin)->putJson('/admin/api/iuran/' . $idIuran, [
+        $this->actingAs($admin)->putJson('/admin/api/iuran/'.$idIuran, [
             'id_kelas' => $kelasB->id_kelas,
             'nama_iuran' => 'Iuran Pindah',
             'kategori' => 'bulanan',
@@ -436,20 +410,20 @@ class AuditS308PerbaikanTest extends TestCase
 
     public function test_nama_siswa_sampai_100_karakter_tersimpan_utuh(): void
     {
-        $this->butuhMysql();
+        if (DB::connection()->getDriverName() === 'mysql') {
+            $panjang = (int) DB::table('information_schema.COLUMNS')
+                ->where('TABLE_SCHEMA', DB::getDatabaseName())
+                ->where('TABLE_NAME', 'siswa')
+                ->where('COLUMN_NAME', 'nama_siswa')
+                ->value('CHARACTER_MAXIMUM_LENGTH');
 
-        $panjang = (int) DB::table('information_schema.COLUMNS')
-            ->where('TABLE_SCHEMA', DB::getDatabaseName())
-            ->where('TABLE_NAME', 'siswa')
-            ->where('COLUMN_NAME', 'nama_siswa')
-            ->value('CHARACTER_MAXIMUM_LENGTH');
-
-        if ($panjang < 100) {
-            $this->markTestSkipped('Migrasi pelebaran nama_siswa belum diterapkan.');
+            if ($panjang < 100) {
+                $this->markTestSkipped('Migrasi pelebaran nama_siswa belum diterapkan.');
+            }
         }
 
         $kelas = $this->buatKelas('UJI S308 NAMA');
-        $nama = str_repeat('A', 80);
+        $nama = str_repeat('A', 100);
         $siswa = $this->buatSiswa($kelas, $nama);
 
         $this->assertSame(

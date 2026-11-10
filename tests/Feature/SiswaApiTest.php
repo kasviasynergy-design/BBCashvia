@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Siswa;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -17,14 +16,6 @@ use Tests\TestCase;
  */
 class SiswaApiTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -32,8 +23,6 @@ class SiswaApiTest extends TestCase
 
     public function test_index_siswa_mengembalikan_jenis_kelamin_dan_status_iuran(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->getJson('/admin/api/siswa');
 
@@ -62,8 +51,6 @@ class SiswaApiTest extends TestCase
 
     public function test_tambah_siswa_menyimpan_jenis_kelamin_dan_nomor_hp(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->postJson('/admin/api/siswa', [
                 'nis' => 'UJIWA001',
@@ -86,8 +73,6 @@ class SiswaApiTest extends TestCase
 
     public function test_nis_lebih_dari_11_karakter_ditolak(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->postJson('/admin/api/siswa', [
                 'nis' => '123456789012',
@@ -100,12 +85,10 @@ class SiswaApiTest extends TestCase
 
     public function test_ubah_siswa_dapat_mengosongkan_nomor_hp(): void
     {
-        $this->butuhMysql();
-
         $siswa = Siswa::firstOrFail();
 
         $this->actingAs($this->admin())
-            ->putJson('/admin/api/siswa/' . $siswa->id_siswa, [
+            ->putJson('/admin/api/siswa/'.$siswa->id_siswa, [
                 'nis' => $siswa->nis,
                 'nama' => $siswa->nama_siswa,
                 'id_kelas' => $siswa->id_kelas,

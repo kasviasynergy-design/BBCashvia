@@ -4,19 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class TransaksiReadTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu MySQL (bbcashvia).');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -24,8 +15,6 @@ class TransaksiReadTest extends TestCase
 
     public function test_index_transaksi_mengembalikan_data(): void
     {
-        $this->butuhMysql();
-
         // Buat satu transaksi lalu baca lewat endpoint.
         Transaksi::create([
             'no_bukti' => 'TRX-UJI-READ-1',

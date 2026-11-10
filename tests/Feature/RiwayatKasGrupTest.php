@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -19,14 +18,6 @@ use Tests\TestCase;
  */
 class RiwayatKasGrupTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -42,7 +33,7 @@ class RiwayatKasGrupTest extends TestCase
     {
         $user = $this->admin();
 
-        $noBukti = 'GRP-' . now()->format('ymdHis') . random_int(100, 999);
+        $noBukti = 'GRP-'.now()->format('ymdHis').random_int(100, 999);
 
         $baris = [
             ['nama_iuran' => 'Iuran Bulanan', 'nominal' => 15000],
@@ -63,7 +54,7 @@ class RiwayatKasGrupTest extends TestCase
                 'metode' => 'CH',
                 'jenis' => 'pemasukan',
                 'kategori' => 'Iuran',
-                'keterangan' => 'Pembayaran ' . $item['nama_iuran'],
+                'keterangan' => 'Pembayaran '.$item['nama_iuran'],
                 'periode' => 'Oktober 2026',
             ]);
         }
@@ -73,8 +64,6 @@ class RiwayatKasGrupTest extends TestCase
 
     public function test_pembayaran_multi_iuran_punya_no_bukti_sama(): void
     {
-        $this->butuhMysql();
-
         $baris = $this->buatPembayaranMultiIuran();
 
         $bukti = collect($baris)->pluck('no_bukti')->unique();
@@ -88,8 +77,6 @@ class RiwayatKasGrupTest extends TestCase
 
     public function test_api_mengirim_rincian_grup_pada_index(): void
     {
-        $this->butuhMysql();
-
         $this->buatPembayaranMultiIuran();
 
         $respons = $this->actingAs($this->admin())
@@ -135,14 +122,12 @@ class RiwayatKasGrupTest extends TestCase
 
     public function test_detail_transaksi_memuat_seluruh_rincian(): void
     {
-        $this->butuhMysql();
-
         $baris = $this->buatPembayaranMultiIuran();
 
         $id = $baris[0]->id_transaksi;
 
         $respons = $this->actingAs($this->admin())
-            ->getJson('/admin/api/transaksi/' . $id)
+            ->getJson('/admin/api/transaksi/'.$id)
             ->assertOk();
 
         $this->assertSame(
@@ -162,12 +147,10 @@ class RiwayatKasGrupTest extends TestCase
 
     public function test_transaksi_biasa_tetap_satu_rincian(): void
     {
-        $this->butuhMysql();
-
         $user = $this->admin();
 
         $t = Transaksi::create([
-            'no_bukti' => 'SINGLE-' . now()->format('ymdHis') . random_int(100, 999),
+            'no_bukti' => 'SINGLE-'.now()->format('ymdHis').random_int(100, 999),
             'id_user' => $user->id_users,
             'tanggal' => '2026-10-18 09:00:00',
             'nominal' => 12000,
@@ -180,7 +163,7 @@ class RiwayatKasGrupTest extends TestCase
         ]);
 
         $respons = $this->actingAs($this->admin())
-            ->getJson('/admin/api/transaksi/' . $t->id_transaksi)
+            ->getJson('/admin/api/transaksi/'.$t->id_transaksi)
             ->assertOk();
 
         $this->assertSame(
@@ -202,8 +185,6 @@ class RiwayatKasGrupTest extends TestCase
      */
     public function test_simpan_banyak_transaksi_jadi_satu_id(): void
     {
-        $this->butuhMysql();
-
         $respons = $this->actingAs($this->admin())
             ->postJson('/admin/api/transaksi', [
                 'transaksi' => [
@@ -245,7 +226,7 @@ class RiwayatKasGrupTest extends TestCase
         $idPertama = $respons->json('data.0.id_transaksi');
 
         $detail = $this->actingAs($this->admin())
-            ->getJson('/admin/api/transaksi/' . $idPertama)
+            ->getJson('/admin/api/transaksi/'.$idPertama)
             ->assertOk();
 
         $this->assertSame(3, (int) $detail->json('data.jumlah_rincian'));

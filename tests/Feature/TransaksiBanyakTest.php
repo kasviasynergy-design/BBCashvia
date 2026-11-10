@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Transaksi;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -15,14 +14,6 @@ use Tests\TestCase;
  */
 class TransaksiBanyakTest extends TestCase
 {
-
-    private function butuhMysql(): void
-    {
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            $this->markTestSkipped('Perlu koneksi MySQL.');
-        }
-    }
-
     private function admin(): User
     {
         return User::whereRaw('LOWER(role) = ?', ['admin'])->firstOrFail();
@@ -30,8 +21,6 @@ class TransaksiBanyakTest extends TestCase
 
     public function test_banyak_transaksi_tersimpan_semua(): void
     {
-        $this->butuhMysql();
-
         $sebelum = Transaksi::count();
 
         $respons = $this->actingAs($this->admin())
@@ -102,8 +91,6 @@ class TransaksiBanyakTest extends TestCase
 
     public function test_banyak_transaksi_gagal_total_bila_satu_baris_salah(): void
     {
-        $this->butuhMysql();
-
         $sebelum = Transaksi::count();
 
         $this->actingAs($this->admin())
@@ -140,14 +127,12 @@ class TransaksiBanyakTest extends TestCase
 
     public function test_banyak_transaksi_menolak_lebih_dari_50_baris(): void
     {
-        $this->butuhMysql();
-
         $baris = [];
         for ($i = 0; $i < 51; $i++) {
             $baris[] = [
                 'jenis' => 'pemasukan',
                 'kategori' => 'kas',
-                'keterangan' => 'Uji batas ' . $i,
+                'keterangan' => 'Uji batas '.$i,
                 'tanggal' => '2026-10-18',
                 'nominal' => 1000,
             ];
