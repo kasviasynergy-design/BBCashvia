@@ -1,0 +1,12 @@
+# Nixpacks sudah mendeteksi Laravel (composer.json) dan Vite (package.json).
+# Biarkan fase install tetap default: composer install + npm ci.
+#
+# Nixpacks menambahkan cache BuildKit di node_modules/.cache pada fase build.
+# Jika npm ci dijalankan di fase build, npm mencoba menghapus folder cache yang
+# sedang di-mount sehingga muncul:
+#   npm error code EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'
+#
+# Matikan cache fase build dan jalankan hanya build Vite.
+[phases.build]
+cmds = ["npm run build"]
+cacheDirectories = []
