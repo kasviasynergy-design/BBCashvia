@@ -1,5 +1,5 @@
 # Nixpacks sudah mendeteksi Laravel (composer.json) dan Vite (package.json).
-# Biarkan fase install tetap default: composer install + npm ci.
+# Fase install menjalankan composer install + npm ci.
 # Node dikunci lewat .nvmrc (22.12.0) karena Vite 7 membutuhkan Node >= 20.19.
 #
 # Nixpacks menambahkan cache BuildKit di node_modules/.cache pada fase build.
@@ -7,6 +7,19 @@
 # sedang di-mount sehingga muncul:
 #   npm error code EBUSY: resource busy or locked, rmdir '/app/node_modules/.cache'
 #
+# Pastikan npm tidak membuang devDependencies/optionalDependencies saat build.
+[variables]
+NPM_CONFIG_PRODUCTION = "false"
+
+# Fase install default Nixpacks, tetapi npm ci dipaksa menyertakan dev + optional.
+# Ini mencegah native binding Tailwind (@tailwindcss/oxide) dan lightningcss hilang.
+[phases.install]
+cmds = [
+    "mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx",
+    "composer install --ignore-platform-reqs",
+    "npm ci --include=dev --include=optional",
+]
+
 # Matikan cache fase build dan jalankan hanya build Vite.
 [phases.build]
 cmds = ["npm run build"]
