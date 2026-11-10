@@ -28,24 +28,26 @@ class FilterKategoriTest extends TestCase
     ];
 
     /**
-     * Ambil nilai enum kategori langsung dari struktur tabel.
+     * Ambil nilai enum kategori dari struktur tabel bila tersedia.
+     * Skema baru memakai varchar, sehingga fallback ke konstanta model.
      *
      * @return array<int, string>
      */
     private function enumsKategori(): array
     {
-        // SQLite tidak mendukung SHOW COLUMNS. Di sana daftar kategori
-        // bersumber dari konstanta model yang juga dipakai aplikasi.
-        if (DB::connection()->getDriverName() !== 'mysql') {
-            return Transaksi::KATEGORI;
+        // SQLite tidak mendukung SHOW COLUMNS.
+        if (DB::connection()->getDriverName() === 'mysql') {
+            $baris = DB::selectOne("SHOW COLUMNS FROM transaksi LIKE 'kategori'");
+            $tipe = (string) ($baris->Type ?? '');
+
+            preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $tipe, $cocok);
+
+            if (! empty($cocok[1])) {
+                return $cocok[1];
+            }
         }
 
-        $baris = DB::selectOne("SHOW COLUMNS FROM transaksi LIKE 'kategori'");
-        $tipe = (string) ($baris->Type ?? '');
-
-        preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $tipe, $cocok);
-
-        return $cocok[1] ?? [];
+        return Transaksi::KATEGORI;
     }
 
     /**
