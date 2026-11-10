@@ -3,4 +3,4 @@
 @section('kode', '503')
 @section('judul', 'Layanan Tidak Tersedia')
 @section('pesan', ($pesan ?? null)
-    ?: 'Basis data tidak dapat dihubungi. Kemungkinan layanan MySQL belum berjalan. Coba lagi beberapa saat.')
+    ?: 'Server tidak dapat terhubung ke basis data. Layanan mungkin sedang dimulai ulang atau database sedang tidak tersedia. Silakan coba beberapa saat lagi.')

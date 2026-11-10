@@ -47,12 +47,16 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        // Koneksi utama aplikasi. Di Railway, isi DB_HOST, DB_PORT,
+        // DB_DATABASE, DB_USERNAME, dan DB_PASSWORD lewat Variables
+        // service aplikasi (reference ke service MySQL). Nilai default
+        // di bawah hanya untuk pengembangan lokal.
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
+            'database' => env('DB_DATABASE', 'bbcashvia'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),
@@ -72,7 +76,7 @@ return [
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'laravel'),
+            'database' => env('DB_DATABASE', 'bbcashvia'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
             'unix_socket' => env('DB_SOCKET', ''),

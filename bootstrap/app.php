@@ -1,12 +1,15 @@
 <?php
 
+use App\Http\Middleware\RoleMiddleware;
+use App\Support\DatabaseFailure;
+use App\Support\ErrorPage;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -25,13 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         /*
         |================================================================
-        | S3-02: PENANGANAN GALAT TERPUSAT (GLOBAL ERROR HANDLING)
+        | PENANGANAN GALAT TERPUSAT
         |================================================================
         | Setiap galat aplikasi dibentuk di SATU tempat menjadi:
         |
@@ -43,14 +46,15 @@ return Application::configure(basePath: dirname(__DIR__))
         |                    memakai view resources/views/errors/*.
         |
         | Kategori yang dibentuk:
-        |  503 - kegagalan koneksi basis data (DB Connection Exception)
+        |  503 - kegagalan koneksi basis data (MySQL mati/terputus)
         |  403 - hak akses ditolak (RoleMiddleware dsb.)
         |  401 - pengguna belum login (tamu diarahkan ke halaman login)
         |  404 - halaman/data tidak ditemukan
         |  500 - galat internal tak terduga
         |
-        | Seluruh galat 500 & 503 dicatat ke berkas log khusus
-        | storage/logs/app-error.log (channel "error-file").
+        | Halaman error sengaja tidak memakai auth(), model Eloquent,
+        | session, atau query database apa pun. Dengan begitu halaman
+        | tetap dapat dirender saat MySQL mati total.
         */
 
         // ---------------------------------------------------------------
@@ -70,37 +74,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // ---------------------------------------------------------------
         $exceptions->render(function (Throwable $e, Request $request) use ($kelompokJson) {
             $api = $kelompokJson($request);
-
             $pesan = (string) $e->getMessage();
             $kode = $e instanceof HttpException ? $e->getStatusCode() : 0;
-
-            // ==========================================================
-            // (A) KEGAGALAN KONEKSI BASIS DATA → 503
-            // ==========================================================
-            // Ditandai oleh ConnectionException (koneksi terputus saat
-            // kueri), PDOException gagal tersambung, atau pesan khas
-            // SQLSTATE[HY000] [kode koneksi] dari MySQL.
-            $galatDatabase = $e instanceof \Illuminate\Database\ConnectionException
-                || $e instanceof PDOException
-                || ($e instanceof \Illuminate\Database\QueryException
-                    && preg_match('/sqlstate\[hy000\]\s*\[(2002|2003|2006|2013|1045|1044|1049)\]/', strtolower($pesan)));
-
-            if ($galatDatabase) {
-                // Catat ke berkas log khusus galat (channel error-file).
-                Log::channel('error-file')->error('Koneksi basis data gagal', [
-                    'url' => $request->getRequestUri(),
-                    'pesan' => $e->getMessage(),
-                ]);
-
-                return $api
-                    ? response()->json([
-                        'success' => false,
-                        'message' => 'Server tidak dapat mengakses basis data. Silakan coba beberapa saat lagi.',
-                    ], 503)
-                    : response()->view('errors.503', [
-                        'pesan' => null,
-                    ], 503);
-            }
 
             // Dibiarkan memakai perilaku default Laravel, supaya status
             // dan bentuk respons yang sudah diandalkan tes lama tidak
@@ -109,11 +84,27 @@ return Application::configure(basePath: dirname(__DIR__))
             //   AuthorizationException     -> 403 (gate/policy)
             //   ModelNotFoundException     -> 404 (mis. findOrFail)
             $dibiarkan = $e instanceof ValidationException
-                || $e instanceof \Illuminate\Auth\Access\AuthorizationException
+                || $e instanceof AuthorizationException
                 || $e instanceof ModelNotFoundException;
 
             if ($dibiarkan) {
                 return null;
+            }
+
+            // ==========================================================
+            // (A) KEGAGALAN KONEKSI BASIS DATA → 503
+            // ==========================================================
+            // Deteksi dibuat spesifik agar kesalahan SQL biasa (mis.
+            // kolom tidak ada) tetap menjadi 500, bukan 503.
+            if (DatabaseFailure::isConnectionFailure($e)) {
+                DatabaseFailure::report($e, $request, 'Koneksi basis data gagal');
+
+                return $api
+                    ? response()->json([
+                        'success' => false,
+                        'message' => 'Server tidak dapat mengakses basis data. Silakan coba beberapa saat lagi.',
+                    ], 503)
+                    : ErrorPage::render('errors.503', 503);
             }
 
             // ==========================================================
@@ -125,9 +116,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         'success' => false,
                         'message' => $pesan ?: 'Akses Ditolak: Anda tidak memiliki wewenang untuk aksi ini.',
                     ], 403)
-                    : response()->view('errors.403', [
-                        'pesan' => $pesan ?: null,
-                    ], 403);
+                    : ErrorPage::render('errors.403', 403, $pesan ?: null);
             }
 
             // ==========================================================
@@ -146,7 +135,21 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             // ==========================================================
-            // (D) HALAMAN/DATA TIDAK DITEMUKAN → 404
+            // (D) LAYANAN TIDAK TERSEDIA → 503
+            // ==========================================================
+            // Selain kegagalan DB, 503 juga dipakai Laravel saat mode
+            // maintenance. Jangan jatuhkan ke halaman 500.
+            if ($e instanceof HttpException && $kode === 503) {
+                return $api
+                    ? response()->json([
+                        'success' => false,
+                        'message' => 'Layanan sedang tidak tersedia. Silakan coba beberapa saat lagi.',
+                    ], 503)
+                    : ErrorPage::render('errors.503', 503, $pesan ?: null);
+            }
+
+            // ==========================================================
+            // (E) HALAMAN/DATA TIDAK DITEMUKAN → 404
             // ==========================================================
             if ($e instanceof NotFoundHttpException
                 || ($e instanceof HttpException && $kode === 404)) {
@@ -155,31 +158,23 @@ return Application::configure(basePath: dirname(__DIR__))
                         'success' => false,
                         'message' => 'Data atau alamat tujuan tidak ditemukan.',
                     ], 404)
-                    : response()->view('errors.404', [
-                        'pesan' => null,
-                    ], 404);
+                    : ErrorPage::render('errors.404', 404);
             }
 
             // ==========================================================
-            // (E) GALAT INTERNAL TAK TERDUGA → 500
+            // (F) GALAT INTERNAL TAK TERDUGA → 500
             // ==========================================================
             // Termasuk HttpException 5xx lainnya. Galat ini dicatat ke
             // berkas log khusus galat.
             if (! $e instanceof HttpException || $kode >= 500) {
-                Log::channel('error-file')->error('Galat internal aplikasi', [
-                    'url' => $request->getRequestUri(),
-                    'kelas' => $e::class,
-                    'pesan' => $e->getMessage(),
-                ]);
+                DatabaseFailure::report($e, $request, 'Galat internal aplikasi');
 
                 return $api
                     ? response()->json([
                         'success' => false,
                         'message' => 'Terjadi kesalahan internal pada server. Silakan coba lagi atau hubungi Admin.',
                     ], 500)
-                    : response()->view('errors.500', [
-                        'pesan' => null,
-                    ], 500);
+                    : ErrorPage::render('errors.500', 500);
             }
 
             // HttpException lain (< 500, mis. 429 throttle) tetap

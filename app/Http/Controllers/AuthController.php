@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\DatabaseFailure;
+use App\Support\ErrorPage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class AuthController extends Controller
 {
@@ -33,37 +35,78 @@ class AuthController extends Controller
             ],
         ]);
 
-        $user = User::where('email', $validated['email'])->first();
+        try {
+            // Query awal hanya untuk membedakan pesan "email tidak
+            // terdaftar" dari "password salah". Autentikasi tetap
+            // dilakukan oleh guard Laravel melalui Auth::attempt().
+            $user = User::where('email', $validated['email'])->first();
 
-        if (!$user) {
-            return $this->loginError(
-                $request,
-                'email',
-                'Email yang Anda masukkan salah atau tidak terdaftar.'
-            );
+            if (! $user) {
+                return $this->loginError(
+                    $request,
+                    'email',
+                    'Email yang Anda masukkan salah atau tidak terdaftar.'
+                );
+            }
+
+            if (! Hash::check($validated['password'], $user->password)) {
+                return $this->loginError(
+                    $request,
+                    'password',
+                    'Password yang Anda masukkan salah.'
+                );
+            }
+
+            if (strtolower((string) $user->role) !== $validated['role']) {
+                return $this->loginError(
+                    $request,
+                    'role',
+                    'Peran yang dipilih tidak sesuai dengan akun ini.'
+                );
+            }
+
+            if (! Auth::attempt([
+                'email' => $validated['email'],
+                'password' => $validated['password'],
+            ])) {
+                return $this->loginError(
+                    $request,
+                    'password',
+                    'Password yang Anda masukkan salah.'
+                );
+            }
+
+            /** @var User $user */
+            $user = Auth::user();
+
+            $request->session()->regenerate();
+
+            $user->last_login_at = now();
+            $user->save();
+        } catch (Throwable $e) {
+            // Hanya kegagalan koneksi database yang diubah menjadi 503.
+            // Bug aplikasi lain tetap dilempar ke handler global sebagai 500.
+            if (! DatabaseFailure::isConnectionFailure($e)) {
+                throw $e;
+            }
+
+            DatabaseFailure::report($e, $request, 'Kegagalan database saat login');
+
+            // Jangan tinggalkan sesi setengah jadi bila penyimpanan
+            // last_login_at atau session database ikut gagal.
+            try {
+                if (Auth::check()) {
+                    Auth::logout();
+                }
+
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            } catch (Throwable) {
+                // Session/cache bisa ikut mati ketika database down.
+            }
+
+            return $this->databaseError($request);
         }
-
-        if (!Hash::check($validated['password'], $user->password)) {
-            return $this->loginError(
-                $request,
-                'password',
-                'Password yang Anda masukkan salah.'
-            );
-        }
-
-        if (strtolower((string) $user->role) !== $validated['role']) {
-            return $this->loginError(
-                $request,
-                'role',
-                'Peran yang dipilih tidak sesuai dengan akun ini.'
-            );
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        $user->last_login_at = now();
-        $user->save();
 
         if ($user->must_change_password) {
             $redirect = route('change-password');
@@ -86,7 +129,7 @@ class AuthController extends Controller
             default => null,
         };
 
-        if (!$redirect) {
+        if (! $redirect) {
             Auth::logout();
 
             $request->session()->invalidate();
@@ -117,7 +160,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
@@ -169,6 +212,44 @@ class AuthController extends Controller
             'status',
             'Password berhasil diubah. Silakan login kembali.'
         );
+    }
+
+    /**
+     * Respons aman ketika database tidak dapat dihubungi saat login.
+     *
+     * JSON dipakai oleh form login berbasis fetch. Untuk form biasa,
+     * flash message hanya aman bila session tidak disimpan di database;
+     * jika session memakai database, langsung tampilkan halaman 503 agar
+     * proses penyimpanan session tidak menimbulkan error kedua.
+     */
+    private function databaseError(Request $request)
+    {
+        $message = 'Gagal terhubung ke server database. Silakan coba beberapa saat lagi.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+                'errors' => [
+                    'email' => [$message],
+                ],
+            ], 503);
+        }
+
+        $sessionAman = in_array(
+            config('session.driver'),
+            ['file', 'cookie', 'array'],
+            true
+        );
+
+        if ($sessionAman) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => $message])
+                ->withInput($request->only('email'));
+        }
+
+        return ErrorPage::render('errors.503', 503, $message);
     }
 
     /**

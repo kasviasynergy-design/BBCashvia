@@ -4,18 +4,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
 
     <title>@yield('kode', 'Galat') - BBCashvia | KASVIA Synergy</title>
 
+    {{--
+        CSS sengaja ditulis inline dan tidak memakai @vite/asset build.
+        Halaman error harus tetap tampil meskipun database mati, Vite
+        belum di-build, atau storage/framework/views bermasalah.
+    --}}
     <style>
         :root {
+            --brand: #4338ca;
+            --brand-dark: #312e81;
+            --brand-soft: #eef2ff;
             --bg-1: #eef2f7;
-            --bg-2: #e2e8f0;
+            --bg-2: #dbe4f0;
             --card: #ffffff;
             --text: #0f172a;
             --muted: #64748b;
             --border: #e2e8f0;
-            --accent: #4338ca;
         }
 
         * {
@@ -30,93 +38,176 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
-            color: var(--text);
             padding: 24px;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 12% 12%, rgba(67, 56, 202, .14), transparent 32%),
+                radial-gradient(circle at 88% 88%, rgba(14, 165, 233, .12), transparent 34%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
         }
 
         .sheet {
+            width: 100%;
+            max-width: 470px;
+            padding: 38px 40px 32px;
+            text-align: center;
             background: var(--card);
+            border: 1px solid rgba(226, 232, 240, .9);
             border-radius: 20px;
             box-shadow: 0 24px 60px rgba(15, 23, 42, .14);
-            max-width: 470px;
-            width: 100%;
-            padding: 44px 40px 34px;
-            text-align: center;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 26px;
+            text-align: left;
+        }
+
+        .brand__mark {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--brand), #0ea5e9);
+            box-shadow: 0 8px 20px rgba(67, 56, 202, .22);
+        }
+
+        .brand__text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+        }
+
+        .brand__text strong {
+            font-size: 16px;
+            letter-spacing: -.01em;
+        }
+
+        .brand__text small {
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
         }
 
         .sheet__kode {
-            font-size: 68px;
+            display: inline-block;
+            padding: 7px 14px;
+            border-radius: 999px;
+            color: var(--brand-dark);
+            font-size: 13px;
             font-weight: 800;
-            letter-spacing: -.03em;
-            line-height: 1;
-            color: var(--accent);
+            letter-spacing: .12em;
+            background: var(--brand-soft);
         }
 
         .sheet__judul {
-            font-size: 22px;
-            font-weight: 700;
-            margin: 14px 0 10px;
+            margin: 18px 0 10px;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -.02em;
         }
 
         .sheet__pesan {
             color: var(--muted);
             font-size: 15px;
             line-height: 1.65;
-            margin-bottom: 30px;
         }
 
-        .sheet__tombol {
-            display: inline-block;
-            background: var(--accent);
-            color: #fff;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 12px 36px;
+        .sheet__aksi {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 28px;
+        }
+
+        .tombol {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 11px 22px;
+            border: 1px solid transparent;
             border-radius: 12px;
-            transition: opacity .2s ease;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: opacity .2s ease, transform .2s ease;
         }
 
-        .sheet__tombol:hover {
-            opacity: .88;
+        .tombol:hover {
+            opacity: .9;
+            transform: translateY(-1px);
+        }
+
+        .tombol--utama {
+            color: #fff;
+            background: var(--brand);
+            box-shadow: 0 10px 22px rgba(67, 56, 202, .2);
+        }
+
+        .tombol--sekunder {
+            color: var(--brand-dark);
+            background: #fff;
+            border-color: var(--border);
         }
 
         .sheet__footer {
             margin-top: 30px;
             padding-top: 18px;
             border-top: 1px solid var(--border);
-            font-size: 12px;
             color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .sheet {
+                padding: 30px 24px 26px;
+            }
+
+            .sheet__judul {
+                font-size: 21px;
+            }
         }
     </style>
 </head>
 
 <body>
 
-    @php
-        // Tujuan tombol "Kembali": ke dashboard sesuai role bila sedang login.
-        $urlKembali = auth()->check()
-            ? match (strtolower((string) auth()->user()->role)) {
-                'admin' => '/dashboard/admin',
-                'bendahara' => '/dashboard/bendahara',
-                'viewer' => '/dashboard/viewer',
-                default => '/login',
-            }
-            : '/login';
-    @endphp
+    <main class="sheet" role="main" aria-labelledby="errorTitle">
 
-    <main class="sheet">
+        <div class="brand">
+            <span class="brand__mark" aria-hidden="true">B</span>
+            <span class="brand__text">
+                <strong>BBCashvia</strong>
+                <small>KASVIA Synergy</small>
+            </span>
+        </div>
 
         <p class="sheet__kode">@yield('kode', 'Galat')</p>
 
-        <h1 class="sheet__judul">@yield('judul', 'Terjadi Galat')</h1>
+        <h1 class="sheet__judul" id="errorTitle">@yield('judul', 'Terjadi Galat')</h1>
 
         <p class="sheet__pesan">@yield('pesan', 'Silakan coba lagi atau hubungi Admin.')</p>
 
-        <a class="sheet__tombol" href="{{ $urlKembali }}">
-            Kembali ke Beranda
-        </a>
+        <div class="sheet__aksi">
+            <a class="tombol tombol--utama" href="/login">Ke Halaman Login</a>
+            <button class="tombol tombol--sekunder" type="button" onclick="window.location.reload()">
+                Muat Ulang
+            </button>
+        </div>
 
         <footer class="sheet__footer">
             BBCashvia &mdash; KASVIA Synergy &bull; Sistem Pengelolaan Kas Kelas

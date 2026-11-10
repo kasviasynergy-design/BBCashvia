@@ -262,6 +262,36 @@
 
                 </div>
 
+                {{-- Fallback tanpa JavaScript: tampilkan error validasi,
+                     error login, atau flash message dari server. --}}
+                @if ($errors->any())
+                    <div
+                        class="alert"
+                        role="alert"
+                        style="margin-top: 0; margin-bottom: 18px;">
+                        <span
+                            class="material-symbols-outlined"
+                            aria-hidden="true">
+                            error
+                        </span>
+                        <p>{{ $errors->first() }}</p>
+                    </div>
+                @endif
+
+                @if (session('status'))
+                    <div
+                        class="alert"
+                        role="status"
+                        style="margin-top: 0; margin-bottom: 18px; background: #ecfdf5; border-color: #a7f3d0;">
+                        <span
+                            class="material-symbols-outlined"
+                            aria-hidden="true">
+                            check_circle
+                        </span>
+                        <p style="color: #065f46;">{{ session('status') }}</p>
+                    </div>
+                @endif
+
                 <!-- Form autentikasi -->
                 <form
                     class="login-form"
