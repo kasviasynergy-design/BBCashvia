@@ -3,6 +3,45 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+/*
+|--------------------------------------------------------------------------
+| Fallback Variabel MySQL Railway
+|--------------------------------------------------------------------------
+|
+| Railway menyuntikkan MYSQLHOST, MYSQLPORT, MYSQLDATABASE, MYSQLUSER,
+| MYSQLPASSWORD, dan MYSQL_URL ketika service MySQL di-link ke service
+| aplikasi. Jika DB_* belum diisi (atau masih memakai nilai lokal),
+| pakai nilai dari service MySQL tersebut supaya aplikasi langsung
+| terhubung tanpa konfigurasi manual satu per satu.
+|
+*/
+$railwayMysqlUrl = env('DB_URL') ?: env('MYSQL_PRIVATE_URL') ?: env('MYSQL_URL');
+
+$dbHost = env('DB_HOST');
+if (! $dbHost || in_array($dbHost, ['127.0.0.1', 'localhost'], true)) {
+    $dbHost = env('MYSQLHOST') ?: $dbHost ?: '127.0.0.1';
+}
+
+$dbPort = env('DB_PORT');
+if (! $dbPort || $dbPort === '3306') {
+    $dbPort = env('MYSQLPORT') ?: $dbPort ?: '3306';
+}
+
+$dbDatabase = env('DB_DATABASE');
+if (! $dbDatabase || $dbDatabase === 'bbcashvia') {
+    $dbDatabase = env('MYSQLDATABASE') ?: $dbDatabase ?: 'bbcashvia';
+}
+
+$dbUsername = env('DB_USERNAME');
+if (! $dbUsername || $dbUsername === 'root') {
+    $dbUsername = env('MYSQLUSER') ?: $dbUsername ?: 'root';
+}
+
+$dbPassword = env('DB_PASSWORD');
+if ($dbPassword === null || $dbPassword === '') {
+    $dbPassword = env('MYSQLPASSWORD') ?: $dbPassword ?: '';
+}
+
 return [
 
     /*
@@ -53,12 +92,12 @@ return [
         // di bawah hanya untuk pengembangan lokal.
         'mysql' => [
             'driver' => 'mysql',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'bbcashvia'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'url' => $railwayMysqlUrl,
+            'host' => $dbHost,
+            'port' => $dbPort,
+            'database' => $dbDatabase,
+            'username' => $dbUsername,
+            'password' => $dbPassword,
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
@@ -73,12 +112,12 @@ return [
 
         'mariadb' => [
             'driver' => 'mariadb',
-            'url' => env('DB_URL'),
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'bbcashvia'),
-            'username' => env('DB_USERNAME', 'root'),
-            'password' => env('DB_PASSWORD', ''),
+            'url' => $railwayMysqlUrl,
+            'host' => $dbHost,
+            'port' => $dbPort,
+            'database' => $dbDatabase,
+            'username' => $dbUsername,
+            'password' => $dbPassword,
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),

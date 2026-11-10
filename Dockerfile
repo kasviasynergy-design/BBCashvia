@@ -38,5 +38,9 @@ RUN php artisan storage:link
 # Expose port
 EXPOSE 8000
 
-# Jalankan Laravel development server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Jalankan Laravel.
+# - config:clear memastikan variabel environment Railway benar-benar dibaca.
+# - migrate --force dijalankan best-effort: jika database sedang mati,
+#   aplikasi tetap start dan menampilkan halaman 503, bukan crash.
+# - PORT dari Railway dipakai jika tersedia; fallback ke 8000 untuk lokal.
+CMD php artisan config:clear; php artisan migrate --force || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
