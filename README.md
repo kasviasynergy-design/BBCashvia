@@ -1,59 +1,241 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# BBCashvia
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi manajemen kas kelas berbasis **Laravel 12** untuk mengelola data siswa, kelas, iuran, transaksi, dan laporan kas. Aplikasi mendukung tiga peran: **Admin**, **Bendahara**, dan **Viewer**.
 
-## About Laravel
+## Live
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Aplikasi: <https://bbcashvia-production.up.railway.app>
+- Health check: <https://bbcashvia-production.up.railway.app/up>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fitur
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Login multi-role: Admin, Bendahara, dan Viewer.
+- Dashboard terpisah untuk Admin, Bendahara, dan Viewer.
+- Manajemen pengguna (tambah, ubah, hapus, atur role).
+- Manajemen data siswa dan kelas.
+- Manajemen iuran (sekali bayar, mingguan, bulanan, tahunan).
+- Pencatatan transaksi pemasukan dan pengeluaran.
+- Riwayat transaksi dan laporan kas.
+- Ganti password dengan validasi kekuatan password.
+- Halaman error aman saat database bermasalah (HTTP 503, tanpa fatal error).
+- API JSON untuk data dashboard, siswa, kelas, iuran, dan transaksi.
 
-## Learning Laravel
+## Teknologi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP 8.2
+- Laravel 12
+- MySQL / MariaDB
+- Vite 7 + Tailwind CSS 4
+- PHPUnit 11
+- Railway (Dockerfile, PHP CLI server port 8000)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Akun
 
-## Laravel Sponsors
+### Akun produksi Railway
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Akun lama sudah diimpor ke database Railway. **Password mengikuti password lama masing-masing akun.**
 
-### Premium Partners
+| Nama | Email | Role |
+|---|---|---|
+| A Azis | `admin@gmail.com` | Admin |
+| Nuraeni naziroh | `nuraeninaziroh51@gmail.com` | Bendahara |
+| Andi Pratama | `andipratama@gmail.com` | Bendahara |
+| Budi Santoso | `budisantoso@gmail.com` | Viewer |
+| Gesya Fikry | `gesyafikry@gmail.com` | Admin |
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Saat login, pilih role yang sesuai dengan akun. Akun **Andi Pratama** dan **Gesya Fikry** akan diminta mengganti password pada login pertama.
 
-## Contributing
+### Akun demo (seeder)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Akun berikut hanya dibuat jika menjalankan `php artisan db:seed` pada database kosong:
 
-## Code of Conduct
+| Email | Password | Role |
+|---|---|---|
+| `admin@bbcashvia.test` | `Admin123!` | Admin |
+| `bendahara@bbcashvia.test` | `Bendahara123!` | Bendahara |
+| `viewer@bbcashvia.test` | `Viewer123!` | Viewer |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+> **Penting:** jangan menjalankan `php artisan db:seed` di production yang sudah berisi data. Seeder akan membuat akun demo dan mereset password akun demo tersebut.
 
-## Security Vulnerabilities
+## Menjalankan di Lokal
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Prasyarat
 
-## License
+- PHP >= 8.2 dengan ekstensi `pdo_mysql`
+- Composer
+- Node.js >= 22.12
+- MySQL / MariaDB (XAMPP/Laragon juga bisa)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Langkah
+
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+```
+
+Buat database MySQL, misalnya `bbcashvia`, lalu sesuaikan konfigurasi di `.env`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=bbcashvia
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Jalankan migrasi dan seeder:
+
+```bash
+php artisan migrate --seed
+```
+
+Install dan build aset frontend:
+
+```bash
+npm install
+npm run build
+```
+
+Jalankan aplikasi:
+
+```bash
+php artisan serve
+```
+
+Atau gunakan perintah bawaan Composer:
+
+```bash
+composer run setup   # install dependency, generate key, migrate, build aset
+composer run dev     # server + queue + log + Vite
+```
+
+## Konfigurasi Database
+
+### Lokal
+
+Gunakan MySQL/MariaDB. Konfigurasi default ada di `.env.example`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=bbcashvia
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### Railway
+
+Di service aplikasi Railway, hubungkan variabel database ke service MySQL. Cara paling aman adalah memakai referensi variabel:
+
+```env
+MYSQLHOST=${{MySQL.MYSQLHOST}}
+MYSQLPORT=${{MySQL.MYSQLPORT}}
+MYSQLDATABASE=${{MySQL.MYSQLDATABASE}}
+MYSQLUSER=${{MySQL.MYSQLUSER}}
+MYSQLPASSWORD=${{MySQL.MYSQLPASSWORD}}
+
+DB_HOST=${{MySQL.MYSQLHOST}}
+DB_PORT=${{MySQL.MYSQLPORT}}
+DB_DATABASE=${{MySQL.MYSQLDATABASE}}
+DB_USERNAME=${{MySQL.MYSQLUSER}}
+DB_PASSWORD=${{MySQL.MYSQLPASSWORD}}
+DB_CONNECTION=mysql
+```
+
+`config/database.php` memprioritaskan variabel `MYSQL*` dari service MySQL Railway di atas `DB_*` manual.
+
+Variabel production yang disarankan:
+
+```env
+APP_ENV=production
+APP_DEBUG=false
+SESSION_DRIVER=file
+CACHE_STORE=file
+```
+
+`SESSION_DRIVER=file` dan `CACHE_STORE=file` membuat halaman login dan halaman error tetap bisa tampil saat database mati.
+
+Setelah deploy pertama, jalankan migrasi di container:
+
+```bash
+php artisan migrate --force
+```
+
+## Deployment Railway
+
+1. Buat project Railway dengan dua service: **aplikasi** dan **MySQL**.
+2. Hubungkan repository GitHub ke service aplikasi.
+3. Railway akan memakai `Dockerfile` pada repository ini.
+4. Tambahkan variabel database seperti pada bagian **Konfigurasi Database**.
+5. Pastikan service aplikasi dan MySQL berada di project/environment yang sama agar hostname `mysql.railway.internal` bisa diakses.
+6. Deploy. Health check tersedia di `/up`.
+7. Jalankan `php artisan migrate --force` bila database masih kosong.
+
+Dockerfile menjalankan:
+
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+
+## Testing
+
+```bash
+php artisan test
+```
+
+Format kode:
+
+```bash
+./vendor/bin/pint
+```
+
+Test suite menggunakan `RefreshDatabase` dan seeder, sehingga setiap test berjalan pada database bersih.
+
+## Struktur Proyek
+
+```text
+app/
+  Http/Controllers/       # Controller web dan API
+  Models/                 # Model Eloquent
+  Support/                # Helper error handling database
+bootstrap/
+  app.php                 # Konfigurasi exception Laravel 12
+config/
+  database.php            # Prioritas MYSQL* Railway dan fallback DB_*
+  session.php             # Default session driver: file
+  cache.php               # Default cache store: file
+database/
+  migrations/             # Migrasi baseline + arsip migrasi lama
+  seeders/                # Seeder akun demo
+resources/
+  views/                  # Blade views
+routes/
+  web.php                 # Route web dan API internal
+  api.php                 # Route API
+public/
+  build/                  # Aset Vite hasil build
+Dockerfile                # Deployment Railway
+```
+
+## Penanganan Error Database
+
+- Kegagalan koneksi database saat login atau akses halaman publik ditangkap dan dikembalikan sebagai **HTTP 503**.
+- Request JSON menerima respons JSON `503`; request web menerima halaman error aman.
+- `QueryException` yang bukan kegagalan koneksi dikembalikan sebagai **HTTP 500**.
+- Halaman error tidak memakai `Auth::user()`, Eloquent, session, atau komponen lain yang bergantung pada database.
+- Pesan login saat database mati: `Gagal terhubung ke server database. Silakan coba beberapa saat lagi.`
+
+## Catatan Migrasi
+
+- Migrasi baseline ada di `database/migrations/2026_11_10_000000_create_final_schema.php`.
+- Baseline tidak mengubah database lama yang sudah memiliki tabel `users` dan `transaksi`.
+- Migrasi lama diarsipkan di `database/migrations/archive`.
+- Kolom mirip enum memakai `string` agar kompatibel dengan SQLite (testing) dan MySQL (production).
+- Baseline tidak membuat foreign key agar aman untuk database lama dan pengujian.
+
+## Lisensi
+
+Proyek ini menggunakan lisensi MIT.
