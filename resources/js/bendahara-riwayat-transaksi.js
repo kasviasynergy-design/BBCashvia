@@ -135,7 +135,7 @@
             jenis: (jenisDb === "PENGELUARAN" || jenisDb === "K") ? "keluar" : "masuk",
             kategori: t.kategori ?? "",
             keterangan: t.keterangan ?? "",
-            kelas: t.nama_siswa ?? "",
+            kelas: t.nama_kelas ?? "",
             tanggal: tanggal,
             waktu: waktu || "-",
             metode: labelMetode(t.metode),

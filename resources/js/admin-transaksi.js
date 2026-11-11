@@ -508,7 +508,7 @@ import {
                     id_siswa: t.id_siswa ?? "",
                     id_iuran: t.id_iuran ?? "",
                     nama_siswa: t.siswa?.nama_siswa ?? t.nama_siswa ?? "",
-                    kelas: kelasDariId(t.id_kelas) || (t.siswa?.nama_kelas ?? t.nama_siswa ?? ""),
+                    kelas: kelasDariId(t.id_kelas) || t.nama_kelas || "",
                     tanggal: String(t.tanggal_format ?? t.tanggal ?? "").slice(0, 10),
                     waktu: t.waktu ?? "",
                     tagihan: (floatval(t.nominal ?? 0)),
