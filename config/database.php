@@ -15,32 +15,16 @@ use Pdo\Mysql;
 | terhubung tanpa konfigurasi manual satu per satu.
 |
 */
-$railwayMysqlUrl = env('DB_URL') ?: env('MYSQL_PRIVATE_URL') ?: env('MYSQL_URL');
+$railwayMysqlUrl = env('DB_URL') ?: env('MYSQL_PRIVATE_URL');
 
-$dbHost = env('DB_HOST');
-if (! $dbHost || in_array($dbHost, ['127.0.0.1', 'localhost'], true)) {
-    $dbHost = env('MYSQLHOST') ?: $dbHost ?: '127.0.0.1';
-}
-
-$dbPort = env('DB_PORT');
-if (! $dbPort || $dbPort === '3306') {
-    $dbPort = env('MYSQLPORT') ?: $dbPort ?: '3306';
-}
-
-$dbDatabase = env('DB_DATABASE');
-if (! $dbDatabase || $dbDatabase === 'bbcashvia') {
-    $dbDatabase = env('MYSQLDATABASE') ?: $dbDatabase ?: 'bbcashvia';
-}
-
-$dbUsername = env('DB_USERNAME');
-if (! $dbUsername || $dbUsername === 'root') {
-    $dbUsername = env('MYSQLUSER') ?: $dbUsername ?: 'root';
-}
-
-$dbPassword = env('DB_PASSWORD');
-if ($dbPassword === null || $dbPassword === '') {
-    $dbPassword = env('MYSQLPASSWORD') ?: $dbPassword ?: '';
-}
+// Jika service MySQL Railway di-link, variabel MYSQL* adalah sumber
+// paling akurat. Nilai DB_* manual bisa saja masih berisi host lama
+// atau salah ketik, jadi MYSQL* diprioritaskan.
+$dbHost = env('MYSQLHOST') ?: env('DB_HOST') ?: '127.0.0.1';
+$dbPort = env('MYSQLPORT') ?: env('DB_PORT') ?: '3306';
+$dbDatabase = env('MYSQLDATABASE') ?: env('DB_DATABASE') ?: 'bbcashvia';
+$dbUsername = env('MYSQLUSER') ?: env('DB_USERNAME') ?: 'root';
+$dbPassword = env('MYSQLPASSWORD') ?: env('DB_PASSWORD') ?: '';
 
 return [
 
