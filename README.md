@@ -8,7 +8,7 @@
 > Proyek Uji Kompetensi Keahlian (UKK) Rekayasa Perangkat Lunak / PPLG — Tahun Ajaran 2026/2027  
 > **Tema:** Local Digital Solution &bull; **Mitra:** Manajemen Kas Kelas Sekolah
 
-🔗 **Live Demo:** [bbcashvia-production.up.railway.app](https://bbcashvia-production.up.railway.app)
+🔗 **Live Demo:** [bbcashvia.up.railway.app](https://bbcashvia.up.railway.app)
 
 ---
 
