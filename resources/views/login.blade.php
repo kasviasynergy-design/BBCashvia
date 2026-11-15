@@ -144,7 +144,7 @@
                 </h1>
 
                 <p class="card__lead">
-                    Silakan tentukan hak akses peran Anda untuk mengelola atau meninjau pembukuan kas sekolah.
+                    Silakan tentukan hak akses peran Anda untuk mengelola atau meninjau pembukuan kas kelas.
                 </p>
 
                 <!-- Pilihan peran -->
@@ -336,7 +336,7 @@
                                 type="email"
                                 id="identity"
                                 name="email"
-                                placeholder="contoh: asepbetmen@gmail.com"
+                                placeholder="contoh: nama@email.com"
                                 autocomplete="username"
                                 value="{{ old('email') }}"
                                 required
@@ -567,16 +567,15 @@
 
             <p class="site-footer__copy">
                 <center>
-                    BBCashvia
-                    <strong>KASVIA Synergy</strong>
+                    <strong>BBCashvia</strong>
+                    &bull;
+                    KASVIA Synergy
 
                     <span aria-hidden="true">
                         &bull;
                     </span>
 
-                    Copyright &copy; 2026 BBCashvia
-                    &bull;
-                    KASVIA Synergy.
+                    Copyright &copy; 2026
                 </center>
             </p>
 
@@ -700,7 +699,7 @@
             <!-- Hubungi Admin via WhatsApp -->
             <a
                 class="btn-primary btn-primary--block"
-                href="https://wa.me/+6287749797136"
+                href="https://wa.me/6287749797136"
                 target="_blank"
                 rel="noopener noreferrer"
             >
@@ -751,7 +750,7 @@
             </h2>
 
             <p id="successText">
-                Mengalihkan ke dasbor Anda&hellip;
+                Mengalihkan ke dashboard Anda&hellip;
             </p>
 
             <span

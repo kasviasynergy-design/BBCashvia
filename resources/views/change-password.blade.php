@@ -12,7 +12,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>
-        Buat Kata Sandi Baru -  BBCashvia
+        Buat Kata Sandi Baru - BBCashvia
     </title>
 
     <link rel="preconnect"
