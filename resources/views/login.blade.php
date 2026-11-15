@@ -255,7 +255,7 @@
                         <p id="roleNoteText">
                             <strong>Super Administrator:</strong>
                             Konfigurasi sistem global, master siswa &amp; kelas,
-                            hak otorisasi rekening, serta riwayat audit transaksi menyeluruh.
+                            serta riwayat audit transaksi menyeluruh.
                         </p>
 
                     </div>
