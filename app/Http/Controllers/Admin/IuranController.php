@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\MembatasiKelas;
+use App\Http\Controllers\Concerns\MenolakDuplikat;
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -13,6 +15,7 @@ use Illuminate\Validation\Rule;
 class IuranController extends Controller
 {
     use MembatasiKelas;
+    use MenolakDuplikat;
     use \App\Http\Controllers\Concerns\MengunciIdempotensi;
 
     public function index(Request $request): JsonResponse
@@ -109,7 +112,7 @@ class IuranController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         /* =====================================================
            S3-07 - PENGAMAN SIMPAN GANDA (IDEMPOTENSI)
@@ -133,7 +136,7 @@ class IuranController extends Controller
      * Logika penyimpanan iuran asli (utuh), hanya respons akhir yang
      * dibungkus pengaman idempotensi.
      */
-    private function tambahIuran(Request $request): JsonResponse
+    private function tambahIuran(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'nama_iuran' => ['required', 'string', 'max:100'],
@@ -173,6 +176,47 @@ class IuranController extends Controller
             ], 403);
 
             return $this->responIdempotensi($request, $respons);
+        }
+
+        // SKKNI-3: tolak iuran dengan kombinasi kunci yang sama.
+        // Kunci = nama iuran (tanpa beda huruf besar/kecil) + kelas +
+        // kategori + jatuh tempo. Kolom nullable dibandingkan dengan
+        // whereNull agar NULL tidak dianggap sama dengan nilai lain.
+        $duplikat = DB::table('iuran')
+            ->whereRaw(
+                'LOWER(nama_iuran) = ?',
+                [mb_strtolower(trim($validated['nama_iuran']))]
+            )
+            ->where('kategori', $validated['kategori'])
+            ->when(
+                $idKelas === null,
+                fn ($q) => $q->whereNull('id_kelas'),
+                fn ($q) => $q->where('id_kelas', $idKelas)
+            )
+            ->when(
+                empty($validated['jatuh_tempo']),
+                fn ($q) => $q->whereNull('jatuh_tempo'),
+                fn ($q) => $q->where('jatuh_tempo', $validated['jatuh_tempo'])
+            )
+            ->exists();
+
+        $responsDuplikat = $this->tolakDuplikat(
+            $request,
+            $duplikat,
+            'Iuran dengan nama, kelas, kategori, dan jatuh tempo yang sama sudah ada. Data ganda ditolak.',
+            ['nama_iuran' => ['Iuran serupa sudah terdaftar.']]
+        );
+
+        if ($responsDuplikat !== null) {
+            if ($responsDuplikat instanceof JsonResponse) {
+                return $this->responIdempotensi($request, $responsDuplikat);
+            }
+
+            // Jalur form biasa: lepaskan klaim idempotensi karena
+            // penyimpanan dibatalkan (bukan respons sukses).
+            $this->lepaskanIdempotensi($request);
+
+            return $responsDuplikat;
         }
 
         $data = [

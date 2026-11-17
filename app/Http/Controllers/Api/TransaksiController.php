@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Concerns\MembatasiKelas;
 use App\Http\Controllers\Concerns\MenghitungSaldoKas;
+use App\Http\Controllers\Concerns\MenolakDuplikat;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTransaksiRequest;
 use App\Models\DetailTransaksi;
@@ -20,6 +21,7 @@ class TransaksiController extends Controller
 {
     use MembatasiKelas;
     use MenghitungSaldoKas;
+    use MenolakDuplikat;
     use \App\Http\Controllers\Concerns\MengunciIdempotensi;
 
     public function index(Request $request)
@@ -248,7 +250,10 @@ class TransaksiController extends Controller
                 ->store('bukti-transaksi', 'public');
         }
 
-        $transaksi = DB::transaction(function () use ($validated) {
+        $transaksi = DB::transaction(function () use ($validated, $request) {
+            // SKKNI-3: tolak transaksi identik sebelum INSERT.
+            $this->pastikanTransaksiTidakDuplikat($request, [$validated]);
+
             // Sisa tagihan dicek di dalam transaksi database (baris
             // pembayaran lama terkunci) agar cicilan tidak bisa melebihi
             // tagihan, termasuk saat dua pembayaran masuk bersamaan.
@@ -313,9 +318,14 @@ class TransaksiController extends Controller
             $idKelasDibatasi,
             $idUser,
             $namaPetugas,
-            $noBuktiUmum
+            $noBuktiUmum,
+            $request
         ) {
             $hasil = [];
+
+            // SKKNI-3: tolak transaksi ganda, baik yang sudah ada di
+            // database maupun yang berulang di dalam kiriman ini.
+            $this->pastikanTransaksiTidakDuplikat($request, $baris);
 
             // Sisa tagihan seluruh batch dicek di depan (dengan kunci
             // baris pembayaran) supaya cicilan dalam satu kali simpan
@@ -846,6 +856,134 @@ class TransaksiController extends Controller
         }
 
         return ['periksa_status' => $periksaStatus];
+    }
+
+    /**
+     * SKKNI-3: menyusun kunci duplikat satu baris transaksi.
+     *
+     * Pembayaran iuran memakai kunci (siswa + iuran + tanggal + nominal).
+     * Transaksi umum memakai (siswa/nama pembayar + jenis + kategori +
+     * tanggal + nominal). Nominal ikut diperiksa agar dua transaksi
+     * berbeda pada hari yang sama tidak ikut tertolak; cicilan dengan
+     * nominal berbeda tetap diperbolehkan.
+     *
+     * @param  array<string, mixed>  $baris
+     * @return array<string, mixed>
+     */
+    private function kunciDuplikatTransaksi(array $baris): array
+    {
+        $tanggal = $baris['tanggal'] ?? null;
+
+        return [
+            'id_siswa' => !empty($baris['id_siswa'])
+                ? (int) $baris['id_siswa']
+                : null,
+            'id_iuran' => !empty($baris['id_iuran'])
+                ? (int) $baris['id_iuran']
+                : null,
+            'jenis' => strtolower((string) ($baris['jenis'] ?? '')),
+            'kategori' => $baris['kategori'] ?? null,
+            'tanggal' => $tanggal !== null && $tanggal !== ''
+                ? date('Y-m-d', strtotime((string) $tanggal))
+                : null,
+            'nominal' => round((float) ($baris['nominal'] ?? 0), 2),
+            'nama_pembayar' => $baris['nama_pembayar'] ?? null,
+        ];
+    }
+
+    /**
+     * Query pencarian transaksi yang identik dengan kunci duplikat.
+     *
+     * @param  array<string, mixed>  $kunci
+     */
+    private function queryDuplikatTransaksi(
+        array $kunci
+    ): \Illuminate\Database\Eloquent\Builder {
+        $query = Transaksi::query()
+            ->where('jenis', $kunci['jenis'])
+            ->whereDate('tanggal', $kunci['tanggal'])
+            ->whereBetween('nominal', [
+                (float) $kunci['nominal'] - 0.009,
+                (float) $kunci['nominal'] + 0.009,
+            ]);
+
+        if ($kunci['id_siswa'] !== null) {
+            $query->where('id_siswa', $kunci['id_siswa']);
+        } else {
+            $query->whereNull('id_siswa');
+
+            if (!empty($kunci['nama_pembayar'])) {
+                $query->where('nama_pembayar', $kunci['nama_pembayar']);
+            } else {
+                $query->whereNull('nama_pembayar');
+            }
+        }
+
+        if ($kunci['id_iuran'] !== null) {
+            $query->where('id_iuran', $kunci['id_iuran']);
+        } else {
+            $query->whereNull('id_iuran')
+                ->where('kategori', $kunci['kategori']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * SKKNI-3: menolak transaksi ganda, baik terhadap database maupun
+     * terhadap baris lain dalam satu kiriman (mode banyak).
+     *
+     * @param  array<int, array<string, mixed>>  $barisBatch
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     */
+    private function pastikanTransaksiTidakDuplikat(
+        Request $request,
+        array $barisBatch
+    ): void {
+        $sudahAdaDiBatch = [];
+
+        foreach ($barisBatch as $baris) {
+            $kunci = $this->kunciDuplikatTransaksi($baris);
+
+            $sidik = implode('|', [
+                $kunci['id_siswa'] ?? 'null',
+                $kunci['id_iuran'] ?? 'null',
+                $kunci['jenis'],
+                $kunci['kategori'] ?? 'null',
+                $kunci['tanggal'] ?? 'null',
+                number_format((float) $kunci['nominal'], 2, '.', ''),
+                $kunci['nama_pembayar'] ?? 'null',
+            ]);
+
+            if (isset($sudahAdaDiBatch[$sidik])) {
+                $respons = $this->tolakDuplikat(
+                    $request,
+                    true,
+                    'Transaksi yang sama muncul lebih dari sekali dalam satu kiriman. Data ganda ditolak.',
+                    ['duplikat' => ['Transaksi ganda dalam satu kiriman.']]
+                );
+
+                if ($respons !== null) {
+                    throw new HttpResponseException($respons);
+                }
+            }
+
+            $sudahAdaDiBatch[$sidik] = true;
+
+            if ($this->queryDuplikatTransaksi($kunci)->exists()) {
+                $respons = $this->tolakDuplikat(
+                    $request,
+                    true,
+                    'Transaksi identik sudah tercatat pada tanggal yang sama. Data ganda ditolak.',
+                    ['duplikat' => ['Transaksi serupa sudah ada di database.']]
+                );
+
+                if ($respons !== null) {
+                    throw new HttpResponseException($respons);
+                }
+            }
+        }
     }
 
     /**

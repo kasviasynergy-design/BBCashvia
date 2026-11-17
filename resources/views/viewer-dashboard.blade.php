@@ -57,7 +57,7 @@ css.com */@layer theme{:root,:host{--primary:#2BA19E;--primary-dark:#237A77;--pr
             <div class="sidebar__logo">
 
                 <img
-                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    src="{{ asset('image/Logo BBCashvia.png') }}"
                     alt="Logo BBCashvia"
                     class="sidebar__logo-img"
                 >

@@ -1,5 +1,5 @@
 /* =========================================================
-   BBCASHVIA Ã¢â‚¬â€ VIEWER RIWAYAT TRANSAKSI
+   BBCASHVIA — VIEWER RIWAYAT TRANSAKSI
    Kerangka halaman Viewer + tabel riwayat.
    ========================================================= */
 
@@ -10,7 +10,7 @@
    BARIS RIWAYAT
    Kelas render JS (transaction-* / receipt-number /
    status-badge) diberi gaya agar setara standar visual
-   bersama Ã¢â‚¬â€ palet & tipografi token resmi, tanpa mengubah
+   bersama — palet & tipografi token resmi, tanpa mengubah
    markup JavaScript.
    ========================================================= */
 

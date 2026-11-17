@@ -1,5 +1,5 @@
 /* =========================================================
-   BBCASHVIA Ã¢â‚¬â€ VIEWER SHARED
+   BBCASHVIA — VIEWER SHARED
    Kerangka halaman Viewer. Komponen konten memakai sistem
    CSS Bendahara Dashboard; file ini menyediakan dialek
    shell halaman Viewer (sidebar/topbar/profil/konten ringan)
@@ -35,7 +35,7 @@
 
 
 /* =========================================================
-   SIDEBAR Ã¢â‚¬â€ DIALEK VIEWER
+   SIDEBAR — DIALEK VIEWER
    ========================================================= */
 
 .sidebar-brand {
@@ -287,7 +287,7 @@
 
 
 /* =========================================================
-   TOPBAR Ã¢â‚¬â€ DIALEK VIEWER
+   TOPBAR — DIALEK VIEWER
    ========================================================= */
 
 .topbar-left {
@@ -1280,7 +1280,7 @@
 
 
 /* =========================================================
-   GRAFIK Ã¢â‚¬â€ ALIAS STATUS VIEWER
+   GRAFIK — ALIAS STATUS VIEWER
    (viewer JS memakai kelas "active", bukan "is-active")
    ========================================================= */
 
@@ -1409,7 +1409,7 @@
 
 /* =========================================================
    HEADER HALAMAN DENGAN AKSI
-   (judul kiri Ã¢â‚¬â€ tombol kanan)
+   (judul kiri — tombol kanan)
    ========================================================= */
 
 .page-intro--split {
@@ -1625,7 +1625,7 @@
 }
 
 /* =========================================================
-   MODAL (tambah data) Ã¢â‚¬â€ pola sama dengan Bendahara
+   MODAL (tambah data) — pola sama dengan Bendahara
    ========================================================= */
 
 body.modal-open {
