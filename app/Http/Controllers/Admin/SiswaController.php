@@ -3,22 +3,25 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\MembatasiKelas;
+use App\Http\Controllers\Concerns\MenolakDuplikat;
 use App\Http\Controllers\Controller;
 use App\Models\Iuran;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\Transaksi;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 
 class SiswaController extends Controller
 {
     use MembatasiKelas;
+    use MenolakDuplikat;
     use \App\Http\Controllers\Concerns\MengunciIdempotensi;
 
     /**
@@ -205,7 +208,7 @@ class SiswaController extends Controller
     /**
      * Menambahkan siswa.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         /* =====================================================
            S3-07 - PENGAMAN SIMPAN GANDA (IDEMPOTENSI)
@@ -243,7 +246,7 @@ class SiswaController extends Controller
      * Logika penyimpanan siswa asli (utuh), hanya respons akhir yang
      * dibungkus pengaman idempotensi.
      */
-    private function tambahSiswa(Request $request): JsonResponse
+    private function tambahSiswa(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'nis' => [
@@ -303,6 +306,48 @@ class SiswaController extends Controller
         // id_kelas dari klien diabaikan agar tidak dapat menulis
         // data ke kelas lain.
         $idKelas = $batasKelas ?? ($validated['id_kelas'] ?? null);
+
+        // SKKNI-3: cegah data siswa ganda. NIS sudah dijaga aturan
+        // unique, tetapi nama yang sama pada kelas yang sama juga
+        // ditolak agar pendaftaran ganda tidak lolos dengan NIS baru.
+        $duplikatNis = DB::table('siswa')
+            ->where('nis', $validated['nis'])
+            ->exists();
+
+        $duplikatNama = DB::table('siswa')
+            ->whereRaw(
+                'LOWER(TRIM(nama_siswa)) = ?',
+                [mb_strtolower(trim($validated['nama']))]
+            )
+            ->when(
+                $idKelas === null,
+                fn ($q) => $q->whereNull('id_kelas'),
+                fn ($q) => $q->where('id_kelas', $idKelas)
+            )
+            ->exists();
+
+        $pesanDuplikat = $duplikatNis
+            ? 'NIS sudah digunakan siswa lain. Data ganda ditolak.'
+            : 'Siswa dengan nama yang sama pada kelas yang sama sudah terdaftar. Data ganda ditolak.';
+
+        $responsDuplikat = $this->tolakDuplikat(
+            $request,
+            $duplikatNis || $duplikatNama,
+            $pesanDuplikat,
+            [$duplikatNis ? 'nis' : 'nama' => [$pesanDuplikat]]
+        );
+
+        if ($responsDuplikat !== null) {
+            if ($responsDuplikat instanceof JsonResponse) {
+                return $this->responIdempotensi($request, $responsDuplikat);
+            }
+
+            // Jalur form biasa: penyimpanan dibatalkan, lepaskan klaim
+            // idempotensi agar pengguna dapat mencoba lagi.
+            $this->lepaskanIdempotensi($request);
+
+            return $responsDuplikat;
+        }
 
         $jenisKelamin = null;
         if (!empty($validated['jenis_kelamin'])) {

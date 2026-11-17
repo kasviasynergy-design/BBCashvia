@@ -1,5 +1,5 @@
 /* =========================================================
-   BBCASHVIA Ã¢â‚¬â€ VIEWER DASHBOARD
+   BBCASHVIA — VIEWER DASHBOARD
    Konten memakai komponen Bendahara Dashboard
    (hero, stat-grid--kpi, panel--ringkasan, duo, panel--table)
    plus kerangka halaman Viewer.
@@ -9,10 +9,10 @@
 
 
 /* =========================================================
-   GRAFIK ARUS KAS Ã¢â‚¬â€ SVG (render viewer-dashboard.js)
+   GRAFIK ARUS KAS — SVG (render viewer-dashboard.js)
    Palet mengikuti keluarga bendahara:
-   bar-income = var(--primary)  Ã¢â€°Ë† legend dot --in
-   bar-expense = var(--text-muted) Ã¢â€°Ë† legend dot --out
+   bar-income = var(--primary)  ≈ legend dot --in
+   bar-expense = var(--text-muted) ≈ legend dot --out
    ========================================================= */
 
 .chart-svg {

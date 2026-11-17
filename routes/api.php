@@ -13,3 +13,6 @@ Route::get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('transaksi', TransaksiController::class);
 });
+
+
+

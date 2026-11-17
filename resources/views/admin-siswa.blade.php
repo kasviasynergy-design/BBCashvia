@@ -42,7 +42,7 @@
         <div class="sidebar__brand">
             <div class="sidebar__logo">
              <img
-            src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+            src="{{ asset('image/Logo BBCashvia.png') }}"
             alt="Logo BBCashvia"
             class="sidebar__logo-img"
             >

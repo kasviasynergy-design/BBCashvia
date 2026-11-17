@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BBCASHVIA Ã¢â‚¬â€ BENDAHARA IURAN
+   BBCASHVIA — BENDAHARA IURAN
    Visual language mengikuti Dashboard Bendahara
    ========================================================================== */
 
@@ -452,7 +452,7 @@
     background: #94a3b8;
 }
 
-/* Status "selesai" Ã¢â‚¬â€ disamakan dengan halaman Iuran Admin
+/* Status "selesai" — disamakan dengan halaman Iuran Admin
    (IuranKategoriCrudTest : badge tetap netral, bukan merah "nonaktif"). */
 .status-badge--selesai {
     color: var(--text-soft);
@@ -1448,7 +1448,7 @@ body.modal-open {
 }
 
 /* ==========================================================================
-   KOMPONEN HAPUS Ã¢â‚¬â€ disamakan dengan halaman Iuran Admin
+   KOMPONEN HAPUS — disamakan dengan halaman Iuran Admin
    (modal konfirmasi + tombol merah + ikon aksi merah)
    ========================================================================== */
 
