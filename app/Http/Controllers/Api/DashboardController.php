@@ -89,6 +89,56 @@ class DashboardController extends Controller
 
         $totalTransaksi = $transaksiQuery()->count();
 
+        // SKKNI-4: rekap agregat dinamis dengan GROUP BY + COUNT/SUM.
+        // Semua query tetap memakai pembatas kelas pengguna sehingga
+        // bendahara/viewer hanya menerima rekap kelasnya sendiri.
+        $rekapKategori = $transaksiQuery()
+            ->selectRaw("COALESCE(kategori, 'Tanpa Kategori') AS label, COUNT(*) AS total_data, SUM(nominal) AS total_nominal")
+            ->groupBy('kategori')
+            ->orderByDesc('total_nominal')
+            ->get()
+            ->map(fn ($baris) => [
+                'label' => $baris->label,
+                'total_data' => (int) $baris->total_data,
+                'total_nominal' => (float) $baris->total_nominal,
+            ])
+            ->values();
+
+        $rekapKelas = $transaksiQuery()
+            ->selectRaw("COALESCE((SELECT nama_kelas FROM kelas WHERE kelas.id_kelas = transaksi.id_kelas), 'Tanpa Kelas') AS label, COUNT(*) AS total_data, SUM(nominal) AS total_nominal")
+            ->groupBy('transaksi.id_kelas')
+            ->orderByDesc('total_nominal')
+            ->get()
+            ->map(fn ($baris) => [
+                'label' => $baris->label,
+                'total_data' => (int) $baris->total_data,
+                'total_nominal' => (float) $baris->total_nominal,
+            ])
+            ->values();
+
+        $rekapJenis = $transaksiQuery()
+            ->selectRaw("COALESCE(jenis, 'Tanpa Jenis') AS label, COUNT(*) AS total_data, SUM(nominal) AS total_nominal")
+            ->groupBy('jenis')
+            ->orderByDesc('total_nominal')
+            ->get()
+            ->map(fn ($baris) => [
+                'label' => $baris->label,
+                'total_data' => (int) $baris->total_data,
+                'total_nominal' => (float) $baris->total_nominal,
+            ])
+            ->values();
+
+        $rekapStatusSiswa = (clone $siswaQuery)
+            ->selectRaw("COALESCE(status, 'Tanpa Status') AS label, COUNT(*) AS total_data")
+            ->groupBy('status')
+            ->orderByDesc('total_data')
+            ->get()
+            ->map(fn ($baris) => [
+                'label' => $baris->label,
+                'total_data' => (int) $baris->total_data,
+            ])
+            ->values();
+
         $iuranTotal = $transaksiQuery()
             ->where('kategori', 'Iuran')
             ->where('jenis', Transaksi::JENIS_MASUK)
@@ -133,6 +183,12 @@ class DashboardController extends Controller
                     'saldo_sekarang' => (float) $ringkasan['saldo_sekarang'],
                     'masuk_bulan_ini' => (float) $masukBulanIni,
                     'keluar_bulan_ini' => (float) $keluarBulanIni,
+                ],
+                'rekap' => [
+                    'kategori' => $rekapKategori,
+                    'kelas' => $rekapKelas,
+                    'jenis' => $rekapJenis,
+                    'status_siswa' => $rekapStatusSiswa,
                 ],
             ],
         ]);

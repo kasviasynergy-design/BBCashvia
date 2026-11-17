@@ -31,6 +31,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const $ = (selector) => document.querySelector(selector);
 
+    const escapeHtml = (nilai) =>
+        String(nilai ?? "").replace(/[&<>"']/g, (karakter) => ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+        }[karakter]));
+
     /* Pemetaan nilai kategori database ke label yang enak dibaca. */
     const PETAKAN_KATEGORI = {
         "iuran": "Iuran",
@@ -86,6 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const kpi = dataKpi.kpi || {};
     const ringkasan = dataKpi.ringkasan || {};
+    const rekap = dataKpi.rekap || {};
 
     /* |======================================================================
     |  KPI + RINGKASAN KAS
@@ -381,6 +391,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /* |======================================================================
+    |  REKAP AGREGAT (SKKNI-4)
+    |====================================================================== */
+
+    const renderRekap = () => {
+        const isiTabel = (tbodyId, data, denganNominal) => {
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) {
+                return;
+            }
+
+            const baris = Array.isArray(data) ? data : [];
+
+            if (baris.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${denganNominal ? 3 : 2}" class="table__empty">Belum ada data.</td>
+                    </tr>`;
+                return;
+            }
+
+            tbody.innerHTML = baris
+                .map((item) => {
+                    const label = escapeHtml(item.label || "-");
+                    const jumlah = Number(item.total_data) || 0;
+
+                    return `
+                        <tr>
+                            <td><span class="table__primary">${label}</span></td>
+                            <td>${jumlah}</td>
+                            ${denganNominal ? `<td>${formatRupiah(item.total_nominal)}</td>` : ""}
+                        </tr>`;
+                })
+                .join("");
+        };
+
+        isiTabel("rekapKategoriBody", rekap.kategori, true);
+        isiTabel("rekapKelasBody", rekap.kelas, true);
+        isiTabel("rekapStatusBody", rekap.status_siswa, false);
+    };
+
+    /* |======================================================================
     |  TABEL TRANSAKSI TERBARU
     |====================================================================== */
 
@@ -566,6 +617,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     isiKpi();
     isiRumus();
+    renderRekap();
     renderBarChart();
     renderLineChart();
     renderTransaksi();
