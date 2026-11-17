@@ -42,7 +42,7 @@
 
             <div class="brand">
                 <img
-                    src="{{ asset('build/assets/image/Logo BBCashvia.png') }}"
+                    src="{{ asset('image/Logo BBCashvia.png') }}"
                     alt="Logo BBCashvia"
                     class="brand__icon"
                 >

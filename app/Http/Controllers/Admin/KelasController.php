@@ -3,17 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Concerns\MembatasiKelas;
+use App\Http\Controllers\Concerns\MenolakDuplikat;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
-use App\Models\Siswa;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class KelasController extends Controller
 {
     use MembatasiKelas;
+    use MenolakDuplikat;
     use \App\Http\Controllers\Concerns\MengunciIdempotensi;
 
     /**
@@ -50,7 +51,7 @@ class KelasController extends Controller
     /**
      * Menambahkan kelas.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
         /* =====================================================
            S3-07 - PENGAMAN SIMPAN GANDA (IDEMPOTENSI)
@@ -74,7 +75,7 @@ class KelasController extends Controller
      * Logika penyimpanan kelas asli (utuh), hanya respons akhir yang
      * dibungkus pengaman idempotensi.
      */
-    private function tambahKelas(Request $request): JsonResponse
+    private function tambahKelas(Request $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validate([
             'nama_kelas' => [
@@ -98,6 +99,40 @@ class KelasController extends Controller
             'tingkat.max' => 'Tingkat maksimal 20 karakter.',
             'tahun_ajaran.max' => 'Tahun ajaran maksimal 20 karakter.',
         ]);
+
+        // SKKNI-3: tolak kelas dengan nama + tahun ajaran yang sama.
+        // Nama dibandingkan tanpa beda huruf besar/kecil; tahun ajaran
+        // nullable dibandingkan dengan whereNull.
+        $duplikat = DB::table('kelas')
+            ->whereRaw(
+                'LOWER(nama_kelas) = ?',
+                [mb_strtolower(trim($validated['nama_kelas']))]
+            )
+            ->when(
+                empty($validated['tahun_ajaran']),
+                fn ($q) => $q->whereNull('tahun_ajaran'),
+                fn ($q) => $q->where('tahun_ajaran', $validated['tahun_ajaran'])
+            )
+            ->exists();
+
+        $responsDuplikat = $this->tolakDuplikat(
+            $request,
+            $duplikat,
+            'Kelas dengan nama dan tahun ajaran yang sama sudah ada. Data ganda ditolak.',
+            ['nama_kelas' => ['Kelas serupa sudah terdaftar.']]
+        );
+
+        if ($responsDuplikat !== null) {
+            if ($responsDuplikat instanceof JsonResponse) {
+                return $this->responIdempotensi($request, $responsDuplikat);
+            }
+
+            // Jalur form biasa: penyimpanan dibatalkan, lepaskan klaim
+            // idempotensi agar pengguna dapat mencoba lagi.
+            $this->lepaskanIdempotensi($request);
+
+            return $responsDuplikat;
+        }
 
         $kelas = Kelas::create([
             'nama_kelas' => $validated['nama_kelas'],

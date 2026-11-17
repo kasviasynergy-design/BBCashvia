@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
