@@ -270,6 +270,8 @@
         <!-- ===== KONTEN ===== -->
         <main class="content">
 
+            @include('partials.flash-alert')
+
             <!-- KEPALA HALAMAN -->
             <section class="page-head">
                 <div class="page-head__text">
@@ -517,7 +519,7 @@
                             dipilih. Opsi diisi di server agar tidak
                             pernah kosong walau JS belum sempat jalan.
                         -->
-                        <select id="inputKategori" required>
+                        <select id="inputKategori" name="kategori" required>
                             <optgroup label="Pemasukan">
                                 <option value="Iuran">Iuran</option>
                                 <option value="kas">Kas</option>
@@ -530,13 +532,15 @@
                                 <option value="pengeluaran lainnya">Pengeluaran Lainnya</option>
                             </optgroup>
                         </select>
+                        @include('partials.field-error', ['field' => 'kategori'])
                     </label>
 
                     <label class="field">
                         <span class="field__label">Kelas</span>
-                        <select id="inputKelas">
+                        <select id="inputKelas" name="id_kelas">
                             <option value="">- Pilih kelas (opsional) -</option>
                         </select>
+                        @include('partials.field-error', ['field' => 'id_kelas'])
                     </label>
 
                 </div>
@@ -574,10 +578,12 @@
                     <input
                         type="text"
                         id="inputKeterangan"
+                        name="keterangan"
                         placeholder="Contoh: Setoran kas mingguan kelas XI RPL"
                         required
                         autocomplete="off"
                     >
+                    @include('partials.field-error', ['field' => 'keterangan'])
                 </label>
 
                 <div class="form-grid">
@@ -585,7 +591,8 @@
                         <span class="field__label">
                             Tanggal <b class="wajib">*</b>
                         </span>
-                        <input type="date" id="inputTanggal" required>
+                        <input type="date" id="inputTanggal" name="tanggal" required>
+                        @include('partials.field-error', ['field' => 'tanggal'])
                     </label>
                 </div>
 
@@ -619,11 +626,13 @@
                                 <input
                                     type="text"
                                     id="inputTagihan"
+                                    name="nominal"
                                     inputmode="numeric"
                                     placeholder="0"
                                     autocomplete="off"
                                 >
                             </span>
+                            @include('partials.field-error', ['field' => 'nominal'])
                         </label>
 
                         <label class="field field--uang">

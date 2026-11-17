@@ -612,6 +612,85 @@
             </section>
 
 
+            <!-- ===== STAT CARD AGREGAT (SKKNI-5) ===== -->
+            <section
+                class="stat-grid"
+                aria-label="Ringkasan hasil agregat dashboard">
+
+                <article class="stat-card">
+
+                    <div class="stat-card__top">
+
+                        <div>
+                            <p class="stat-card__label">Transaksi Terkelompok</p>
+                            <p class="stat-card__value" id="rekapTotalTransaksi">-</p>
+                        </div>
+
+                        <span class="stat-card__icon stat-card__icon--trx">
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                functions
+                            </span>
+                        </span>
+
+                    </div>
+
+                    <p class="stat-card__foot">
+                        Jumlah COUNT dari rekap per kategori.
+                    </p>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-card__top">
+
+                        <div>
+                            <p class="stat-card__label">Total Nominal Rekap</p>
+                            <p class="stat-card__value" id="rekapTotalNominal">-</p>
+                        </div>
+
+                        <span class="stat-card__icon stat-card__icon--kas">
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                account_balance_wallet
+                            </span>
+                        </span>
+
+                    </div>
+
+                    <p class="stat-card__foot">
+                        Jumlah SUM nominal dari rekap per kategori.
+                    </p>
+
+                </article>
+
+
+                <article class="stat-card">
+
+                    <div class="stat-card__top">
+
+                        <div>
+                            <p class="stat-card__label">Kelas Terdata</p>
+                            <p class="stat-card__value" id="rekapJumlahKelas">-</p>
+                        </div>
+
+                        <span class="stat-card__icon stat-card__icon--siswa">
+                            <span class="material-symbols-outlined" aria-hidden="true">
+                                class
+                            </span>
+                        </span>
+
+                    </div>
+
+                    <p class="stat-card__foot">
+                        Jumlah kelompok dari GROUP BY kelas.
+                    </p>
+
+                </article>
+
+            </section>
+
+
             <!-- ===== REKAP AGREGAT (SKKNI-4) ===== -->
             <section
                 class="rekap-grid"

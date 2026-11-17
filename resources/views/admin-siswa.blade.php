@@ -228,6 +228,8 @@
         <!-- ===== KONTEN ===== -->
         <main class="content">
 
+            @include('partials.flash-alert')
+
             <!-- ===== KEPALA HALAMAN ===== -->
             <section class="page-head">
 
@@ -479,15 +481,17 @@
 
                     <label class="field">
                         <span class="field__label">NIS <b class="wajib">*</b></span>
-                        <input type="text" id="inputNis" inputmode="numeric" maxlength="11"
+                        <input type="text" id="inputNis" name="nis" inputmode="numeric" maxlength="11"
                             placeholder="Contoh: 2024000101" required autocomplete="off">
+                        @include('partials.field-error', ['field' => 'nis'])
                     </label>
 
                     <label class="field">
                         <span class="field__label">Kelas <b class="wajib">*</b></span>
-                        <select id="inputKelas" required>
+                        <select id="inputKelas" name="id_kelas" required>
                             <option value="">- Pilih kelas -</option>
                         </select>
+                        @include('partials.field-error', ['field' => 'id_kelas'])
                     </label>
 
                 </div>
@@ -495,8 +499,9 @@
 
                 <label class="field">
                     <span class="field__label">Nama Lengkap <b class="wajib">*</b></span>
-                    <input type="text" id="inputNama" placeholder="Contoh: Rizky Ananda Putra" required
+                    <input type="text" id="inputNama" name="nama" placeholder="Contoh: Rizky Ananda Putra" required
                         autocomplete="off">
+                    @include('partials.field-error', ['field' => 'nama'])
                 </label>
 
 
@@ -698,8 +703,9 @@
 
                     <label class="field">
                         <span class="field__label">Nama Kelas <b class="wajib">*</b></span>
-                        <input type="text" id="inputNamaKelas" placeholder="Contoh: XI RPL"
+                        <input type="text" id="inputNamaKelas" name="nama_kelas" placeholder="Contoh: XI RPL"
                             required autocomplete="off" maxlength="50">
+                        @include('partials.field-error', ['field' => 'nama_kelas'])
                     </label>
 
                     <label class="field">
