@@ -612,6 +612,153 @@
             </section>
 
 
+            <!-- ===== REKAP AGREGAT (SKKNI-4) ===== -->
+            <section
+                class="rekap-grid"
+                aria-label="Rekap agregat dashboard">
+
+                <article class="panel rekap-panel">
+
+                    <div class="panel__head">
+
+                        <div>
+
+                            <p class="panel__eyebrow">
+                                Agregat
+                            </p>
+
+                            <h3 class="panel__title">
+                                Rekap per Kategori
+                            </h3>
+
+                            <p class="panel__sub">
+                                COUNT transaksi dan SUM nominal per kategori.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="table-wrap">
+
+                        <table class="table rekap-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Kategori</th>
+                                    <th>Jumlah</th>
+                                    <th>Total Nominal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="rekapKategoriBody">
+                                <tr>
+                                    <td colspan="3" class="table__empty">Memuat data...</td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel rekap-panel">
+
+                    <div class="panel__head">
+
+                        <div>
+
+                            <p class="panel__eyebrow">
+                                Agregat
+                            </p>
+
+                            <h3 class="panel__title">
+                                Rekap per Kelas
+                            </h3>
+
+                            <p class="panel__sub">
+                                COUNT transaksi dan SUM nominal per kelas.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="table-wrap">
+
+                        <table class="table rekap-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Kelas</th>
+                                    <th>Jumlah</th>
+                                    <th>Total Nominal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="rekapKelasBody">
+                                <tr>
+                                    <td colspan="3" class="table__empty">Memuat data...</td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+
+                <article class="panel rekap-panel">
+
+                    <div class="panel__head">
+
+                        <div>
+
+                            <p class="panel__eyebrow">
+                                Agregat
+                            </p>
+
+                            <h3 class="panel__title">
+                                Rekap Status Siswa
+                            </h3>
+
+                            <p class="panel__sub">
+                                COUNT siswa berdasarkan status keaktifan.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="table-wrap">
+
+                        <table class="table rekap-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Jumlah Siswa</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="rekapStatusBody">
+                                <tr>
+                                    <td colspan="2" class="table__empty">Memuat data...</td>
+                                </tr>
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
             <!-- ===== GRAFIK + TRANSAKSI TERBARU ===== -->
             <div class="duo">
 
