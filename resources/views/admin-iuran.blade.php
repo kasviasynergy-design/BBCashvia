@@ -199,6 +199,8 @@
 
     <main class="content">
 
+        @include('partials.flash-alert')
+
         <section class="page-head">
 
             <div>
@@ -452,9 +454,16 @@
                         <input
                             type="text"
                             id="inputNamaIuran"
+                            name="nama_iuran"
                             placeholder="Contoh: Kas Kelas"
                             required
                         >
+
+                        @error('nama_iuran')
+                            <span role="alert" style="display:block; margin:6px 0 0; color:#B91C1C; font:500 13px/1.45 'Inter', sans-serif;">
+                                {{ $message }}
+                            </span>
+                        @enderror
 
                     </div>
 
@@ -466,7 +475,7 @@
                         </label>
 
 
-                    <select id="inputKategori" required>
+                    <select id="inputKategori" name="kategori" required>
                         <option value="">Pilih kategori</option>
                         <option value="sekali bayar">Sekali Bayar</option>
                         <option value="mingguan">Mingguan</option>
@@ -474,6 +483,11 @@
                         <option value="tahunan">Tahunan</option>
                     </select>
 
+                    @error('kategori')
+                        <span role="alert" style="display:block; margin:6px 0 0; color:#B91C1C; font:500 13px/1.45 'Inter', sans-serif;">
+                            {{ $message }}
+                        </span>
+                    @enderror
 
                     </div>
 
@@ -487,8 +501,11 @@
                         <input
                             type="date"
                             id="inputJatuhTempo"
+                            name="jatuh_tempo"
                             required
                         >
+
+                        @include('partials.field-error', ['field' => 'jatuh_tempo'])
 
                     </div>
 
@@ -506,6 +523,7 @@
                             <input
                                 type="number"
                                 id="inputNominalIuran"
+                                name="nominal"
                                 min="0"
                                 step="500"
                                 placeholder="0"
@@ -513,6 +531,8 @@
                             >
 
                         </div>
+
+                        @include('partials.field-error', ['field' => 'nominal'])
 
                     </div>
 
@@ -523,10 +543,12 @@
                             Status
                         </label>
 
-                        <select id="inputStatusIuran" required>
+                        <select id="inputStatusIuran" name="status" required>
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
                         </select>
+
+                        @include('partials.field-error', ['field' => 'status'])
 
                     </div>
 
@@ -537,11 +559,13 @@
                             Kelas
                         </label>
 
-                        <select id="inputKelasIuran">
+                        <select id="inputKelasIuran" name="id_kelas">
                             <option value="">
                                 - Semua Kelas (khusus Admin) -
                             </option>
                         </select>
+
+                        @include('partials.field-error', ['field' => 'id_kelas'])
 
                     </div>
 
@@ -554,9 +578,12 @@
 
                         <textarea
                             id="inputKeteranganIuran"
+                            name="keterangan"
                             rows="4"
                             placeholder="Keterangan tambahan tentang iuran..."
                         ></textarea>
+
+                        @include('partials.field-error', ['field' => 'keterangan'])
 
                     </div>
 

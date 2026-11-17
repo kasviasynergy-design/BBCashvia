@@ -432,6 +432,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     /* |======================================================================
+    |  STAT CARD AGREGAT (SKKNI-5)
+    |====================================================================== */
+
+    const totalDari = (baris, kunci) =>
+        (Array.isArray(baris) ? baris : []).reduce(
+            (total, item) => total + (Number(item[kunci]) || 0),
+            0
+        );
+
+    const renderRekapKpi = () => {
+        const totalTransaksi = totalDari(rekap.kategori, "total_data");
+        const totalNominal = totalDari(rekap.kategori, "total_nominal");
+        const jumlahKelas = Array.isArray(rekap.kelas) ? rekap.kelas.length : 0;
+
+        const isi = (id, teks) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.textContent = teks;
+            }
+        };
+
+        isi(
+            "rekapTotalTransaksi",
+            new Intl.NumberFormat("id-ID").format(totalTransaksi)
+        );
+        isi("rekapTotalNominal", formatRupiah(totalNominal));
+        isi(
+            "rekapJumlahKelas",
+            new Intl.NumberFormat("id-ID").format(jumlahKelas)
+        );
+    };
+
+    /* |======================================================================
     |  TABEL TRANSAKSI TERBARU
     |====================================================================== */
 
@@ -617,6 +650,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     isiKpi();
     isiRumus();
+    renderRekapKpi();
     renderRekap();
     renderBarChart();
     renderLineChart();

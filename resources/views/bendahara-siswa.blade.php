@@ -214,6 +214,8 @@
         <!-- CONTENT -->
         <main class="content">
 
+        @include('partials.flash-alert')
+
         @include('partials.kelas-belum-ditetapkan')
 
 
