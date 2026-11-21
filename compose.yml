@@ -1,48 +1,79 @@
-﻿services:
+﻿# Deployment di Coolify:
+#   Build Pack  : Docker Compose (file ini) atau Dockerfile
+#   Port        : 8000  -> healthcheck /up
+#   Environment : isi melalui menu "Environment Variables" Coolify.
+#                 JANGAN simpan kredensial sebenar di dalam repo.
+#
+# Database adalah MySQL EKSTERNAL di server sekolah. Tiada servis db tempatan
+# sengaja disediakan (dulu ada, dan ia menimpa DB luar dengan DB kosong).
+
+services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: bbcashvia_app
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-      - /app/vendor
-      - /app/node_modules
-    environment:
-      APP_ENV: local
-      APP_DEBUG: "true"
-      DB_CONNECTION: mysql
-      DB_HOST: db
-      DB_PORT: 3306
-      DB_DATABASE: bbcashvia
-      DB_USERNAME: root
-      DB_PASSWORD: secret
-    depends_on:
-      db:
-        condition: service_healthy
-
-  db:
-    image: mysql:8.0
-    container_name: bbcashvia_db
+      target: app
     restart: unless-stopped
     ports:
-      - "3306:3306"
+      - "${APP_PORT:-8000}:8000"
     environment:
-      MYSQL_DATABASE: bbcashvia
-      MYSQL_USER: root
-      MYSQL_ROOT_PASSWORD: secret
-      mysql_root_password: secret
+      APP_NAME: ${APP_NAME:-BBCashvia}
+      APP_ENV: ${APP_ENV:-production}
+      APP_KEY: ${APP_KEY:-}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_URL: ${APP_URL:-http://localhost:8000}
+
+      # Isi nilai sebenar di Coolify. Kosong = app akan gagal connect.
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      DB_HOST: ${DB_HOST:-}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-bbcashvia}
+      DB_USERNAME: ${DB_USERNAME:-}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+
+      # File-based lebih selamat di sini: jadual sessions/cache/jobs
+      # TIDAK dicipta oleh migrasi baseline projek ini.
+      SESSION_DRIVER: ${SESSION_DRIVER:-file}
+      CACHE_STORE: ${CACHE_STORE:-file}
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-sync}
+      FILESYSTEM_DISK: ${FILESYSTEM_DISK:-local}
+      MAIL_MAILER: ${MAIL_MAILER:-log}
+      LOG_LEVEL: ${LOG_LEVEL:-debug}
+
+      # Set true SEKALI sahaja bila mahu jalankan migrate --force.
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-false}
     volumes:
-      - mysql_data:/var/lib/mysql
+      # Upload (storage/app/public) dan APP_KEY automatik kekal selamat.
+      - storage_data:/var/www/html/storage
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psecret"]
-      interval: 5s
+      # /up ialah route health Laravel — tidak menyentuh database,
+      # jadi status Healthy tidak bergantung pada DB luar sekolah.
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/up"]
+      interval: 15s
       timeout: 5s
-      retries: 10
-      retrise_delay: 5s
-      start_period: 30s
+      retries: 5
+      start_period: 60s
+
+  # Jalankan migrasi secara manual bila perlu:
+  #   docker compose --profile migrate run --rm migrate
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    profiles: ["migrate"]
+    restart: "no"
+    environment:
+      APP_ENV: production
+      APP_KEY: ${APP_KEY:-}
+      DB_CONNECTION: ${DB_CONNECTION:-mysql}
+      DB_HOST: ${DB_HOST:-}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_DATABASE: ${DB_DATABASE:-bbcashvia}
+      DB_USERNAME: ${DB_USERNAME:-}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+    entrypoint: ["/usr/local/bin/entrypoint"]
+    command: ["php", "artisan", "migrate", "--force", "--no-interaction"]
 
 volumes:
-  mysql_data:
+  storage_data:

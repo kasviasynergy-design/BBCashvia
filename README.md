@@ -184,11 +184,58 @@ CACHE_STORE=file
 php artisan migrate --force
 ```
 
-Dockerfile menjalankan:
+Dockerfile lama menjalankan `php artisan serve`. Untuk deployment production
+semasa (Coolify), gunakan `Dockerfile` + `compose.yml` yang baru — lihat
+seksyen berikut.
 
-```bash
-php artisan serve --host=0.0.0.0 --port=8000
-```
+---
+
+## ☁️ 7b. Deployment Production di Coolify
+
+Aplikasi ini **tidak memerlukan fail `.env` di dalam container**. Semua
+konfigurasi dibaca daripada environment variables yang disuntikkan Coolify.
+
+### Langkah
+
+1. Di Coolify, pilih **Build Pack = Dockerfile** atau **Docker Compose** dan
+   gunakan `Dockerfile` / `compose.yml` dari repo ini (jangan guna auto-detect
+   Nixpacks, kerana itu yang menyebabkan PHP 8.4 + SQLite + HTTP 500).
+2. Buka menu **Environment Variables** dan isi mengikut
+   `.env.production.example`:
+
+   | Pembolehubah | Nota |
+   |---|---|
+   | `APP_KEY` | Jana dengan `php artisan key:generate --show`. Boleh dikosongkan — entrypoint akan jana sekali dan simpan dalam volume `storage`. |
+   | `APP_URL` | **Wajib** — URL domain Coolify, bukan `localhost`. |
+   | `APP_ENV` / `APP_DEBUG` | `production` / `false`. |
+   | `DB_CONNECTION` | `mysql` (jangan `sqlite`). |
+   | `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | Isi dengan kredensial **MySQL sekolah sebenar**. Jangan simpan di GitHub. |
+   | `SESSION_DRIVER`, `CACHE_STORE`, `QUEUE_CONNECTION` | `file`, `file`, `sync` — jadual `sessions`/`cache`/`jobs` tidak dicipta oleh migrasi baseline. |
+
+3. Deploy. Healthcheck menggunakan `GET /up` pada port `8000`.
+4. Untuk migrasi (sekali sahaja, selepas kredensial DB betul):
+
+   ```bash
+   docker compose --profile migrate run --rm migrate
+   ```
+
+   atau set `RUN_MIGRATIONS=true` untuk satu deploy, kemudian tukar semula ke
+   `false`.
+
+### Pembenaran yang dibuat
+
+- `compose.yml` lama me-*mount* `.:/app` — ini menimpa `vendor/` dan
+  `public/build/` dari image dengan direktori host, lalu menyebabkan 500.
+- `compose.yml` lama juga ada servis `db` tempatan dengan kata laluan
+  hardcoded `secret` — ia bukan MySQL sekolah dan menyalahi keperluan.
+- Healthcheck lama tidak sah (string tidak ditutup, tanpa port dan tanpa
+  `/up`), jadi container sentiasa *Unhealthy*.
+- `SESSION_DRIVER=database` + `CACHE_STORE=database` + `QUEUE_CONNECTION=database`
+  gagal kerana jadual `sessions`, `cache`, `jobs` tidak wujud dalam migrasi.
+- `Storage Link: NOT LINKED` dibaiki oleh `entrypoint.sh` dengan
+  `php artisan storage:link --force`.
+- `route:cache` sengaja **tidak** digunakan kerana `routes/web.php` menggunakan
+  closure (akan menyebabkan `LogicException`).
 
 ---
 
