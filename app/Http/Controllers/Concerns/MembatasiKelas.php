@@ -40,6 +40,64 @@ trait MembatasiKelas
             : -1;
     }
 
+    /**
+     * Validasi parameter id_kelas HANYA bila pemintanya Admin.
+     *
+     * Bendahara/Viewer yang mengirim id_kelas tidak boleh mendapat 422
+     * gara-gara parameter yang memang tidak mereka pakai; nilai tersebut
+     * diabaikan sepenuhnya oleh terapkanFilterKelasAdmin().
+     */
+    protected function validasiFilterKelasAdmin(Request $request): void
+    {
+        if (!$request->user()?->aksesSemuaKelas()
+            || $this->tanpaFilterKelas($request)) {
+            return;
+        }
+
+        $request->validate([
+            'id_kelas' => ['integer', 'exists:kelas,id_kelas'],
+        ], [
+            'id_kelas.exists' => 'Kelas yang dipilih tidak ditemukan.',
+        ]);
+    }
+
+    /**
+     * Terapkan filter kelas opsional HANYA untuk Admin.
+     *
+     * Endpoint baca (/data/siswa, /data/iuran, /data/transaksi,
+     * /laporan-kas/*, dan API admin) dipakai bersama. Parameter
+     * `id_kelas` dari Bendahara/Viewer sengaja diabaikan di sini:
+     * pembatasan mereka tetap dipegang oleh kelasDibatasi(),
+     * siswaTerbatas(), dan transaksiTerbatas().
+     *
+     * @param  mixed  $query  Query Builder / Eloquent Builder.
+     */
+    protected function terapkanFilterKelasAdmin(
+        Request $request,
+        $query,
+        string $kolom = 'id_kelas'
+    ): void {
+        if (!$request->user()?->aksesSemuaKelas()) {
+            return;
+        }
+
+        if ($this->tanpaFilterKelas($request)) {
+            return;
+        }
+
+        $query->where($kolom, (int) $request->input('id_kelas'));
+    }
+
+    /** Nilai "Semua Kelas" tidak boleh dianggap sebagai id. */
+    private function tanpaFilterKelas(Request $request): bool
+    {
+        if (!$request->filled('id_kelas')) {
+            return true;
+        }
+
+        return strtolower(trim((string) $request->input('id_kelas'))) === 'semua';
+    }
+
     /** Query siswa terbatas pada kelas pengguna. */
     protected function siswaTerbatas(Request $request): Builder
     {

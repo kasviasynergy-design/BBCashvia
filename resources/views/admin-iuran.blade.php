@@ -314,6 +314,11 @@
 
 
 
+                {{-- Filter kelas khusus Admin; pilihan diisi dari database. --}}
+                <select id="filterKelasIuran" aria-label="Filter kelas">
+                    <option value="semua">Semua Kelas</option>
+                </select>
+
                 <select id="filterKategori">
                 <option value="">Semua Kategori</option>
                 <option value="sekali bayar">Sekali Bayar</option>

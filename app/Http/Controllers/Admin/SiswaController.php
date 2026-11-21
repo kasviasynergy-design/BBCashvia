@@ -31,12 +31,58 @@ class SiswaController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $daftarSiswa = $this->siswaTerbatas($request)
+        // Mode lama (tanpa ?serverSide=1) tetap mengembalikan seluruh
+        // data agar modul dan pengujian existing tidak berubah.
+        $serverSide = $request->boolean('serverSide');
+
+        if ($serverSide) {
+            // Hanya Admin yang boleh memakai/memvalidasi id_kelas.
+            $this->validasiFilterKelasAdmin($request);
+
+            $request->validate([
+                'page' => ['integer', 'min:1'],
+                'q' => ['nullable', 'string', 'max:100'],
+                'jenis_kelamin' => ['nullable', 'in:L,P'],
+                'status_iuran' => ['nullable', 'in:lunas,sebagian,belum'],
+                'status' => ['nullable', 'in:Aktif,Tidak Aktif'],
+            ]);
+        }
+
+        $querySiswa = $this->siswaTerbatas($request)
             ->with(['kelas', 'transaksi' => function ($q) {
                 $q->orderByDesc('tanggal');
-            }])
-            ->orderBy('nis')
-            ->get();
+            }]);
+
+        if ($serverSide) {
+            $kata = trim((string) $request->input('q', ''));
+
+            if ($kata !== '') {
+                $querySiswa->where(function ($q) use ($kata) {
+                    $q->where('nama_siswa', 'like', '%' . $kata . '%')
+                        ->orWhere('nis', 'like', '%' . $kata . '%');
+                });
+            }
+
+            // Filter pilihan Admin saja. Bendahara/Viewer tetap terikat
+            // kelasnya lewat siswaTerbatas(), berapa pun nilai id_kelas
+            // yang dikirim dari sisi klien.
+            $this->terapkanFilterKelasAdmin($request, $querySiswa);
+
+            $jenisKelamin = $request->input('jenis_kelamin');
+
+            if ($jenisKelamin === 'L' || $jenisKelamin === 'P') {
+                $querySiswa->where(
+                    'Jenis_Kelamin',
+                    $jenisKelamin === 'L' ? 'Laki-Laki' : 'Perempuan'
+                );
+            }
+
+            if ($request->filled('status')) {
+                $querySiswa->where('status', $request->input('status'));
+            }
+        }
+
+        $daftarSiswa = $querySiswa->orderBy('nis')->get();
 
         // Iuran aktif untuk setiap kelas dimuat SATU kali. Status iuran
         // tiap siswa lalu dihitung dari data ini tanpa query berulang
@@ -120,6 +166,55 @@ class SiswaController extends Controller
             ];
         });
 
+        $pagination = null;
+        $statistik = null;
+
+        if ($serverSide) {
+            $statusIuran = $request->input('status_iuran');
+
+            if ($statusIuran) {
+                $siswa = $siswa->filter(
+                    fn ($item) => ($item['status_iuran'] ?? '') === $statusIuran
+                )->values();
+            }
+
+            $statistik = [
+                'total' => $siswa->count(),
+                'laki_laki' => $siswa->filter(
+                    fn ($item) => ($item['jenis_kelamin'] ?? '') === 'Laki-Laki'
+                )->count(),
+                'perempuan' => $siswa->filter(
+                    fn ($item) => ($item['jenis_kelamin'] ?? '') === 'Perempuan'
+                )->count(),
+                'belum_lunas' => $siswa->filter(
+                    fn ($item) => ($item['status_iuran'] ?? '') !== 'lunas'
+                )->count(),
+            ];
+
+            $perHalaman = 10;
+            $totalData = $siswa->count();
+            $halamanAkhir = max(1, (int) ceil($totalData / $perHalaman));
+            $halamanSekarang = min(
+                max(1, (int) $request->input('page', 1)),
+                $halamanAkhir
+            );
+
+            $siswa = $siswa
+                ->forPage($halamanSekarang, $perHalaman)
+                ->values();
+
+            $pagination = [
+                'total' => $totalData,
+                'per_page' => $perHalaman,
+                'current_page' => $halamanSekarang,
+                'last_page' => $halamanAkhir,
+                'from' => $totalData === 0
+                    ? 0
+                    : (($halamanSekarang - 1) * $perHalaman) + 1,
+                'to' => min($halamanSekarang * $perHalaman, $totalData),
+            ];
+        }
+
         $kelasQuery = Kelas::orderBy('nama_kelas');
 
         $idKelas = $this->kelasDibatasi($request);
@@ -130,10 +225,21 @@ class SiswaController extends Controller
 
         $kelas = $kelasQuery->get(['id_kelas', 'nama_kelas']);
 
-        return response()->json([
+        $respons = [
             'data' => $siswa,
             'kelas' => $kelas,
-        ]);
+            'id_kelas_filter' => $request->user()?->aksesSemuaKelas()
+                && !$this->tanpaFilterKelas($request)
+                    ? (int) $request->input('id_kelas')
+                    : null,
+        ];
+
+        if ($serverSide) {
+            $respons['pagination'] = $pagination;
+            $respons['statistik'] = $statistik;
+        }
+
+        return response()->json($respons);
     }
 
     /**

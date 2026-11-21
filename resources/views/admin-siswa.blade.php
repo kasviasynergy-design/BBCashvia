@@ -409,6 +409,39 @@
                         </div>
                     </div>
 
+                    <!-- ===== PAGINATION ===== -->
+                    <div class="student-pagination">
+
+                        <div class="pagination-info" id="paginationInfo">
+                            Menampilkan 0-0 dari 0 siswa • Halaman 1 dari 1
+                        </div>
+
+                        <div class="pagination">
+
+                            <button
+                                type="button"
+                                class="page-btn page-btn--arrow"
+                                id="prevPage"
+                                aria-label="Halaman sebelumnya"
+                            >
+                                <span class="material-symbols-outlined">chevron_left</span>
+                            </button>
+
+                            <div class="pagination__numbers" id="pageNumbers"></div>
+
+                            <button
+                                type="button"
+                                class="page-btn page-btn--arrow"
+                                id="nextPage"
+                                aria-label="Halaman berikutnya"
+                            >
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
+
+                        </div>
+
+                    </div>
+
                 </section>
 
             </div>

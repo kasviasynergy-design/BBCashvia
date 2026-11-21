@@ -369,6 +369,15 @@
 
                 <div class="filterbar__selects">
 
+                    {{-- Filter kelas khusus Admin; pilihan diisi dari database. --}}
+                    <label class="field-select">
+                        <span class="field-select__label">Kelas</span>
+
+                        <select id="filterKelasTransaksi">
+                            <option value="semua">Semua Kelas</option>
+                        </select>
+                    </label>
+
                     <label class="field-select">
                         <span class="field-select__label">Jenis</span>
 

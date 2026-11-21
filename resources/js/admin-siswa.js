@@ -7,6 +7,11 @@ import {
     beriKunciIdempoten,
     kunciTombolSimpan,
 } from "./simpan-guard.js";
+import {
+    ambilFilterKelasDariUrl,
+    isiDropdownFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
 
 (function () {
     "use strict";
@@ -27,6 +32,11 @@ import {
     let idKelasSedangDihapus = null;
     let sedangMemuat = false;
     let aktifTab = "siswa";
+
+    // Pagination server-side: backend yang memotong data menjadi 10 baris.
+    let halamanSekarang = 1;
+    let halamanAkhir = 1;
+    let urutanMuat = 0;
 
     const escapeHtml = (value) =>
         String(value ?? "").replace(/[&<>"']/g, (karakter) => ({
@@ -175,9 +185,32 @@ import {
        DATA DARI DATABASE
     ====================================================== */
 
-    const muatData = async () => {
-        if (sedangMemuat) return;
+    // ?serverSide=1 dipakai oleh semua permintaan daftar: Laravel yang
+    // memfilter dan memotong data menjadi 10 baris per halaman.
+    const bangunURLSiswa = (halaman) => {
+        const parameter = new URLSearchParams({
+            serverSide: "1",
+            page: String(halaman)
+        });
 
+        const kata = $("cariSiswa")?.value.trim() || "";
+        const kelas = $("filterKelas")?.value || "semua";
+        const jk = $("filterJk")?.value || "semua";
+        const iuran = $("filterIuran")?.value || "semua";
+
+        if (kata) parameter.set("q", kata);
+        if (kelas !== "semua") parameter.set("id_kelas", kelas);
+        if (jk === "L" || jk === "P") parameter.set("jenis_kelamin", jk);
+        if (["lunas", "sebagian", "belum"].includes(iuran)) {
+            parameter.set("status_iuran", iuran);
+        }
+
+        return `${API_URL}?${parameter.toString()}`;
+    };
+
+    const muatData = async (halaman = halamanSekarang) => {
+        // Urutan menjaga respons lama tidak menimpa respons filter/page baru.
+        const urutan = ++urutanMuat;
         sedangMemuat = true;
 
         // Skeleton loading: tampilkan placeholder baris selama data dimuat.
@@ -189,29 +222,37 @@ import {
         }
 
         try {
-            const hasil = await permintaanAPI(API_URL);
+            const hasil = await permintaanAPI(bangunURLSiswa(halaman));
 
-            SISWA = Array.isArray(hasil.data) ? hasil.data : [];
-            DAFTAR_KELAS = Array.isArray(hasil.kelas) ? hasil.kelas : [];
+            if (urutan !== urutanMuat) return;
 
-            SISWA.sort((a, b) =>
-                String(a.nis).localeCompare(String(b.nis))
-            );
+            SISWA = Array.isArray(hasil?.data) ? hasil.data : [];
+            DAFTAR_KELAS = Array.isArray(hasil?.kelas) ? hasil.kelas : [];
 
             isiPilihanJurusan();
-            terapkanFilter();
+            renderTabel(SISWA);
+            renderRingkasan(hasil?.statistik);
+            renderPaginasi(hasil?.pagination);
+
+            // URL selalu mencerminkan filter + halaman aktif sehingga
+            // pilihan kelas tidak hilang saat pindah halaman/reload.
+            simpanFilterKelasKeUrl(
+                $("filterKelas")?.value,
+                { halaman: halamanSekarang }
+            );
         } catch (error) {
+            if (urutan !== urutanMuat) return;
+
             console.error("Gagal memuat data siswa:", error);
 
             SISWA = [];
-            DAFTAR_KELAS = [];
-
-            isiPilihanJurusan();
-            terapkanFilter();
+            renderTabel([]);
+            renderRingkasan(null);
+            renderPaginasi(null);
 
             tampilkanToast(error.message);
         } finally {
-            sedangMemuat = false;
+            if (urutan === urutanMuat) sedangMemuat = false;
         }
     };
 
@@ -219,22 +260,9 @@ import {
         const filter = $("filterKelas");
         const input = $("inputKelas");
 
-        if (filter) {
-            const nilaiLama = filter.value || "semua";
-
-            filter.innerHTML = `
-                <option value="semua">Semua Kelas</option>
-                ${DAFTAR_KELAS.map((jurusan) => `
-                    <option value="${escapeHtml(jurusan.id_kelas)}">
-                        ${escapeHtml(jurusan.nama_kelas)}
-                    </option>
-                `).join("")}
-            `;
-
-            filter.value = DAFTAR_KELAS.some(
-                (jurusan) => String(jurusan.id_kelas) === nilaiLama
-            ) ? nilaiLama : "semua";
-        }
+        // Dropdown filter memakai daftar kelas dari database dan
+        // mengembalikan nilai yang tersimpan di URL (?id_kelas=...).
+        isiDropdownFilterKelas(filter, DAFTAR_KELAS);
 
         if (input) {
             const nilaiLama = input.value;
@@ -669,44 +697,90 @@ import {
     const renderTabel = (baris) => {
         const tbody = $("isiTabelSiswa");
         const empty = $("emptyState");
-        const info = $("tabelInfo");
 
         if (!tbody) return;
 
+        // `baris` sudah berisi hanya halaman berjalan dari server.
         tbody.innerHTML = baris.map(barisTabel).join("");
 
         if (empty) {
             empty.hidden = baris.length !== 0;
         }
+    };
 
-        if (info) {
-            info.textContent = `${baris.length} siswa ditampilkan`;
+    // Info jumlah + halaman berasal dari metadata server, bukan dari
+    // jumlah baris yang tampil di halaman ini.
+    const renderPaginasi = (paginasi) => {
+        const info = paginasi && typeof paginasi === "object"
+            ? paginasi
+            : {
+                total: 0,
+                current_page: 1,
+                last_page: 1,
+                from: 0,
+                to: 0
+            };
+
+        halamanSekarang = Number(info.current_page) || 1;
+        halamanAkhir = Math.max(1, Number(info.last_page) || 1);
+
+        const teksInfo =
+            `Menampilkan ${info.from ?? 0}-${info.to ?? 0} dari ` +
+            `${info.total ?? 0} siswa • Halaman ${halamanSekarang} dari ` +
+            `${halamanAkhir}`;
+
+        if ($("tabelInfo")) $("tabelInfo").textContent = teksInfo;
+        if ($("paginationInfo")) {
+            $("paginationInfo").textContent = teksInfo;
+        }
+
+        const wadah = $("pageNumbers");
+
+        if (wadah) {
+            wadah.innerHTML = "";
+
+            const lebar = 5;
+            let awal = Math.max(1, halamanSekarang - Math.floor(lebar / 2));
+            let akhir = Math.min(halamanAkhir, awal + lebar - 1);
+            awal = Math.max(1, akhir - lebar + 1);
+
+            for (let halaman = awal; halaman <= akhir; halaman++) {
+                const tombol = document.createElement("button");
+                tombol.type = "button";
+                tombol.className = "page-btn";
+                tombol.dataset.halaman = String(halaman);
+                tombol.textContent = String(halaman);
+
+                if (halaman === halamanSekarang) {
+                    tombol.classList.add("is-active", "active");
+                }
+
+                wadah.appendChild(tombol);
+            }
+        }
+
+        if ($("prevPage")) {
+            $("prevPage").disabled = halamanSekarang <= 1;
+        }
+
+        if ($("nextPage")) {
+            $("nextPage").disabled = halamanSekarang >= halamanAkhir;
         }
     };
 
-    const renderRingkasan = (baris) => {
-        if ($("sumTotal")) {
-            $("sumTotal").textContent = baris.length;
-        }
+    // Statistik dihitung server untuk seluruh data yang lolos filter.
+    const renderRingkasan = (statistik) => {
+        const info = statistik && typeof statistik === "object"
+            ? statistik
+            : { total: 0, laki_laki: 0, perempuan: 0, belum_lunas: 0 };
 
-        const jumlahLk = baris.filter(
-            (s) => s.jenis_kelamin === "Laki-Laki"
-        ).length;
-
-        const jumlahPr = baris.filter(
-            (s) => s.jenis_kelamin === "Perempuan"
-        ).length;
-
-        const jumlahBelum = baris.filter(
-            (s) => s.status_iuran !== "lunas"
-        ).length;
-
-        if ($("sumLk")) $("sumLk").textContent = jumlahLk;
-        if ($("sumPr")) $("sumPr").textContent = jumlahPr;
-        if ($("sumBelum")) $("sumBelum").textContent = jumlahBelum;
+        if ($("sumTotal")) $("sumTotal").textContent = info.total ?? 0;
+        if ($("sumLk")) $("sumLk").textContent = info.laki_laki ?? 0;
+        if ($("sumPr")) $("sumPr").textContent = info.perempuan ?? 0;
+        if ($("sumBelum")) $("sumBelum").textContent = info.belum_lunas ?? 0;
 
         if ($("sumTotalNote")) {
-            $("sumTotalNote").textContent = baris.length
+            $("sumTotalNote").textContent = Number(info.total) > 0
                 ? "siswa terdaftar"
                 : "belum ada siswa";
         }
@@ -728,53 +802,11 @@ import {
        FILTER
     ====================================================== */
 
+    // Filter diteruskan ke API (q / id_kelas / jenis_kelamin /
+    // status_iuran). Setiap perubahan filter kembali ke halaman 1.
     const terapkanFilter = () => {
-        const kata = $("cariSiswa")?.value.trim().toLowerCase() || "";
-        const kelas = $("filterKelas")?.value || "semua";
-        const jk = $("filterJk")?.value || "semua";
-        const iuran = $("filterIuran")?.value || "semua";
-
-        const hasil = SISWA.filter((siswa) => {
-            if (
-                kelas !== "semua" &&
-                String(siswa.id_kelas) !== String(kelas)
-            ) {
-                return false;
-            }
-
-            // Filter jenis kelamin (L/P). Data berisi "Laki-Laki"/"Perempuan".
-            if (jk !== "semua") {
-                const jkSiswa = /perempuan/i.test(String(siswa.jenis_kelamin ?? ""))
-                    ? "P"
-                    : (/laki/i.test(String(siswa.jenis_kelamin ?? "")) ? "L" : "");
-
-                if (jkSiswa !== jk) return false;
-            }
-
-            // Filter status iuran: lunas / sebagian / belum.
-            // Pencocokan harus persis supaya "Sebagian" tidak ikut
-            // muncul saat memilih "Belum Bayar".
-            if (iuran !== "semua") {
-                const status = String(siswa.status_iuran ?? "").toLowerCase();
-
-                if (status !== iuran) return false;
-            }
-
-            if (kata) {
-                const gabung = [
-                    siswa.nama,
-                    siswa.nis,
-                    siswa.kelas
-                ].join(" ").toLowerCase();
-
-                if (!gabung.includes(kata)) return false;
-            }
-
-            return true;
-        });
-
-        renderTabel(hasil);
-        renderRingkasan(hasil);
+        halamanSekarang = 1;
+        muatData(1);
     };
 
     const resetFilter = () => {
@@ -1221,6 +1253,22 @@ import {
 
         $("filterIuran")?.addEventListener("change", terapkanFilter);
 
+        $("prevPage")?.addEventListener("click", () => {
+            if (halamanSekarang > 1) muatData(halamanSekarang - 1);
+        });
+
+        $("nextPage")?.addEventListener("click", () => {
+            if (halamanSekarang < halamanAkhir) muatData(halamanSekarang + 1);
+        });
+
+        $("pageNumbers")?.addEventListener("click", (event) => {
+            const tombol = event.target.closest("button[data-halaman]");
+            if (!tombol) return;
+
+            const halaman = Number(tombol.dataset.halaman);
+            if (Number.isFinite(halaman)) muatData(halaman);
+        });
+
         $("btnResetFilter")?.addEventListener("click", resetFilter);
         $("btnKosongkanFilter")?.addEventListener("click", resetFilter);
 
@@ -1295,6 +1343,12 @@ import {
 
     pasangInteraksiUmum();
     pasangEvent();
+
+    // Pulihkan pilihan kelas sebelum request pertama, lalu pertahankan
+    // di URL setiap halaman pagination dimuat.
+    if ($("filterKelas")) {
+        $("filterKelas").value = ambilFilterKelasDariUrl();
+    }
     muatData();
 
 })();

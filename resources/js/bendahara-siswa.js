@@ -233,8 +233,18 @@ document.addEventListener("DOMContentLoaded", () => {
        PAGINATION
        ========================================================= */
 
-    const perPage = 8;
+    // Backend yang memotong daftar menjadi 10 baris per halaman;
+    // JS hanya membaca metadata pagination yang dikembalikan API.
     let currentPage = 1;
+    let lastPage = 1;
+    let infoHalaman = {
+        total: 0,
+        current_page: 1,
+        last_page: 1,
+        from: 0,
+        to: 0
+    };
+    let urutanMuat = 0;
 
 
     /* =========================================================
@@ -310,18 +320,19 @@ document.addEventListener("DOMContentLoaded", () => {
        STATISTICS
        ========================================================= */
 
-    function updateStats() {
-        const total = students.length;
+    function updateStats(statistik) {
+        // Angka ringkasan berasal dari seluruh data hasil filter di server,
+        // bukan dari 10 baris yang tampil di halaman ini.
+        const info = statistik && typeof statistik === "object"
+            ? statistik
+            : { total: 0, belum_lunas: 0 };
 
-        const paid = students.filter(
-            student => student.status === "lunas"
-        ).length;
+        const total = Number(info.total) || 0;
 
         // "Belum Lunas" mencakup siswa yang belum membayar sama sekali
         // maupun yang baru membayar sebagian.
-        const unpaid = students.filter(
-            student => student.status !== "lunas"
-        ).length;
+        const unpaid = Number(info.belum_lunas) || 0;
+        const paid = Math.max(total - unpaid, 0);
 
         if (totalStudents) {
             totalStudents.textContent = total;
@@ -346,26 +357,9 @@ document.addEventListener("DOMContentLoaded", () => {
        ========================================================= */
 
     function getFilteredStudents() {
-        const keyword = searchInput
-            ? searchInput.value.trim().toLowerCase()
-            : "";
-
-        const selectedStatus = statusFilter
-            ? statusFilter.value
-            : "all";
-
-        return students.filter(student => {
-            const matchesKeyword =
-                !keyword ||
-                student.name.toLowerCase().includes(keyword) ||
-                student.nis.toLowerCase().includes(keyword);
-
-            const matchesStatus =
-                selectedStatus === "all" ||
-                student.status === selectedStatus;
-
-            return matchesKeyword && matchesStatus;
-        });
+        // Pencarian dan filter status sudah diterapkan server melalui
+        // ?serverSide=1, jadi JS hanya merender halaman berjalan.
+        return students;
     }
 
 
@@ -381,29 +375,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const filteredStudents = getFilteredStudents();
-
-        const totalItems = filteredStudents.length;
-
-        const totalPages = Math.max(
-            1,
-            Math.ceil(totalItems / perPage)
-        );
-
-        if (currentPage > totalPages) {
-            currentPage = totalPages;
-        }
-
-        const startIndex = (currentPage - 1) * perPage;
-        const endIndex = Math.min(
-            startIndex + perPage,
-            totalItems
-        );
-
-        const currentStudents = filteredStudents.slice(
-            startIndex,
-            endIndex
-        );
+        // `students` sudah berisi maksimal 10 baris dari halaman berjalan.
+        const currentStudents = getFilteredStudents();
 
         tableBody.innerHTML = "";
 
@@ -412,11 +385,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 emptyState.classList.add("show");
             }
 
-            if (paginationInfo) {
-                paginationInfo.textContent = "Tidak ada data siswa";
-            }
-
-            renderPagination(0);
+            renderPagination();
 
             return;
         }
@@ -545,12 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         tableBody.appendChild(fragment);
 
-        if (paginationInfo) {
-            paginationInfo.textContent =
-                `Menampilkan ${startIndex + 1}–${endIndex} dari ${totalItems} siswa`;
-        }
-
-        renderPagination(totalPages);
+        renderPagination();
     }
 
 
@@ -558,68 +522,69 @@ document.addEventListener("DOMContentLoaded", () => {
        PAGINATION RENDER
        ========================================================= */
 
-    function renderPagination(totalPages) {
-        if (!pageNumbers) {
-            return;
+    function renderPagination() {
+        const dari = Number(infoHalaman.from) || 0;
+        const sampai = Number(infoHalaman.to) || 0;
+        const total = Number(infoHalaman.total) || 0;
+        const halaman = Number(infoHalaman.current_page) || 1;
+        const akhirHalaman = Math.max(
+            1,
+            Number(infoHalaman.last_page) || 1
+        );
+
+        currentPage = halaman;
+        lastPage = akhirHalaman;
+
+        if (paginationInfo) {
+            paginationInfo.textContent =
+                `Menampilkan ${dari}-${sampai} dari ${total} siswa` +
+                ` • Halaman ${halaman} dari ${akhirHalaman}`;
         }
 
-        pageNumbers.innerHTML = "";
+        if (pageNumbers) {
+            pageNumbers.innerHTML = "";
 
-        if (totalPages <= 0) {
-            if (prevPage) {
-                prevPage.disabled = true;
+            // Jendela maksimal 5 nomor halaman di sekitar halaman aktif.
+            const lebar = 5;
+            let awal = Math.max(1, currentPage - Math.floor(lebar / 2));
+            let akhir = Math.min(lastPage, awal + lebar - 1);
+            awal = Math.max(1, akhir - lebar + 1);
+
+            for (let nomor = awal; nomor <= akhir; nomor++) {
+                const button = document.createElement("button");
+
+                button.type = "button";
+                button.className = "page-btn";
+                button.dataset.page = String(nomor);
+                button.textContent = String(nomor);
+
+                if (nomor === currentPage) {
+                    button.classList.add("is-active", "active");
+                }
+
+                button.addEventListener("click", () => muatData(nomor));
+
+                pageNumbers.appendChild(button);
             }
-
-            if (nextPage) {
-                nextPage.disabled = true;
-            }
-
-            return;
-        }
-
-        for (let page = 1; page <= totalPages; page++) {
-            const button = document.createElement("button");
-
-            button.type = "button";
-            button.className = "page-btn";
-
-            if (page === currentPage) {
-                button.classList.add("active");
-            }
-
-            button.textContent = page;
-
-            button.addEventListener("click", () => {
-                currentPage = page;
-                renderTable();
-            });
-
-            pageNumbers.appendChild(button);
         }
 
         if (prevPage) {
             prevPage.disabled = currentPage <= 1;
 
             prevPage.onclick = () => {
-                if (currentPage <= 1) {
-                    return;
+                if (currentPage > 1) {
+                    muatData(currentPage - 1);
                 }
-
-                currentPage--;
-                renderTable();
             };
         }
 
         if (nextPage) {
-            nextPage.disabled = currentPage >= totalPages;
+            nextPage.disabled = currentPage >= lastPage;
 
             nextPage.onclick = () => {
-                if (currentPage >= totalPages) {
-                    return;
+                if (currentPage < lastPage) {
+                    muatData(currentPage + 1);
                 }
-
-                currentPage++;
-                renderTable();
             };
         }
     }
@@ -632,7 +597,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (searchInput) {
         searchInput.addEventListener("input", () => {
             currentPage = 1;
-            renderTable();
+            muatData(1);
         });
     }
 
@@ -644,7 +609,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (statusFilter) {
         statusFilter.addEventListener("change", () => {
             currentPage = 1;
-            renderTable();
+            muatData(1);
         });
     }
 
@@ -1261,7 +1226,10 @@ document.addEventListener("DOMContentLoaded", () => {
        MUAT DATA DARI DATABASE
        ========================================================= */
 
-    const muatData = async () => {
+    const muatData = async (halaman = currentPage) => {
+
+        // Respons lama tidak boleh menimpa hasil permintaan yang lebih baru.
+        const urutan = ++urutanMuat;
 
         const tbodyBend = document.getElementById("studentTableBody");
         if (tbodyBend) {
@@ -1270,17 +1238,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 .join("");
         }
 
+        // ?serverSide=1: server mengirim hanya halaman berjalan (10 baris).
+        // Bendahara tidak mengirim id_kelas supaya batasan kelas dari trait
+        // MembatasiKelas tetap menentukan scope datanya.
+        const parameter = new URLSearchParams({
+            serverSide: "1",
+            page: String(halaman)
+        });
+
+        const keyword = searchInput ? searchInput.value.trim() : "";
+        const statusTerpilih = statusFilter ? statusFilter.value : "all";
+
+        if (keyword) {
+            parameter.set("q", keyword);
+        }
+
+        if (["lunas", "sebagian", "belum"].includes(statusTerpilih)) {
+            parameter.set("status_iuran", statusTerpilih);
+        }
+
         let hasilSiswa = { data: [], kelas: [] };
 
         try {
 
-            hasilSiswa = await ambilJSON(API_SISWA);
+            hasilSiswa = await ambilJSON(
+                `${API_SISWA}?${parameter.toString()}`
+            );
 
         } catch (err) {
+
+            if (urutan !== urutanMuat) {
+                return;
+            }
 
             console.error(err);
 
             showToast(err.message);
+        }
+
+        if (urutan !== urutanMuat) {
+            return;
         }
 
         daftarKelas = Array.isArray(hasilSiswa?.kelas)
@@ -1317,9 +1314,19 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         });
 
-        currentPage = 1;
+        // Metadata server dipakai untuk info "Menampilkan x-y dari z" dan
+        // tombol halaman; total TIDAK dihitung dari 10 baris di atas.
+        infoHalaman = hasilSiswa?.pagination && typeof hasilSiswa.pagination === "object"
+            ? hasilSiswa.pagination
+            : {
+                total: 0,
+                current_page: 1,
+                last_page: 1,
+                from: 0,
+                to: 0
+            };
 
-        updateStats();
+        updateStats(hasilSiswa?.statistik);
 
         renderTable();
     };

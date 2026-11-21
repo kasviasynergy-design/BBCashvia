@@ -19,6 +19,47 @@
     gap: 18px;
 }
 
+
+/* Tombol cetak/unduh laporan: mengikuti palet BBCashvia. */
+.page-intro__action {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+.btn-laporan {
+    min-height: 38px;
+
+    padding: 0 16px;
+
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    border: 1px solid var(--primary, #2BA19E);
+    border-radius: var(--radius-sm, 8px);
+
+    background: #FFFFFF;
+    color: var(--primary-dark, #237A77);
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: background-color 0.2s ease;
+}
+
+.btn-laporan:hover {
+    background: #D4F1F9;
+}
+
+.btn-laporan .material-symbols-outlined {
+    font-size: 20px;
+}
+
 /*
  * Guard pesan kosong (regesi PesanKosongTest):
  * atribut [hidden] harus selalu menang atas aturan display

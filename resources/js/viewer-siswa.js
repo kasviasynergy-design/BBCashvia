@@ -19,6 +19,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let siswa = [];
 
+    // Pagination dihitung server (10 baris per halaman); JS hanya membaca
+    // metadata pagination/statistik yang dikirim bersama data.
+    let halamanSekarang = 1;
+    let halamanAkhir = 1;
+    let infoHalaman = {
+        total: 0,
+        current_page: 1,
+        last_page: 1,
+        from: 0,
+        to: 0
+    };
+    let urutanMuat = 0;
+
 
     /* ========================================================
        AKSES API
@@ -90,7 +103,9 @@ document.addEventListener("DOMContentLoaded", () => {
         ).format(Number(nilai) || 0);
 
 
-    const muatData = async () => {
+    const muatData = async (halaman = halamanSekarang) => {
+
+        const urutan = ++urutanMuat;
 
         const tbodyV = document.getElementById("studentTableBody");
         if (tbodyV) {
@@ -99,18 +114,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 .join("");
         }
 
+        // ?serverSide=1 dipakai pada setiap permintaan daftar. Viewer tidak
+        // mengirim id_kelas: batasan kelas tetap ditentukan server.
+        const parameter = new URLSearchParams({
+            serverSide: "1",
+            page: String(halaman)
+        });
+
+        const kata = searchInput?.value.trim() || "";
+        const statusTerpilih = statusFilter?.value || "all";
+
+        if (kata) {
+            parameter.set("q", kata);
+        }
+
+        if (statusTerpilih === "Aktif" || statusTerpilih === "Tidak Aktif") {
+            parameter.set("status", statusTerpilih);
+        }
+
         try {
-            const hasil = await permintaanAPI(API_URL);
+            const hasil = await permintaanAPI(
+                `${API_URL}?${parameter.toString()}`
+            );
+
+            if (urutan !== urutanMuat) return;
 
             const data =
-                Array.isArray(hasil.data) ? hasil.data : [];
+                Array.isArray(hasil?.data) ? hasil.data : [];
 
             siswa = data.map(petakanSiswa);
 
-            isiRingkasan();
+            isiRingkasan(hasil?.statistik);
+            renderPaginasi(hasil?.pagination);
 
             filterData();
         } catch (error) {
+
+            if (urutan !== urutanMuat) return;
 
             console.error(
                 "Gagal memuat data siswa:",
@@ -118,6 +158,9 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             siswa = [];
+
+            isiRingkasan(null);
+            renderPaginasi(null);
 
             filterData();
         }
@@ -155,33 +198,52 @@ document.addEventListener("DOMContentLoaded", () => {
     const infoJumlahSiswa =
         document.getElementById("infoJumlahSiswa");
 
+    const paginationInfo =
+        document.getElementById("paginationInfo");
+
+    const pageNumbers =
+        document.getElementById("pageNumbers");
+
+    const prevPage =
+        document.getElementById("prevPage");
+
+    const nextPage =
+        document.getElementById("nextPage");
+
 
     /* ========================================================
        RINGKASAN (DARI DATA ASLI DATABASE)
     ======================================================== */
 
-    function isiRingkasan() {
+    function isiRingkasan(statistik) {
 
-        const jumlah = siswa.length;
+        // Total berasal dari statistik server (seluruh hasil filter),
+        // bukan dari jumlah baris pada halaman ini.
+        const info = statistik && typeof statistik === "object"
+            ? statistik
+            : { total: 0 };
 
-        const aktif = siswa.filter(
-            (item) => item.status === "Aktif"
-        ).length;
+        const jumlah = Number(info.total) || 0;
+        const statusTerpilih = statusFilter?.value || "all";
 
         if (totalSiswa) {
             totalSiswa.textContent = jumlah;
         }
 
+        // Payload statistik tidak memuat rincian aktif/non-aktif, jadi
+        // angka pasti hanya ditampilkan saat filter status dipakai.
         if (siswaAktif) {
-            siswaAktif.textContent = aktif;
+            siswaAktif.textContent =
+                statusTerpilih === "Aktif" ? jumlah
+                    : statusTerpilih === "Tidak Aktif" ? 0
+                        : "–";
         }
 
         if (siswaTidakAktif) {
-            siswaTidakAktif.textContent = jumlah - aktif;
-        }
-
-        if (infoJumlahSiswa) {
-            infoJumlahSiswa.textContent = jumlah;
+            siswaTidakAktif.textContent =
+                statusTerpilih === "Tidak Aktif" ? jumlah
+                    : statusTerpilih === "Aktif" ? 0
+                        : "–";
         }
 
     }
@@ -242,8 +304,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     : "danger";
 
 
+            const nomor = (Number(infoHalaman.from) || 1) + index;
+
             row.innerHTML = `
-                <td>${index + 1}</td>
+                <td>${nomor}</td>
 
                 <td>
                     <span class="mono-text">
@@ -293,58 +357,141 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* ========================================================
+       PAGINASI (METADATA DARI SERVER)
+    ======================================================== */
+
+    function renderPaginasi(paginasi) {
+
+        const info = paginasi && typeof paginasi === "object"
+            ? paginasi
+            : {
+                total: 0,
+                current_page: 1,
+                last_page: 1,
+                from: 0,
+                to: 0
+            };
+
+        infoHalaman = info;
+        halamanSekarang = Number(info.current_page) || 1;
+        halamanAkhir = Math.max(1, Number(info.last_page) || 1);
+
+        const teksInfo =
+            `Menampilkan ${info.from ?? 0}-${info.to ?? 0} dari ` +
+            `${info.total ?? 0} siswa • Halaman ${halamanSekarang} dari ` +
+            `${halamanAkhir}`;
+
+        if (infoJumlahSiswa) {
+            infoJumlahSiswa.textContent = teksInfo;
+        }
+
+        if (paginationInfo) {
+            paginationInfo.textContent = teksInfo;
+        }
+
+        if (pageNumbers) {
+
+            pageNumbers.innerHTML = "";
+
+            const lebar = 5;
+            let awal = Math.max(
+                1,
+                halamanSekarang - Math.floor(lebar / 2)
+            );
+            let akhir = Math.min(
+                halamanAkhir,
+                awal + lebar - 1
+            );
+            awal = Math.max(1, akhir - lebar + 1);
+
+            for (
+                let halaman = awal;
+                halaman <= akhir;
+                halaman++
+            ) {
+
+                const tombol =
+                    document.createElement("button");
+
+                tombol.type = "button";
+                tombol.className = "page-btn";
+                tombol.dataset.halaman = String(halaman);
+                tombol.textContent = String(halaman);
+
+                if (halaman === halamanSekarang) {
+                    tombol.classList.add(
+                        "is-active",
+                        "active"
+                    );
+                }
+
+                pageNumbers.appendChild(tombol);
+            }
+        }
+
+        if (prevPage) {
+            prevPage.disabled = halamanSekarang <= 1;
+        }
+
+        if (nextPage) {
+            nextPage.disabled =
+                halamanSekarang >= halamanAkhir;
+        }
+    }
+
+    prevPage?.addEventListener("click", () => {
+        if (halamanSekarang > 1) {
+            muatData(halamanSekarang - 1);
+        }
+    });
+
+    nextPage?.addEventListener("click", () => {
+        if (halamanSekarang < halamanAkhir) {
+            muatData(halamanSekarang + 1);
+        }
+    });
+
+    pageNumbers?.addEventListener("click", (event) => {
+        const tombol =
+            event.target.closest("button[data-halaman]");
+
+        if (!tombol) return;
+
+        const halaman = Number(tombol.dataset.halaman);
+
+        if (Number.isFinite(halaman)) {
+            muatData(halaman);
+        }
+    });
+
+
+    /* ========================================================
        FILTER
     ======================================================== */
 
     function filterData() {
 
-        const keyword =
-            searchInput?.value
-                .trim()
-                .toLowerCase() || "";
-
-        const selectedStatus =
-            statusFilter?.value || "all";
+        // Pencarian/status sudah diterapkan server sebelum data dikirim.
+        renderTable(siswa);
+    }
 
 
-        const filtered =
-            siswa.filter((item) => {
+    function terapkanFilter() {
 
-                const matchesSearch =
-                    item.nama
-                        .toLowerCase()
-                        .includes(keyword) ||
-
-                    item.nis
-                        .toLowerCase()
-                        .includes(keyword);
-
-
-                const matchesStatus =
-                    selectedStatus === "all" ||
-                    item.status === selectedStatus;
-
-
-                return (
-                    matchesSearch &&
-                    matchesStatus
-                );
-            });
-
-
-        renderTable(filtered);
+        halamanSekarang = 1;
+        muatData(1);
     }
 
 
     searchInput?.addEventListener(
         "input",
-        filterData
+        terapkanFilter
     );
 
 
     statusFilter?.addEventListener(
         "change",
-        filterData
+        terapkanFilter
     );
 
 

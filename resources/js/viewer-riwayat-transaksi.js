@@ -104,14 +104,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const petakanTransaksi = (t) => {
 
         const jenisDb = String(t.jenis ?? "").toUpperCase();
+        const tanggalIso = String(t.tanggal ?? "").slice(0, 10);
 
         return {
             receipt: t.no_bukti || ("TRX-" + (t.id_transaksi ?? "")),
-            date: formatTanggal(t.tanggal),
+            tanggalIso,
+            date: formatTanggal(tanggalIso),
             type: (jenisDb === "PENGELUARAN" || jenisDb === "K") ? "Pengeluaran" : "Pemasukan",
+            kategoriMentah: String(t.kategori ?? ""),
             category: labelKategori(t.kategori),
             description: t.keterangan || t.nama_pembayar || "-",
-            amount: Number(t.nominal) || 0,
+            // Satu pembayaran multi-iuran sudah diagregasi backend.
+            amount: Number(t.nominal_grup ?? t.nominal) || 0,
+            kelas: t.nama_kelas || "-",
             status: "Berhasil"
         };
     };
@@ -145,13 +150,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const muatData = async () => {
 
         try {
-            const hasil = await permintaanAPI(API_URL);
+            // Periode dikirim ke server supaya ringkasan & daftar
+            // dihitung dari query yang sama. Kelas tetap dikunci
+            // oleh hak akses pengguna (tanpa parameter id_kelas).
+            const parameter = new URLSearchParams();
+
+            if (dariInput?.value) parameter.set("dari", dariInput.value);
+            if (sampaiInput?.value) parameter.set("sampai", sampaiInput.value);
+
+            const url = parameter.toString()
+                ? `${API_URL}?${parameter.toString()}`
+                : API_URL;
+
+            const hasil = await permintaanAPI(url);
 
             const data =
                 Array.isArray(hasil.data) ? hasil.data : [];
 
-            transactions = data.map(petakanTransaksi);
+            // Satu no_bukti = satu transaksi utama, meski pembayaran
+            // terdiri dari beberapa baris iuran.
+            const perBukti = new Map();
 
+            data.forEach((t) => {
+                const kunci = t.no_bukti || ("TRX-" + (t.id_transaksi ?? ""));
+                if (!perBukti.has(kunci)) perBukti.set(kunci, t);
+            });
+
+            transactions = Array.from(perBukti.values())
+                .map(petakanTransaksi);
+
+            isiPilihanKategori();
             filterData();
         } catch (error) {
 
@@ -172,25 +200,34 @@ document.addEventListener("DOMContentLoaded", () => {
     ============================================================ */
 
     const tableBody =
-        document.getElementById("transactionTableBody");
+        document.getElementById("riwayatTableBody");
 
     const searchInput =
         document.getElementById("searchInput");
 
+    /* Select lama bernama statusFilter berisi pilihan jenis transaksi. */
     const typeFilter =
-        document.getElementById("typeFilter");
+        document.getElementById("statusFilter");
+
+    const statusFilter = typeFilter;
 
     const categoryFilter =
         document.getElementById("categoryFilter");
 
-    const statusFilter =
-        document.getElementById("statusFilter");
+    const dariInput =
+        document.getElementById("dariTanggal");
+
+    const sampaiInput =
+        document.getElementById("sampaiTanggal");
 
     const tableCount =
         document.getElementById("tableCount");
 
     const emptyState =
         document.getElementById("emptyState");
+
+    const ringkasanTransaksi =
+        document.getElementById("ringkasanTransaksi");
 
     const totalTransactions =
         document.getElementById("totalTransactions");
@@ -240,10 +277,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const balance = income - expense;
 
-        totalTransactions.textContent = data.length;
-        totalIncome.textContent = formatCurrency(income);
-        totalExpense.textContent = formatCurrency(expense);
-        cashBalance.textContent = formatCurrency(balance);
+        if (totalTransactions) totalTransactions.textContent = data.length;
+        if (totalIncome) totalIncome.textContent = formatCurrency(income);
+        if (totalExpense) totalExpense.textContent = formatCurrency(expense);
+        if (cashBalance) cashBalance.textContent = formatCurrency(balance);
+
+        if (ringkasanTransaksi) {
+            ringkasanTransaksi.textContent =
+                `${data.length} transaksi • Pemasukan ${formatCurrency(income)} • ` +
+                `Pengeluaran ${formatCurrency(expense)} • Saldo ${formatCurrency(balance)}`;
+        }
 
     };
 
@@ -254,19 +297,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const renderTable = (data) => {
 
+        if (!tableBody) return;
+
         tableBody.innerHTML = "";
 
         if (data.length === 0) {
 
-            emptyState.classList.add("show");
+            emptyState?.classList.add("show");
 
-            tableCount.textContent =
-                "Tidak ada transaksi";
+            if (tableCount) {
+                tableCount.textContent = "Tidak ada transaksi";
+            }
 
             return;
         }
 
-        emptyState.classList.remove("show");
+        emptyState?.classList.remove("show");
 
         data.forEach((item, index) => {
 
@@ -296,29 +342,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 <td>
                     <span class="receipt-number">
-                        ${item.receipt}
+                        ${escapeHtml(item.receipt)}
                     </span>
                 </td>
 
                 <td>
-                    ${item.date}
+                    ${escapeHtml(item.date)}
                 </td>
 
                 <td>
                     <span class="transaction-type ${typeClass}">
-                        ${item.type}
+                        ${escapeHtml(item.type)}
                     </span>
                 </td>
 
                 <td>
                     <span class="transaction-category">
-                        ${item.category}
+                        ${escapeHtml(item.category)}
                     </span>
                 </td>
 
                 <td>
                     <span class="transaction-description">
-                        ${item.description}
+                        ${escapeHtml(item.description)}
+                        <span class="transaction-category">${escapeHtml(item.kelas)}</span>
                     </span>
                 </td>
 
@@ -339,8 +386,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         });
 
-        tableCount.textContent =
-            `Menampilkan ${data.length} transaksi`;
+        if (tableCount) {
+            tableCount.textContent =
+                `Menampilkan ${data.length} transaksi`;
+        }
 
     };
 
@@ -352,43 +401,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const filterData = () => {
 
         const search =
-            searchInput.value
+            (searchInput?.value ?? "")
                 .trim()
                 .toLowerCase();
 
+        /* Nilai lama: all | masuk | keluar. */
         const selectedType =
-            typeFilter.value;
+            typeFilter?.value ?? "all";
+
+        const jenisLabel =
+            selectedType === "masuk"
+                ? "Pemasukan"
+                : selectedType === "keluar"
+                    ? "Pengeluaran"
+                    : null;
 
         const selectedCategory =
-            categoryFilter.value;
+            categoryFilter?.value ?? "all";
 
-        const selectedStatus =
-            statusFilter.value;
+        const dari = dariInput?.value ?? "";
+        const sampai = sampaiInput?.value ?? "";
 
         const filtered = transactions.filter(item => {
 
             const matchesSearch =
-                item.receipt.toLowerCase().includes(search) ||
-                item.description.toLowerCase().includes(search) ||
-                item.category.toLowerCase().includes(search);
+                !search ||
+                String(item.receipt).toLowerCase().includes(search) ||
+                String(item.description).toLowerCase().includes(search) ||
+                String(item.category).toLowerCase().includes(search) ||
+                String(item.kelas).toLowerCase().includes(search);
 
             const matchesType =
-                selectedType === "all" ||
-                item.type === selectedType;
+                !jenisLabel || item.type === jenisLabel;
 
             const matchesCategory =
                 selectedCategory === "all" ||
                 item.category === selectedCategory;
 
-            const matchesStatus =
-                selectedStatus === "all" ||
-                item.status === selectedStatus;
+            /* Server sudah memfilter periode; ini pengaman bila
+               pengguna mengubah tanggal sebelum data selesai dimuat. */
+            const matchesPeriode =
+                (!dari || item.tanggalIso >= dari) &&
+                (!sampai || item.tanggalIso <= sampai);
 
             return (
                 matchesSearch &&
                 matchesType &&
                 matchesCategory &&
-                matchesStatus
+                matchesPeriode
             );
 
         });
@@ -403,25 +463,24 @@ document.addEventListener("DOMContentLoaded", () => {
        EVENT FILTER
     ============================================================ */
 
-    searchInput.addEventListener(
+    searchInput?.addEventListener(
         "input",
         filterData
     );
 
-    typeFilter.addEventListener(
+    typeFilter?.addEventListener(
         "change",
         filterData
     );
 
-    categoryFilter.addEventListener(
+    categoryFilter?.addEventListener(
         "change",
         filterData
     );
 
-    statusFilter.addEventListener(
-        "change",
-        filterData
-    );
+    /* Periode dikirim ulang ke server agar ringkasan ikut berubah. */
+    dariInput?.addEventListener("change", muatData);
+    sampaiInput?.addEventListener("change", muatData);
 
 
     /* ============================================================

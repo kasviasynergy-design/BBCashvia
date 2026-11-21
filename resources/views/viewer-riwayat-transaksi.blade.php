@@ -389,6 +389,51 @@
 
                     </div>
 
+
+                    <div class="filter-control">
+
+                        <span class="material-symbols-outlined">
+                            category
+                        </span>
+
+                        <select id="categoryFilter">
+                            <option value="all">Semua Kategori</option>
+                        </select>
+
+                    </div>
+
+
+                    <div class="filter-control">
+
+                        <span class="material-symbols-outlined">
+                            date_range
+                        </span>
+
+                        <input type="date" id="dariTanggal" aria-label="Dari tanggal">
+
+                    </div>
+
+
+                    <div class="filter-control">
+
+                        <span class="material-symbols-outlined">
+                            event
+                        </span>
+
+                        <input type="date" id="sampaiTanggal" aria-label="Sampai tanggal">
+
+                    </div>
+
+                </div>
+
+
+                {{-- Ringkasan mengikuti filter yang sama dengan tabel. --}}
+                <div class="filter-area" aria-live="polite">
+
+                    <span id="tableCount">Menampilkan 0 transaksi</span>
+
+                    <span id="ringkasanTransaksi">Kelas {{ auth()->user()->labelKelas() }}</span>
+
                 </div>
 
                 {{-- =================================================

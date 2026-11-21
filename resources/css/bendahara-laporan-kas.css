@@ -1022,6 +1022,18 @@ img {
     transform: translateY(-1px);
 }
 
+.btn--secondary {
+    background: #ffffff;
+
+    color: var(--primary-dark);
+
+    border: 1px solid var(--primary);
+}
+
+.btn--secondary:hover {
+    background: #D4F1F9;
+}
+
 .btn--ghost {
     background: #ffffff;
 

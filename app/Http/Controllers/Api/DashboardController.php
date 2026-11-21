@@ -239,10 +239,6 @@ class DashboardController extends Controller
             ->limit(10)
             ->get()
             ->map(function ($t) {
-                $waktuWib = $t->created_at
-                    ? $t->created_at->copy()->setTimezone(Transaksi::ZONA_WIB)
-                    : null;
-
                 return [
                     'id' => $t->no_bukti
                         ?: ('TRX-' . str_pad($t->id_transaksi, 4, '0', STR_PAD_LEFT)),
@@ -251,7 +247,7 @@ class DashboardController extends Controller
                     'kategori' => $t->kategori ?? '-',
                     'tanggal' => $t->tanggal ? $t->tanggal->format('d M Y') : '-',
                     'tanggal_iso' => $t->tanggal ? $t->tanggal->format('Y-m-d') : null,
-                    'jam' => $waktuWib ? $waktuWib->format('H:i') : '-',
+                    'jam' => $t->waktu ?: '-',
                     'nominal' => (float) $t->nominal,
                     'arah' => strtolower($t->jenis),
                     'status' => 'Terverifikasi',

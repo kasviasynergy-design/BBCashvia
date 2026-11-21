@@ -4,6 +4,12 @@
    Tanpa fitur verifikasi
    ============================================================ */
 
+import {
+    ambilFilterKelasDariUrl,
+    isiDropdownFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
+
 (function () {
     "use strict";
 
@@ -164,10 +170,48 @@
         };
     };
 
-    const muatData = async () => {
+    /* Dropdown kelas memakai data DB nyata. Hanya Admin yang melihat
+       seluruh kelas; "Semua Kelas" tidak mengirim filter ke server. */
+    const isiPilihanKelasRiwayat = async () => {
+
+        const pilih = $("filterKelasRiwayat");
+
+        if (!pilih) return;
+
+        // Pulihkan dulu agar request pertama sudah memakai kelas URL.
+        pilih.value = ambilFilterKelasDariUrl();
 
         try {
-            const hasil = await permintaanAPI(API_URL);
+            const hasil = await permintaanAPI("/data/kelas");
+            const daftar = Array.isArray(hasil?.data) ? hasil.data : [];
+
+            // Memakai pembantu bersama: daftar dari database + nilai
+            // ?id_kelas= yang dipertahankan saat halaman dimuat ulang.
+            isiDropdownFilterKelas(pilih, daftar);
+        } catch (error) {
+            console.error("Gagal memuat daftar kelas:", error);
+        }
+    };
+
+
+    const muatData = async () => {
+
+        // Filter kelas dikirim ke server agar hak akses dan agregasi
+        // tetap dihitung dari satu sumber yang sama dengan tabel.
+        const pilihKelas = $("filterKelasRiwayat");
+        const idKelas = pilihKelas && pilihKelas.value !== "semua"
+            ? pilihKelas.value
+            : "";
+        const url = idKelas
+            ? `${API_URL}?id_kelas=${encodeURIComponent(idKelas)}`
+            : API_URL;
+
+        // Simpan pilihan di URL agar tetap terbawa saat halaman
+        // dimuat ulang atau dibagikan.
+        simpanFilterKelasKeUrl(pilihKelas?.value);
+
+        try {
+            const hasil = await permintaanAPI(url);
 
             const data =
                 Array.isArray(hasil.data)
@@ -469,11 +513,18 @@
         $("filterJenis").value = "semua";
         $("filterBulan").value = "semua";
 
+        const pilihKelas = $("filterKelasRiwayat");
+
+        if (pilihKelas) {
+            pilihKelas.value = "semua";
+        }
+
         isiPilihanKategori();
 
         $("filterKategori").value = "semua";
 
         terapkanFilter();
+        muatData();
     };
 
 
@@ -1050,6 +1101,9 @@
 
         pasangInteraksiUmum();
 
+        $("filterKelasRiwayat")
+            ?.addEventListener("change", muatData);
+
         terapkanFilter();
 
 
@@ -1105,6 +1159,7 @@
         "DOMContentLoaded",
         () => {
             init();
+            isiPilihanKelasRiwayat();
             muatData();
         }
     );

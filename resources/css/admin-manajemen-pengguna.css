@@ -1507,6 +1507,11 @@ a {
    BADGES
    ========================================================= */
 
+/* Pastikan atribut hidden tetap menonaktifkan tombol bertampilan flex. */
+[hidden] {
+    display: none !important;
+}
+
 .badge {
     min-height: 25px;
 
@@ -1540,6 +1545,12 @@ a {
 .badge--primary {
     background: var(--primary-soft);
     color: var(--primary);
+}
+
+/* Import pengguna: baris yang gagal validasi. */
+.badge--danger {
+    background: #FDECEC;
+    color: #B4232A;
 }
 
 .status-dot {

@@ -26,7 +26,44 @@ class TransaksiController extends Controller
 
     public function index(Request $request)
     {
-        $transaksi = $this->transaksiTerbatas($request)
+        // Filter bersifat aditif. Hak akses tetap dipegang oleh trait
+        // MembatasiKelas: Bendahara/Viewer tidak bisa melebarkan data
+        // lewat parameter id_kelas.
+        // id_kelas divalidasi hanya untuk Admin; untuk peran lain
+        // parameter ini diabaikan sama sekali.
+        $this->validasiFilterKelasAdmin($request);
+
+        $request->validate([
+            'dari' => ['nullable', 'date'],
+            'sampai' => ['nullable', 'date', 'after_or_equal:dari'],
+        ], [
+            'sampai.after_or_equal' => 'Tanggal akhir tidak boleh sebelum tanggal mulai.',
+        ]);
+
+        $query = $this->transaksiTerbatas($request);
+
+        if ($request->filled('dari')) {
+            $query->whereDate('tanggal', '>=', $request->input('dari'));
+        }
+
+        if ($request->filled('sampai')) {
+            $query->whereDate('tanggal', '<=', $request->input('sampai'));
+        }
+
+        // Satu pembantu yang sama dipakai seluruh endpoint: hanya Admin
+        // yang boleh menyaring berdasarkan id_kelas dari query string.
+        $this->terapkanFilterKelasAdmin($request, $query);
+
+        $idKelasFilter = $request->user()?->aksesSemuaKelas()
+            && !$this->tanpaFilterKelas($request)
+                ? (int) $request->input('id_kelas')
+                : null;
+
+        // Ringkasan saldo memakai query yang SAMA dengan daftar transaksi,
+        // sehingga total laporan tidak bisa berbeda dari rinciannya.
+        $ringkasan = $this->ringkasanSaldo(clone $query);
+
+        $transaksi = (clone $query)
             ->with([
                 'iuran:id_iuran,nama_iuran',
                 'siswa:id_siswa,nis,nama_siswa',
@@ -36,10 +73,6 @@ class TransaksiController extends Controller
             ])
             ->orderByDesc('id_transaksi')
             ->get();
-
-        // Ringkasan saldo dihitung di backend agar semua halaman
-        // memakai angka yang sama (pemasukan dikurung pengeluaran).
-        $ringkasan = $this->ringkasanSaldo($this->transaksiTerbatas($request));
 
         // =====================================================
         // KELOMPOK PEMBAYARAN (GRUP BERDASARKAN no_bukti)
@@ -98,6 +131,11 @@ class TransaksiController extends Controller
             'message' => 'Data transaksi berhasil diambil.',
             'data' => $data,
             'ringkasan' => $ringkasan,
+            'filter' => [
+                'dari' => $request->input('dari'),
+                'sampai' => $request->input('sampai'),
+                'id_kelas' => $idKelasFilter,
+            ],
         ]);
     }
 

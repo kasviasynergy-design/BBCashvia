@@ -3,6 +3,12 @@ import {
     beriKunciIdempoten,
     kunciTombolSimpan,
 } from "./simpan-guard.js";
+import {
+    ambilFilterKelasDariUrl,
+    isiDropdownFilterKelas,
+    nilaiFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -153,6 +159,83 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+    /**
+     * Upload FormData tidak boleh memakai header Content-Type JSON.
+     * Helper ini memisahkan jalur unggah berkas dari permintaanAPI().
+     */
+    async function permintaanFormData(url, formData, opsi = {}) {
+        const csrf = (
+            opsi.csrfBaru
+                ? await ambilTokenCsrfBaru()
+                : null
+        ) || document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
+
+        const opsiFetch = beriKunciIdempoten({
+            method: "POST",
+            body: formData,
+            headers: {
+                Accept: "application/json",
+                ...(csrf ? { "X-CSRF-TOKEN": csrf } : {})
+            },
+            credentials: "same-origin"
+        });
+
+        const respons = await fetch(url, opsiFetch);
+
+        let hasil = {};
+
+        try {
+            hasil = await respons.json();
+        } catch {
+            // Respons bukan JSON.
+        }
+
+        if (!respons.ok) {
+            throw new Error(pesanErrorAPI(hasil, respons.status));
+        }
+
+        return hasil;
+    }
+
+
+    /** Unduh file XLSX dari base64 yang dikirim server (tanpa disimpan). */
+    function unduhXlsx(base64, namaFile) {
+        if (!base64) return;
+
+        let biner;
+
+        try {
+            biner = atob(base64);
+        } catch {
+            showToast("File akun tidak dapat dibuka.");
+            return;
+        }
+
+        const byte = new Uint8Array(biner.length);
+
+        for (let i = 0; i < biner.length; i++) {
+            byte[i] = biner.charCodeAt(i);
+        }
+
+        const url = URL.createObjectURL(
+            new Blob([byte], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            })
+        );
+
+        const tautan = document.createElement("a");
+        tautan.href = url;
+        tautan.download = namaFile;
+        document.body.appendChild(tautan);
+        tautan.click();
+        tautan.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+
     /* =========================================================
        MUAT DATA DARI DATABASE
        ========================================================= */
@@ -167,7 +250,16 @@ document.addEventListener("DOMContentLoaded", () => {
         sedangMemuat = true;
 
         try {
-            const hasil = await permintaanAPI(API_URL);
+            const idKelas = nilaiFilterKelas(filterKelas);
+
+            const url = idKelas
+                ? `${API_URL}?id_kelas=${encodeURIComponent(idKelas)}`
+                : API_URL;
+
+            // Simpan pilihan kelas di URL agar tidak hilang saat reload.
+            simpanFilterKelasKeUrl(filterKelas?.value);
+
+            const hasil = await permintaanAPI(url);
 
             const data =
                 Array.isArray(hasil.data)
@@ -179,13 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     ? hasil.kelas
                     : [];
 
-            DAFTAR_SISWA =
-                Array.isArray(hasil.siswa)
-                    ? hasil.siswa
-                    : [];
-
             isiPilihanKelas();
-            isiPilihanSiswa();
+            isiPilihanKelasPendukung();
 
             DATA_PENGGUNA = data.map((user) => ({
                 db_id: user.db_id,
@@ -215,6 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             DATA_PENGGUNA = [];
 
+            isiPilihanKelasPendukung();
             renderSummary();
             renderTable();
 
@@ -239,6 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const cariPengguna = document.getElementById("cariPengguna");
     const filterPeran = document.getElementById("filterPeran");
+    const filterKelas = document.getElementById("filterKelas");
     const btnResetFilter = document.getElementById("btnResetFilter");
 
     const isiTabelPengguna = document.getElementById("isiTabelPengguna");
@@ -252,9 +341,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const sumViewer = document.getElementById("sumViewer");
 
     const btnTambahPengguna = document.getElementById("btnTambahPengguna");
+    const btnImportPengguna = document.getElementById("btnImportPengguna");
 
     const modalForm = document.getElementById("modalForm");
     const modalHapus = document.getElementById("modalHapus");
+    const modalImport = document.getElementById("modalImport");
+    const modalAkun = document.getElementById("modalAkun");
+
+    const importFile = document.getElementById("importFile");
+    const importKelas = document.getElementById("importKelas");
+    const btnPreviewImport = document.getElementById("btnPreviewImport");
+    const btnKonfirmasiImport = document.getElementById("btnKonfirmasiImport");
+    const btnUnduhAkunImport = document.getElementById("btnUnduhAkunImport");
+    const previewImport = document.getElementById("previewImport");
+    const isiPreviewImport = document.getElementById("isiPreviewImport");
+    const rekapPreview = document.getElementById("rekapPreview");
+    const hasilImport = document.getElementById("hasilImport");
+    const rekapImport = document.getElementById("rekapImport");
+    const rincianImport = document.getElementById("rincianImport");
+
+    const akunEmail = document.getElementById("akunEmail");
+    const akunPassword = document.getElementById("akunPassword");
+    const akunPeringatan = document.getElementById("akunPeringatan");
+    const btnUnduhAkunManual = document.getElementById("btnUnduhAkunManual");
 
     const formPengguna = document.getElementById("formPengguna");
     const modalFormTitle = document.getElementById("modalFormTitle");
@@ -268,6 +377,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const fieldJenisViewer = document.getElementById("fieldJenisViewer");
     const hintJenisViewer = document.getElementById("hintJenisViewer");
     const inputSiswa = document.getElementById("inputSiswa");
+    const inputKelasSiswa = document.getElementById("inputKelasSiswa");
+    const cariSiswaForm = document.getElementById("cariSiswaForm");
+    const infoSiswaKelas = document.getElementById("infoSiswaKelas");
     const fieldDataSiswa = document.getElementById("fieldDataSiswa");
     const hintDataSiswa = document.getElementById("hintDataSiswa");
     const inputPassword = document.getElementById("inputPassword");
@@ -288,12 +400,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let editId = null;
     let hapusId = null;
+    let HASIL_PREVIEW = [];
+    let AKUN_TERAKHIR = null;
+    let AKUN_IMPORT = null;
 
     /* Daftar kelas dari API untuk pilihan kelas pengguna. */
     let DAFTAR_KELAS = [];
 
     /* Daftar siswa dari API untuk penautan identitas akun. */
-    let DAFTAR_SISWA = [];
+    let SISWA_FORM = [];
+    let pengaturWaktuCariSiswa = null;
+    let urutanMuatSiswa = 0;
 
 
     /* =========================================================
@@ -334,24 +451,64 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* Isi pilihan kelas pada form sesuai daftar kelas dari API. */
     function isiPilihanKelas() {
-        if (!inputKelas) return;
+        const opsi = DAFTAR_KELAS.map((kelas) => `
+            <option value="${escapeHtml(kelas.id_kelas)}">
+                ${escapeHtml(kelas.nama_kelas)}
+            </option>
+        `).join("");
 
-        const nilaiLama = inputKelas.value;
+        if (inputKelas) {
+            const nilaiLama = inputKelas.value;
 
-        inputKelas.innerHTML = `
-            <option value="">- Semua Kelas (khusus Admin) -</option>
-            ${DAFTAR_KELAS.map((kelas) => `
-                <option value="${escapeHtml(kelas.id_kelas)}">
-                    ${escapeHtml(kelas.nama_kelas)}
-                </option>
-            `).join("")}
-        `;
+            inputKelas.innerHTML = `
+                <option value="">- Semua Kelas (khusus Admin) -</option>
+                ${opsi}
+            `;
 
-        const cocok = DAFTAR_KELAS.some(
-            (kelas) => String(kelas.id_kelas) === String(nilaiLama)
-        );
+            const cocok = DAFTAR_KELAS.some(
+                (kelas) => String(kelas.id_kelas) === String(nilaiLama)
+            );
 
-        inputKelas.value = cocok ? nilaiLama : "";
+            inputKelas.value = cocok ? nilaiLama : "";
+        }
+
+        if (inputKelasSiswa) {
+            const nilaiLama = inputKelasSiswa.value || inputKelas?.value || "";
+
+            inputKelasSiswa.innerHTML = `
+                <option value="">- Pilih kelas terlebih dahulu -</option>
+                ${opsi}
+            `;
+
+            const cocok = DAFTAR_KELAS.some(
+                (kelas) => String(kelas.id_kelas) === String(nilaiLama)
+            );
+
+            inputKelasSiswa.value = cocok ? nilaiLama : "";
+        }
+    }
+
+
+    /** Isi dropdown kelas pada filter dan form import dari data DB. */
+    function isiPilihanKelasPendukung() {
+        const opsiKelas = DAFTAR_KELAS.map((kelas) => `
+            <option value="${escapeHtml(kelas.id_kelas)}">
+                ${escapeHtml(kelas.nama_kelas)}
+            </option>
+        `).join("");
+
+        // Filter kelas memakai daftar DB yang sama dengan form, dan
+        // mengembalikan nilai ?id_kelas= bila halaman dibuka ulang.
+        isiDropdownFilterKelas(filterKelas, DAFTAR_KELAS);
+
+        if (importKelas) {
+            const nilaiLama = importKelas.value || "";
+            importKelas.innerHTML = `
+                <option value="">- Semua Kelas / ambil dari kolom Kelas -</option>
+                ${opsiKelas}
+            `;
+            importKelas.value = nilaiLama;
+        }
     }
 
 
@@ -359,6 +516,8 @@ document.addEventListener("DOMContentLoaded", () => {
      * Isi pilihan Data Siswa. Siswa yang sudah tertaut ke akun lain
      * dinonaktifkan agar satu siswa tidak memiliki dua akun. Saat
      * mengedit, siswa milik akun itu sendiri tetap dapat dipilih.
+     *
+     * Daftar diambil dari endpoint per-kelas, bukan dari seluruh siswa.
      */
     function isiPilihanSiswa(idTerpilih = null) {
         if (!inputSiswa) return;
@@ -369,7 +528,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         inputSiswa.innerHTML = `
             <option value="">- Pilih siswa -</option>
-            ${DAFTAR_SISWA.map((siswa) => {
+            ${SISWA_FORM.map((siswa) => {
                 const terpakai =
                     siswa.tertaut &&
                     String(siswa.id_siswa) !== String(nilaiLama);
@@ -382,13 +541,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${escapeHtml(siswa.nama)}
                         • ${escapeHtml(siswa.nis)}
                         • ${escapeHtml(siswa.kelas || "Tanpa kelas")}
-                        ${terpakai ? "(sudah tertaut)" : ""}
+                        ${terpakai ? "(sudah memiliki akun)" : ""}
                     </option>
                 `;
             }).join("")}
         `;
 
-        const cocok = DAFTAR_SISWA.some(
+        const cocok = SISWA_FORM.some(
             (siswa) => String(siswa.id_siswa) === String(nilaiLama)
         );
 
@@ -399,9 +558,69 @@ document.addEventListener("DOMContentLoaded", () => {
     function siswaTerpilih() {
         if (!inputSiswa || !inputSiswa.value) return null;
 
-        return DAFTAR_SISWA.find(
+        return SISWA_FORM.find(
             (siswa) => String(siswa.id_siswa) === String(inputSiswa.value)
         ) || null;
+    }
+
+
+    /**
+     * Muat daftar siswa HANYA untuk kelas yang dipilih.
+     * Pencarian nama/NIS juga diproses di server.
+     */
+    async function muatSiswaForm(idTerpilih = null, idUsers = null) {
+        if (!inputSiswa) return;
+
+        const idKelas = inputKelasSiswa?.value || inputKelas?.value || "";
+        const urutan = ++urutanMuatSiswa;
+
+        if (!idKelas) {
+            SISWA_FORM = [];
+            isiPilihanSiswa(idTerpilih);
+
+            if (infoSiswaKelas) {
+                infoSiswaKelas.textContent = "Pilih kelas untuk menampilkan siswa.";
+            }
+            return;
+        }
+
+        const kata = (cariSiswaForm?.value || "").trim();
+        const parameter = new URLSearchParams({ id_kelas: idKelas });
+
+        if (kata) parameter.set("q", kata);
+        if (idUsers) parameter.set("id_users", idUsers);
+
+        try {
+            const hasil = await permintaanAPI(
+                `${API_URL}/siswa?${parameter.toString()}`
+            );
+
+            if (urutan !== urutanMuatSiswa) return;
+
+            SISWA_FORM = Array.isArray(hasil.data) ? hasil.data : [];
+            isiPilihanSiswa(idTerpilih);
+
+            if (infoSiswaKelas) {
+                const namaKelas = hasil.nama_kelas || "kelas ini";
+                const totalKelas = hasil.total_kelas ?? SISWA_FORM.length;
+                const totalTampil = hasil.total_tampil ?? SISWA_FORM.length;
+
+                infoSiswaKelas.textContent = kata
+                    ? `Ditemukan ${totalTampil} dari ${totalKelas} siswa di kelas ${namaKelas}.`
+                    : (SISWA_FORM.length
+                        ? `${totalKelas} siswa di kelas ${namaKelas}.`
+                        : `Belum ada data siswa pada kelas ${namaKelas}.`);
+            }
+        } catch (error) {
+            if (urutan !== urutanMuatSiswa) return;
+
+            SISWA_FORM = [];
+            isiPilihanSiswa(idTerpilih);
+
+            if (infoSiswaKelas) {
+                infoSiswaKelas.textContent = error.message || "Gagal memuat siswa.";
+            }
+        }
     }
 
 
@@ -974,6 +1193,14 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
 
+    // Filter kelas dijalankan di server (query ?id_kelas=) sehingga
+    // daftar pengguna benar-benar berasal dari DB yang sudah disaring.
+    filterKelas?.addEventListener(
+        "change",
+        muatData
+    );
+
+
     function resetFilter() {
 
         if (cariPengguna) {
@@ -984,7 +1211,12 @@ document.addEventListener("DOMContentLoaded", () => {
             filterPeran.value = "semua";
         }
 
+        if (filterKelas) {
+            filterKelas.value = "semua";
+        }
+
         renderTable();
+        muatData();
     }
 
 
@@ -1052,6 +1284,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 closeModal(modalForm);
                 closeModal(modalHapus);
+                closeModal(modalImport);
+                closeModal(modalAkun);
 
             });
 
@@ -1105,10 +1339,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             inputPassword.type = "password";
 
-            inputPassword.required = true;
+            inputPassword.required = false;
 
             inputPassword.placeholder =
-                "Minimal 8 karakter";
+                "Kosongkan untuk password otomatis";
         }
 
 
@@ -1133,15 +1367,23 @@ document.addEventListener("DOMContentLoaded", () => {
             inputKelas.value = "";
         }
 
+        if (inputKelasSiswa) {
+            inputKelasSiswa.value = "";
+        }
+
         if (inputSiswa) {
             inputSiswa.value = "";
         }
+
+        if (cariSiswaForm) cariSiswaForm.value = "";
 
         if (inputNama) {
             inputNama.readOnly = false;
         }
 
+        SISWA_FORM = [];
         isiPilihanSiswa();
+        muatSiswaForm();
 
         sesuaikanFieldKelas();
         sesuaikanFieldJenisViewer();
@@ -1173,7 +1415,7 @@ document.addEventListener("DOMContentLoaded", () => {
        EDIT PENGGUNA
        ========================================================= */
 
-    function openEdit(id) {
+    async function openEdit(id) {
 
         const user = DATA_PENGGUNA.find(
             (item) => String(item.id) === String(id)
@@ -1195,21 +1437,17 @@ document.addEventListener("DOMContentLoaded", () => {
         inputEmail.value = user.email;
         inputPeran.value = user.peran;
 
+        const kelasAkun = user.id_kelas !== null && user.id_kelas !== undefined
+            ? String(user.id_kelas)
+            : "";
+
+        if (inputKelas) inputKelas.value = kelasAkun;
+        if (inputKelasSiswa) inputKelasSiswa.value = kelasAkun;
+        if (cariSiswaForm) cariSiswaForm.value = "";
+
+        SISWA_FORM = [];
         isiPilihanSiswa(user.id_siswa);
-
-        if (inputSiswa) {
-            inputSiswa.value =
-                user.id_siswa !== null && user.id_siswa !== undefined
-                    ? String(user.id_siswa)
-                    : "";
-        }
-
-        if (inputKelas) {
-            inputKelas.value =
-                user.id_kelas !== null && user.id_kelas !== undefined
-                    ? String(user.id_kelas)
-                    : "";
-        }
+        await muatSiswaForm(user.id_siswa, user.db_id);
 
         if (inputJenisViewer) {
             inputJenisViewer.value =
@@ -1351,6 +1589,30 @@ document.addEventListener("DOMContentLoaded", () => {
         "change",
         sesuaikanFieldDataSiswa
     );
+
+
+    /* Kelas dipilih lebih dulu; daftar siswa mengikuti kelas tersebut. */
+    inputKelas?.addEventListener("change", () => {
+        if (inputKelasSiswa) inputKelasSiswa.value = inputKelas.value;
+        muatSiswaForm();
+        sesuaikanFieldDataSiswa();
+    });
+
+
+    inputKelasSiswa?.addEventListener("change", () => {
+        if (inputKelas) inputKelas.value = inputKelasSiswa.value;
+        muatSiswaForm();
+        sesuaikanFieldDataSiswa();
+    });
+
+
+    cariSiswaForm?.addEventListener("input", () => {
+        window.clearTimeout(pengaturWaktuCariSiswa);
+        pengaturWaktuCariSiswa = window.setTimeout(
+            () => muatSiswaForm(),
+            250
+        );
+    });
 
 
     togglePassword?.addEventListener(
@@ -1542,10 +1804,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
             /* PASSWORD TAMBAH */
 
-            if (!editId && password.length < 8) {
+            if (!editId && password && password.length < 8) {
 
                 showFormError(
-                    "Password awal minimal 8 karakter."
+                    "Password awal minimal 8 karakter, atau kosongkan untuk dibuat otomatis."
                 );
 
                 inputPassword.focus();
@@ -1643,7 +1905,7 @@ document.addEventListener("DOMContentLoaded", () => {
                ================================================= */
 
             try {
-                await permintaanAPI(API_URL, {
+                const hasilTambah = await permintaanAPI(API_URL, {
                     method: "POST",
                     csrfBaru: true,
                     body: JSON.stringify({
@@ -1666,10 +1928,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 await muatData();
 
+                // Segera segarkan status siswa: siswa yang baru diberi
+                // akun tidak lagi bisa dipilih untuk akun berikutnya.
+                await muatSiswaForm();
 
-                showToast(
-                    "Pengguna baru berhasil ditambahkan."
-                );
+
+                if (hasilTambah?.password_awal) {
+                    tampilkanAkun(hasilTambah);
+                } else {
+                    showToast(
+                        "Pengguna baru berhasil ditambahkan."
+                    );
+                }
 
 
                 editId = null;
@@ -1750,6 +2020,241 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================================
+       PASSWORD AWAL & IMPORT PENGGUNA
+       ========================================================= */
+
+    function tampilkanAkun(hasil) {
+        AKUN_TERAKHIR = {
+            base64: hasil.file_xlsx || null,
+            nama: hasil.nama_file || "akun-pengguna-bbcashvia.xlsx"
+        };
+
+        if (akunEmail) {
+            akunEmail.textContent =
+                hasil.data?.email || hasil.akun?.[0]?.email || "-";
+        }
+
+        if (akunPassword) {
+            akunPassword.textContent = hasil.password_awal || "-";
+        }
+
+        if (akunPeringatan) {
+            akunPeringatan.textContent =
+                hasil.peringatan || "Simpan password ini di tempat aman.";
+        }
+
+        if (btnUnduhAkunManual) {
+            btnUnduhAkunManual.hidden = !AKUN_TERAKHIR.base64;
+        }
+
+        openModal(modalAkun);
+    }
+
+
+    function resetImportForm() {
+        HASIL_PREVIEW = [];
+        AKUN_IMPORT = null;
+
+        if (importFile) importFile.value = "";
+        if (previewImport) previewImport.hidden = true;
+        if (hasilImport) hasilImport.hidden = true;
+        if (btnKonfirmasiImport) btnKonfirmasiImport.hidden = true;
+        if (btnUnduhAkunImport) btnUnduhAkunImport.hidden = true;
+        if (isiPreviewImport) isiPreviewImport.innerHTML = "";
+        if (rincianImport) rincianImport.innerHTML = "";
+    }
+
+
+    function renderPreview(hasil) {
+        const baris = Array.isArray(hasil.data) ? hasil.data : [];
+
+        if (rekapPreview) {
+            rekapPreview.textContent =
+                `Total ${hasil.total ?? baris.length} baris · ` +
+                `${hasil.berhasil ?? 0} valid · ${hasil.gagal ?? 0} tidak valid · ` +
+                `${hasil.duplikat ?? 0} duplikat`;
+        }
+
+        if (isiPreviewImport) {
+            isiPreviewImport.innerHTML = baris.map((item) => {
+                const valid = item.status === "valid";
+
+                return `
+                    <tr style="border-bottom:1px solid #D4F1F9;">
+                        <td style="padding:7px;">${escapeHtml(item.baris)}</td>
+                        <td style="padding:7px;">${escapeHtml(item.nama)}</td>
+                        <td style="padding:7px;">${escapeHtml(item.email)}</td>
+                        <td style="padding:7px;">${escapeHtml(item.peran)}</td>
+                        <td style="padding:7px;">${escapeHtml(item.kelas || "-")}</td>
+                        <td style="padding:7px;">
+                            <span class="badge ${valid ? "badge--success" : "badge--danger"}">
+                                ${valid ? "Valid" : "Tidak valid"}
+                            </span>
+                        </td>
+                        <td style="padding:7px;color:#5C7A80;">
+                            ${escapeHtml((item.alasan || []).join(" "))}
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        if (previewImport) previewImport.hidden = false;
+        if (hasilImport) hasilImport.hidden = true;
+        if (btnKonfirmasiImport) {
+            btnKonfirmasiImport.hidden =
+                (hasil.berhasil ?? 0) === 0;
+        }
+        if (btnUnduhAkunImport) btnUnduhAkunImport.hidden = true;
+    }
+
+
+    async function pratinjauImport() {
+        if (!importFile?.files?.length) {
+            showToast("Pilih file Excel atau CSV terlebih dahulu.");
+            return;
+        }
+
+        const kunci = kunciTombolSimpan(btnPreviewImport);
+        if (!kunci) return;
+
+        try {
+            const formData = new FormData();
+            formData.append("file", importFile.files[0]);
+
+            if (importKelas?.value) {
+                formData.append("id_kelas", importKelas.value);
+            }
+
+            const hasil = await permintaanFormData(
+                `${API_URL}/preview`,
+                formData
+            );
+
+            HASIL_PREVIEW = Array.isArray(hasil.data) ? hasil.data : [];
+            renderPreview(hasil);
+        } catch (error) {
+            showToast(error.message);
+        } finally {
+            kunci.pulihkan();
+        }
+    }
+
+
+    async function jalankanImport() {
+        const barisValid = HASIL_PREVIEW
+            .filter((item) => item.status === "valid")
+            .map((item) => ({
+                baris: item.baris,
+                nama: item.nama,
+                email: item.email,
+                nis: item.nis,
+                peran: item.peran,
+                jenis_viewer: item.jenis_viewer || "",
+                kelas: item.kelas,
+                id_siswa: item.id_siswa,
+                id_kelas: item.id_kelas,
+                jenis_kelamin: item.jenis_kelamin || "",
+                no_hp: item.no_hp || "",
+                siswa_baru: Boolean(item.siswa_baru)
+            }));
+
+        if (!barisValid.length) {
+            showToast("Tidak ada baris valid yang dapat disimpan.");
+            return;
+        }
+
+        const kunci = kunciTombolSimpan(btnKonfirmasiImport);
+        if (!kunci) return;
+
+        try {
+            const hasil = await permintaanAPI(`${API_URL}/import`, {
+                method: "POST",
+                csrfBaru: true,
+                body: JSON.stringify({
+                    id_kelas: importKelas?.value || null,
+                    baris: barisValid
+                })
+            });
+
+            AKUN_IMPORT = hasil.file_xlsx
+                ? {
+                    base64: hasil.file_xlsx,
+                    nama: hasil.nama_file || "akun-pengguna-bbcashvia.xlsx"
+                }
+                : null;
+
+            if (rekapImport) {
+                rekapImport.textContent =
+                    `Import selesai · ${hasil.akun_berhasil ?? hasil.berhasil ?? 0} akun dibuat · ` +
+                    `${hasil.siswa_dibuat ?? 0} siswa ditambahkan · ` +
+                    `${hasil.siswa_terhubung ?? 0} siswa ditautkan · ` +
+                    `${hasil.duplikat ?? 0} duplikat · ` +
+                    `${hasil.gagal ?? 0} gagal`;
+
+                const alasanPertama = (hasil.rincian || [])
+                    .flatMap((item) => item.alasan || [])
+                    .find((teks) => Boolean(teks));
+
+                if (alasanPertama) {
+                    rekapImport.textContent += ` · Alasan: ${alasanPertama}`;
+                }
+            }
+
+            if (rincianImport) {
+                rincianImport.innerHTML = (hasil.rincian || [])
+                    .map((item) => `
+                        <div>
+                            Baris ${escapeHtml(item.baris)}:
+                            ${escapeHtml((item.alasan || []).join(" "))}
+                        </div>
+                    `)
+                    .join("");
+            }
+
+            if (hasilImport) hasilImport.hidden = false;
+            if (btnKonfirmasiImport) btnKonfirmasiImport.hidden = true;
+            if (btnUnduhAkunImport) {
+                btnUnduhAkunImport.hidden = !AKUN_IMPORT;
+            }
+
+            await muatData();
+            await muatSiswaForm();
+            showToast(hasil.message || "Import selesai.");
+        } catch (error) {
+            showToast(error.message);
+        } finally {
+            kunci.pulihkan();
+        }
+    }
+
+
+    btnImportPengguna?.addEventListener("click", () => {
+        resetImportForm();
+        openModal(modalImport);
+
+        setTimeout(() => {
+            importFile?.click();
+        }, 120);
+    });
+
+    btnPreviewImport?.addEventListener("click", pratinjauImport);
+    btnKonfirmasiImport?.addEventListener("click", jalankanImport);
+
+    btnUnduhAkunManual?.addEventListener("click", () => {
+        if (AKUN_TERAKHIR) {
+            unduhXlsx(AKUN_TERAKHIR.base64, AKUN_TERAKHIR.nama);
+        }
+    });
+
+    btnUnduhAkunImport?.addEventListener("click", () => {
+        if (AKUN_IMPORT) {
+            unduhXlsx(AKUN_IMPORT.base64, AKUN_IMPORT.nama);
+        }
+    });
+
+
+    /* =========================================================
        ESCAPE
        ========================================================= */
 
@@ -1764,6 +2269,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             closeModal(modalForm);
             closeModal(modalHapus);
+            closeModal(modalImport);
+            closeModal(modalAkun);
 
 
             profileMenu?.classList.remove(
@@ -1786,6 +2293,9 @@ document.addEventListener("DOMContentLoaded", () => {
        INITIAL LOAD (DARI DATABASE)
        ========================================================= */
 
+    if (filterKelas) {
+        filterKelas.value = ambilFilterKelasDariUrl();
+    }
     muatData();
 
 });

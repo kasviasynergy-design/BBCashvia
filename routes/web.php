@@ -7,7 +7,9 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\IuranController;
+use App\Http\Controllers\Admin\PenggunaImportController;
 use App\Http\Controllers\Api\TransaksiController;
+use App\Http\Controllers\LaporanKasController;
 use App\Http\Controllers\Api\DashboardController;
 
 /*
@@ -67,6 +69,14 @@ Route::middleware(['auth'])->group(function () {
             ->name('data.iuran');
         Route::get('/data/transaksi', [TransaksiController::class, 'index'])
             ->name('data.transaksi');
+
+        // Cetak / unduh laporan kas. Filter kelas hanya dipakai Admin;
+        // Bendahara & Viewer tetap dibatasi kelas sendiri oleh controller.
+        Route::get('/laporan-kas/cetak', [LaporanKasController::class, 'cetak'])
+            ->name('laporan.kas.cetak');
+
+        Route::get('/laporan-kas/pdf', [LaporanKasController::class, 'pdf'])
+            ->name('laporan.kas.pdf');
     });
 
     /*
@@ -124,6 +134,20 @@ Route::middleware(['auth'])->group(function () {
 
             Route::get('/', [UserController::class, 'index'])
                 ->name('index');
+
+            // Daftar siswa per kelas untuk form akun (Admin saja).
+            Route::get('/siswa', [UserController::class, 'siswaTersedia'])
+                ->name('siswa');
+
+            // Import massa: template -> preview -> simpan baris valid.
+            Route::get('/template', [PenggunaImportController::class, 'template'])
+                ->name('template');
+
+            Route::post('/preview', [PenggunaImportController::class, 'preview'])
+                ->name('preview');
+
+            Route::post('/import', [PenggunaImportController::class, 'proses'])
+                ->name('import');
 
             Route::post('/', [UserController::class, 'store'])
                 ->name('store');

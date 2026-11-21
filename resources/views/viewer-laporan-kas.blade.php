@@ -352,6 +352,20 @@
 
                 </div>
 
+                <div class="page-intro__action">
+
+                    <button type="button" class="btn-laporan btn-laporan--secondary" id="btnUnduhPdf">
+                        <span class="material-symbols-outlined">download</span>
+                        <span>Unduh PDF</span>
+                    </button>
+
+                    <button type="button" class="btn-filter-tambah" id="btnCetak">
+                        <span class="material-symbols-outlined">print</span>
+                        <span>Cetak</span>
+                    </button>
+
+                </div>
+
             </section>
 
 

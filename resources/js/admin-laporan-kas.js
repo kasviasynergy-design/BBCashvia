@@ -3,6 +3,12 @@
    Data transaksi berasal dari API Laravel (database).
    ============================================================ */
 
+import {
+    ambilFilterKelasDariUrl,
+    isiDropdownFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
+
 (function () {
     "use strict";
 
@@ -55,6 +61,7 @@
     };
 
     let DATA_TRANSAKSI = [];
+    let RINGKASAN_SERVER = {};
 
     /* ============================================================
        AKSES API
@@ -115,8 +122,10 @@
             }
         }
 
-        const nominal = Number(t.nominal) || 0;
-        const diterima = Number(t.uang_diterima) || nominal;
+        // Gunakan nominal grup: satu pembayaran multi-iuran ditampilkan
+        // sebagai SATU transaksi, sehingga total laporan tidak terpotong.
+        const nominal = Number(t.nominal_grup ?? t.nominal) || 0;
+        const diterima = Number(t.uang_diterima_grup ?? t.uang_diterima) || nominal;
 
         return {
             id: t.no_bukti || ("TRX-" + (t.id_transaksi ?? "")),
@@ -133,16 +142,38 @@
         };
     };
 
+    /**Query laporan: filter tanggal & kelas diproses di server. */
+    const queryLaporan = () => {
+        const parameter = new URLSearchParams();
+        const mulai = nilaiFilter("filterMulai");
+        const selesai = nilaiFilter("filterSelesai");
+        const kelas = nilaiFilter("filterKelas");
+
+        if (mulai) parameter.set("dari", mulai);
+        if (selesai) parameter.set("sampai", selesai);
+        if (kelas && kelas !== "semua") {
+            parameter.set("id_kelas", kelas);
+        }
+
+        const teks = parameter.toString();
+        return teks ? `?${teks}` : "";
+    };
+
     const muatData = async () => {
 
+        // Pertahankan kelas aktif di URL (tanpa reload) supaya tautan
+        // cetak/PDF dan reload halaman memakai filter yang sama.
+        simpanFilterKelasKeUrl(nilaiFilter("filterKelas"));
+
         try {
-            const hasil = await permintaanAPI(API_URL);
+            const hasil = await permintaanAPI(API_URL + queryLaporan());
 
             const data =
                 Array.isArray(hasil.data)
                     ? hasil.data
                     : [];
 
+            RINGKASAN_SERVER = hasil.ringkasan || {};
             DATA_TRANSAKSI = data.map(petakanTransaksi);
 
             isiPilihanTahun();
@@ -156,6 +187,7 @@
             );
 
             DATA_TRANSAKSI = [];
+            RINGKASAN_SERVER = {};
 
             terapkanFilter();
         }
@@ -296,6 +328,32 @@
     };
 
 
+    /* Isi dropdown kelas langsung dari database melalui API. */
+    const isiPilihanKelas = async () => {
+        const pilih = $("filterKelas");
+
+        if (!pilih) return;
+
+        // Pulihkan dulu dari URL supaya request pertama sudah memakai
+        // kelas yang dipilih, walau daftar kelas masih dimuat.
+        const dariUrl = ambilFilterKelasDariUrl();
+        pilih.value = dariUrl;
+
+        try {
+            const hasil = await permintaanAPI("/data/kelas");
+            const daftar = Array.isArray(hasil.data) ? hasil.data : [];
+
+            isiDropdownFilterKelas(pilih, daftar, {
+                nilaiTerpilih: dariUrl
+            });
+        } catch {
+            isiDropdownFilterKelas(pilih, [], {
+                nilaiTerpilih: dariUrl
+            });
+        }
+    };
+
+
     /* |======================================================================
     |  FILTER
     |====================================================================== */
@@ -347,12 +405,13 @@
     const resetFilter = () => {
         $("filterMulai").value = "";
         $("filterSelesai").value = "";
+        if ($("filterKelas")) $("filterKelas").value = "semua";
         $("filterBulan").value = "semua";
         $("filterTahun").value = "semua";
         $("filterJenis").value = "semua";
         isiPilihanKategori();
         $("filterKategori").value = "semua";
-        terapkanFilter();
+        muatData();
     };
 
 
@@ -531,9 +590,20 @@
     |  CETAK + EXPORT CSV
     |====================================================================== */
 
+    /* Buka halaman cetak khusus yang memuat kop BBCashvia dan rincian
+       dari database dengan filter yang sedang aktif. */
     const cetakLaporan = () => {
         $("printPeriode").textContent = teksPeriode();
-        window.print();
+        window.open(
+            "/laporan-kas/cetak" + queryLaporan(),
+            "_blank",
+            "noopener,noreferrer"
+        );
+    };
+
+    const unduhPdf = () => {
+        window.location.href =
+            "/laporan-kas/pdf" + queryLaporan();
     };
 
     const eksporCsv = () => {
@@ -661,12 +731,14 @@
         isiPilihanBulan();
         isiPilihanTahun();
         isiPilihanKategori();
+        isiPilihanKelas();
 
         pasangInteraksiUmum();
         terapkanFilter();
 
-        $("filterMulai").addEventListener("change", terapkanFilter);
-        $("filterSelesai").addEventListener("change", terapkanFilter);
+        $("filterMulai").addEventListener("change", muatData);
+        $("filterSelesai").addEventListener("change", muatData);
+        $("filterKelas")?.addEventListener("change", muatData);
         $("filterBulan").addEventListener("change", terapkanFilter);
         $("filterTahun").addEventListener("change", terapkanFilter);
         $("filterJenis").addEventListener("change", () => {
@@ -690,6 +762,11 @@
         const btnEkspor = $("btnEkspor");
         if (btnEkspor) {
             btnEkspor.addEventListener("click", eksporCsv);
+        }
+
+        const btnUnduhPdf = $("btnUnduhPdf");
+        if (btnUnduhPdf) {
+            btnUnduhPdf.addEventListener("click", unduhPdf);
         }
     };
 

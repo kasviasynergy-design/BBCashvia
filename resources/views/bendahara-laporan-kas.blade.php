@@ -500,6 +500,21 @@
 
                 </div>
 
+                {{-- =================================================
+                     AKSI LAPORAN
+                ================================================== --}}
+
+                <div class="page-head__actions">
+                    <button type="button" class="btn btn--secondary" id="btnUnduhPdf">
+                        <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                        Unduh PDF
+                    </button>
+                    <button type="button" class="btn btn--primary" id="btnCetak">
+                        <span class="material-symbols-outlined" aria-hidden="true">print</span>
+                        Cetak
+                    </button>
+                </div>
+
             </section>
 
             {{-- SUMMARY --}}

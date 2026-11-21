@@ -4,6 +4,11 @@ import {
     kunciIdempoten,
     kunciTombolSimpan,
 } from "./simpan-guard.js";
+import {
+    isiDropdownFilterKelas,
+    nilaiFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
@@ -109,8 +114,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? hasil.data
                 : [];
             isiPilihanKelasIuran();
+            isiPilihanFilterKelas();
         } catch {
             daftarKelasIuran = [];
+            isiPilihanFilterKelas();
         }
     }
 
@@ -135,6 +142,14 @@ document.addEventListener("DOMContentLoaded", () => {
         select.value = daftarKelasIuran.some(
             k => String(k.id_kelas) === String(nilaiLama)
         ) ? nilaiLama : "";
+    }
+
+    /* Dropdown filter kelas pada filterbar (khusus Admin). */
+    function isiPilihanFilterKelas() {
+        isiDropdownFilterKelas(
+            document.getElementById("filterKelasIuran"),
+            daftarKelasIuran
+        );
     }
 
     function normalisasiIuran(item) {
@@ -606,13 +621,22 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await muatKelasIuran();
 
-            const response = await requestAPI(API_IURAN);
+            // Filter kelas diproses di server, lalu digabung dengan
+            // pencarian/filter kategori & status yang tetap di klien.
+            const filterKelas = document.getElementById("filterKelasIuran");
+            const idKelas = nilaiFilterKelas(filterKelas);
+            const url = idKelas
+                ? `${API_IURAN}?id_kelas=${encodeURIComponent(idKelas)}`
+                : API_IURAN;
+
+            const response = await requestAPI(url);
 
             iuranData = Array.isArray(response.data)
                 ? response.data.map(normalisasiIuran)
                 : [];
 
             renderIuran();
+            simpanFilterKelasKeUrl(filterKelas?.value);
         } catch (error) {
             iuranData = [];
             renderIuran();
@@ -966,13 +990,21 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("filterStatusIuran")
         ?.addEventListener("change", renderIuran);
 
+    // Kelas mengubah data dari database, bukan hanya menyembunyikan
+    // baris tabel, sehingga perlu memuat ulang respons API.
+    document.getElementById("filterKelasIuran")
+        ?.addEventListener("change", muatIuran);
+
     document.getElementById("btnResetFilter")
         ?.addEventListener("click", () => {
             document.getElementById("cariIuran").value = "";
             document.getElementById("filterKategori").value = "";
             document.getElementById("filterStatusIuran").value = "";
+            if (document.getElementById("filterKelasIuran")) {
+                document.getElementById("filterKelasIuran").value = "semua";
+            }
 
-            renderIuran();
+            muatIuran();
         });
 
     /* =========================================================

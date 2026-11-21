@@ -187,6 +187,63 @@ document.addEventListener("DOMContentLoaded", () => {
     const rumusSaldoEl =
         document.getElementById("rumusSaldo");
 
+    const btnCetak =
+        document.getElementById("btnCetak");
+
+    const btnUnduhPdf =
+        document.getElementById("btnUnduhPdf");
+
+
+    /* ============================================================
+       CETAK / UNDUH PDF
+       Periode diambil dari filter yang sedang dipilih. Kelas tidak
+       dikirim: controller membatasi data sesuai hak akses pengguna.
+    ============================================================ */
+
+    const queryLaporan = () => {
+
+        const parameter = new URLSearchParams();
+
+        const kunci =
+            periodFilter?.value || kunciTerbaru || "";
+
+        const bagian = String(kunci).split("-");
+
+        if (bagian.length === 2 && bagian[0] && bagian[1]) {
+            const tahun = Number(bagian[0]);
+            const bulan = Number(bagian[1]);
+
+            if (tahun && bulan >= 1 && bulan <= 12) {
+                const hariAkhir = new Date(tahun, bulan, 0).getDate();
+
+                parameter.set("dari", `${bagian[0]}-${bagian[1]}-01`);
+                parameter.set(
+                    "sampai",
+                    `${bagian[0]}-${bagian[1]}-${String(hariAkhir).padStart(2, "0")}`
+                );
+            }
+        }
+
+        return parameter.toString();
+    };
+
+
+    const bukaLaporan = (path) => {
+
+        const query = queryLaporan();
+
+        window.location.href =
+            query ? `${path}?${query}` : path;
+
+    };
+
+
+    btnCetak?.addEventListener("click", () =>
+        bukaLaporan("/laporan-kas/cetak"));
+
+    btnUnduhPdf?.addEventListener("click", () =>
+        bukaLaporan("/laporan-kas/pdf"));
+
 
     /* ============================================================
        KELOMPOKKAN TRANSAKSI PER BULAN (DARI DATABASE)

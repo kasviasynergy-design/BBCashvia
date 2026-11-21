@@ -305,6 +305,17 @@
 
                     <label class="field-select">
 
+                        <span class="field-select__label">Kelas</span>
+
+                        <select id="filterKelasRiwayat">
+                            <option value="semua">Semua Kelas</option>
+                        </select>
+
+                    </label>
+
+
+                    <label class="field-select">
+
                         <span class="field-select__label">Kategori</span>
 
                         <select id="filterKategori">

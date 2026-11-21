@@ -243,6 +243,18 @@
 
                     <button
                         type="button"
+                        class="btn btn--secondary"
+                        id="btnImportPengguna"
+                    >
+                        <span class="material-symbols-outlined" aria-hidden="true">
+                            file_upload
+                        </span>
+
+                        <span>Import Pengguna</span>
+                    </button>
+
+                    <button
+                        type="button"
                         class="btn btn--primary"
                         id="btnTambahPengguna"
                     >
@@ -465,18 +477,14 @@
 
                 <div class="filterbar__field">
 
-                    <label for="filterStatus">
-                        Status
+                    <label for="filterKelas">
+                        Kelas
                     </label>
 
-                    <select id="filterStatus">
+                    <select id="filterKelas">
 
                         <option value="semua">
-                            Semua Status
-                        </option>
-
-                        <option value="aktif">
-                            Aktif
+                            Semua Kelas
                         </option>
 
                     </select>
@@ -769,9 +777,30 @@
 
                     <div class="field field--full" id="fieldDataSiswa">
 
-                        <label for="inputSiswa">
+                        <label for="inputKelasSiswa">
+                            Kelas Siswa
+                        </label>
+
+                        <select id="inputKelasSiswa">
+                            <option value="">
+                                - Pilih kelas terlebih dahulu -
+                            </option>
+                        </select>
+
+                        <label for="inputSiswa" style="margin-top:10px;">
                             Data Siswa
                         </label>
+
+                        <input
+                            type="search"
+                            id="cariSiswaForm"
+                            placeholder="Cari nama atau NIS pada kelas ini…"
+                            autocomplete="off"
+                        >
+
+                        <span class="field__hint" id="infoSiswaKelas">
+                            Pilih kelas untuk menampilkan siswa.
+                        </span>
 
                         <select id="inputSiswa">
                             <option value="">
@@ -817,7 +846,7 @@
                             <input
                                 type="password"
                                 id="inputPassword"
-                                placeholder="Minimal 8 karakter"
+                                placeholder="Kosongkan untuk password otomatis"
                             >
 
                             <button
@@ -834,7 +863,7 @@
                         </div>
 
                         <span class="field__hint">
-                            Untuk akun baru, password ini diberikan Admin kepada pengguna.
+                            Kosongkan saat menambah akun agar sistem membuat password awal otomatis. Password hanya ditampilkan sekali dan wajib diganti saat login pertama.
                         </span>
 
                     </div>
@@ -977,6 +1006,162 @@
 
         </div>
 
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL IMPORT PENGGUNA
+     ========================================================= -->
+<div class="modal" id="modalImport" aria-hidden="true">
+
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div class="modal-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="modalImportTitle"
+         style="max-width: 940px;">
+
+        <div class="modal__head">
+            <div>
+                <div class="modal__eyebrow">IMPORT MASSAL</div>
+                <h3 class="modal__title" id="modalImportTitle">Import Pengguna</h3>
+            </div>
+            <button type="button" class="modal__close" data-close-modal aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        <div class="modal__body">
+
+            <div class="field">
+                <label for="importFile">File Excel / CSV</label>
+                <input type="file" id="importFile" accept=".xlsx,.xls,.csv">
+                <span class="field__hint">
+                    Format yang didukung: .xlsx, .xls, .csv (maksimal 2 MB, maksimal 200 baris).
+                    DOCX tidak didukung karena bukan format tabular; simpan tabel sebagai Excel atau CSV terlebih dahulu.
+                </span>
+            </div>
+
+            <div class="field">
+                <label for="importKelas">Kelas import</label>
+                <select id="importKelas">
+                    <option value="">- Ambil dari kolom Kelas pada file -</option>
+                </select>
+                <span class="field__hint">
+                    Pilih kelas agar seluruh baris memakai kelas tersebut. Bila file juga mengisi kolom Kelas,
+                    namanya harus sama. Viewer Siswa dengan NIS baru otomatis menjadi data siswa.
+                </span>
+            </div>
+
+            <p style="margin: 4px 0 16px;">
+                <a class="btn btn--secondary btn--sm"
+                   href="/admin/api/pengguna/template"
+                   download>
+                    <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                    Unduh Template XLSX
+                </a>
+            </p>
+
+            <div id="previewImport" hidden>
+                <div id="rekapPreview"
+                     style="padding:10px 12px;border-radius:8px;background:#D4F1F9;color:#237A77;font-weight:bold;margin-bottom:12px;">
+                </div>
+                <div style="max-height:320px;overflow:auto;border:1px solid #A5DBE3;border-radius:8px;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead>
+                            <tr style="background:#2BA19E;color:#fff;text-align:left;">
+                                <th style="padding:8px;">Baris</th>
+                                <th style="padding:8px;">Nama</th>
+                                <th style="padding:8px;">Email</th>
+                                <th style="padding:8px;">Peran</th>
+                                <th style="padding:8px;">Kelas</th>
+                                <th style="padding:8px;">Status</th>
+                                <th style="padding:8px;">Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="isiPreviewImport"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="hasilImport" hidden>
+                <div id="rekapImport"
+                     style="padding:10px 12px;border-radius:8px;background:#D4F1F9;color:#237A77;font-weight:bold;margin-top:14px;">
+                </div>
+                <div id="rincianImport"
+                     style="max-height:200px;overflow:auto;margin-top:10px;font-size:12px;color:#5C7A80;">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="modal__foot">
+            <button type="button" class="btn btn--secondary" data-close-modal>Batal</button>
+            <button type="button" class="btn btn--secondary" id="btnPreviewImport">
+                <span class="material-symbols-outlined" aria-hidden="true">visibility</span>
+                Pratinjau
+            </button>
+            <button type="button" class="btn btn--primary" id="btnKonfirmasiImport" hidden>
+                <span class="material-symbols-outlined" aria-hidden="true">file_upload</span>
+                Simpan Data Valid
+            </button>
+            <button type="button" class="btn btn--primary" id="btnUnduhAkunImport" hidden>
+                <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                Unduh File Akun
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL PASSWORD AWAL (DIBUAT SERVER)
+     ========================================================= -->
+<div class="modal" id="modalAkun" aria-hidden="true">
+
+    <div class="modal-backdrop" data-close-modal></div>
+
+    <div class="modal-dialog modal-dialog--delete" role="dialog" aria-modal="true"
+         aria-labelledby="modalAkunTitle">
+        <div class="modal__head">
+            <div>
+                <div class="modal__eyebrow">INFORMASI LOGIN</div>
+                <h3 class="modal__title" id="modalAkunTitle">Akun Berhasil Dibuat</h3>
+            </div>
+            <button type="button" class="modal__close" data-close-modal aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        <div class="modal__body">
+            <div class="delete-box">
+                <div class="delete-box__icon">
+                    <span class="material-symbols-outlined" aria-hidden="true">key</span>
+                </div>
+                <div style="width:100%;">
+                    <div class="delete-box__title" id="akunEmail">-</div>
+                    <p style="margin:8px 0;">
+                        Password awal:
+                        <strong id="akunPassword"
+                                style="display:block;font-size:18px;color:#237A77;letter-spacing:.05em;word-break:break-all;">
+                            -
+                        </strong>
+                    </p>
+                    <p id="akunPeringatan" style="font-size:12px;color:#5C7A80;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal__foot">
+            <button type="button" class="btn btn--secondary" data-close-modal>Tutup</button>
+            <button type="button" class="btn btn--primary" id="btnUnduhAkunManual">
+                <span class="material-symbols-outlined" aria-hidden="true">download</span>
+                Unduh File Akun
+            </button>
+        </div>
     </div>
 
 </div>

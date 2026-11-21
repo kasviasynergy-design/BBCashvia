@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     /* =========================================================
        BBCASHVIA - BENDAHARA LAPORAN KAS
-       KHUSUS KELAS XI RPL 1
+       DATA TRANSAKSI BERDASARKAN KELAS YANG LOGIN
     ========================================================= */
 
 
@@ -10,7 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
        KONFIGURASI
     ========================================================= */
 
-    const KELAS_BENDAHARA = "XI RPL 1";
+    /*
+     * Hanya dipakai sebagai teks tampilan.
+     * Pembatasan data per kelas dilakukan server-side oleh
+     * endpoint /bendahara/api/transaksi (trait MembatasiKelas).
+     */
+    const KELAS_BENDAHARA =
+        document.body.dataset.kelasLabel ||
+        "Kelas Saya";
 
 
     const KATEGORI_MASUK = [
@@ -45,218 +52,162 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================================
-       DATA DEMO
-       HANYA XI RPL 1
+       DATA TRANSAKSI
+       SUMBER: /bendahara/api/transaksi (DATABASE)
     ========================================================= */
 
-    const DATA_TRANSAKSI = [
-
-        {
-            id: "TRX-001",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas September",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-01",
-            waktu: "07:30",
-            nominal: 450000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-002",
-            jenis: "masuk",
-            kategori: "Kas",
-            keterangan: "Kas kelas mingguan",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-05",
-            waktu: "08:10",
-            nominal: 150000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-003",
-            jenis: "keluar",
-            kategori: "Perlengkapan kelas",
-            keterangan: "Pembelian spidol dan penghapus papan",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-07",
-            waktu: "13:20",
-            nominal: 85000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-004",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas September",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-10",
-            waktu: "07:25",
-            nominal: 375000,
-            metode: "Transfer"
-        },
-
-        {
-            id: "TRX-005",
-            jenis: "keluar",
-            kategori: "Kebutuhan kelas",
-            keterangan: "Pembelian air minum kelas",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-12",
-            waktu: "10:15",
-            nominal: 65000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-006",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas September",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-15",
-            waktu: "07:40",
-            nominal: 525000,
-            metode: "Transfer"
-        },
-
-        {
-            id: "TRX-007",
-            jenis: "keluar",
-            kategori: "Kegiatan kelas",
-            keterangan: "Kebutuhan kegiatan kelas",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-18",
-            waktu: "11:30",
-            nominal: 175000,
-            metode: "Transfer"
-        },
-
-        {
-            id: "TRX-008",
-            jenis: "masuk",
-            kategori: "Kas",
-            keterangan: "Tambahan kas kelas",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-20",
-            waktu: "08:00",
-            nominal: 200000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-009",
-            jenis: "keluar",
-            kategori: "Perlengkapan kelas",
-            keterangan: "Pembelian alat kebersihan",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-22",
-            waktu: "14:00",
-            nominal: 90000,
-            metode: "Tunai"
-        },
-
-        {
-            id: "TRX-010",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas September",
-            kelas: "XI RPL 1",
-            tanggal: "2026-09-25",
-            waktu: "07:35",
-            nominal: 425000,
-            metode: "Transfer"
-        },
+    let DATA_TRANSAKSI = [];
 
 
-        {
-            id: "TRX-011",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas Oktober",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-01",
-            waktu: "07:20",
-            nominal: 500000,
-            metode: "Transfer"
-        },
+    async function muatDataDariServer() {
 
-        {
-            id: "TRX-012",
-            jenis: "masuk",
-            kategori: "Kas",
-            keterangan: "Kas kelas mingguan",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-03",
-            waktu: "08:05",
-            nominal: 175000,
-            metode: "Tunai"
-        },
+        try {
 
-        {
-            id: "TRX-013",
-            jenis: "keluar",
-            kategori: "Kebutuhan kelas",
-            keterangan: "Pembelian konsumsi rapat kelas",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-04",
-            waktu: "12:10",
-            nominal: 120000,
-            metode: "Tunai"
-        },
+            const response = await fetch(
+                "/bendahara/api/transaksi",
+                {
+                    headers: {
+                        Accept: "application/json"
+                    },
+                    credentials: "same-origin"
+                }
+            );
 
-        {
-            id: "TRX-014",
-            jenis: "masuk",
-            kategori: "Iuran",
-            keterangan: "Iuran kelas Oktober",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-06",
-            waktu: "07:45",
-            nominal: 450000,
-            metode: "Transfer"
-        },
+            if (!response.ok) {
+                throw new Error(
+                    `HTTP ${response.status}`
+                );
+            }
 
-        {
-            id: "TRX-015",
-            jenis: "keluar",
-            kategori: "Kegiatan kelas",
-            keterangan: "Kebutuhan kegiatan kelas",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-08",
-            waktu: "10:30",
-            nominal: 150000,
-            metode: "Transfer"
-        },
+            const payload =
+                await response.json();
 
-        {
-            id: "TRX-016",
-            jenis: "masuk",
-            kategori: "Pemasukan lainnya",
-            keterangan: "Pengembalian dana kegiatan",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-10",
-            waktu: "09:15",
-            nominal: 100000,
-            metode: "Transfer"
-        },
+            if (
+                !payload.success ||
+                !Array.isArray(payload.data)
+            ) {
+                throw new Error(
+                    payload.message ||
+                    "Respons transaksi tidak valid"
+                );
+            }
 
-        {
-            id: "TRX-017",
-            jenis: "keluar",
-            kategori: "Perlengkapan kelas",
-            keterangan: "Pembelian kertas dan tinta",
-            kelas: "XI RPL 1",
-            tanggal: "2026-10-12",
-            waktu: "13:40",
-            nominal: 110000,
-            metode: "Tunai"
+
+            /*
+             * Satu pembayaran dengan beberapa cicilan iuran
+             * muncul sebagai beberapa baris dengan no_bukti
+             * yang sama. Ambil satu baris per no_bukti dan
+             * pakai nominal_grup agar nominal tidak terpotong.
+             */
+            const dilihat = new Set();
+
+            DATA_TRANSAKSI =
+                payload.data
+                    .filter((row) => {
+
+                        const kunci =
+                            row.no_bukti ||
+                            `id:${row.id_transaksi}`;
+
+                        if (
+                            !kunci ||
+                            dilihat.has(kunci)
+                        ) {
+                            return false;
+                        }
+
+                        dilihat.add(kunci);
+
+                        return true;
+
+                    })
+                    .map((row) => {
+
+                        const jenisApi =
+                            String(
+                                row.jenis || ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+                        const jenis =
+                            [
+                                "pengeluaran",
+                                "keluar",
+                                "k"
+                            ].includes(jenisApi)
+                                ? "keluar"
+                                : "masuk";
+
+                        const createdAt =
+                            String(
+                                row.created_at || ""
+                            );
+
+                        const nominal =
+                            Number(
+                                row.nominal_grup ??
+                                row.nominal ??
+                                0
+                            ) || 0;
+
+                        return {
+                            id:
+                                row.no_bukti ||
+                                String(
+                                    row.id_transaksi ??
+                                    "-"
+                                ),
+                            jenis,
+                            kategori:
+                                row.kategori ||
+                                "-",
+                            keterangan:
+                                row.keterangan ||
+                                row.kategori ||
+                                "-",
+                            kelas:
+                                row.nama_kelas ||
+                                "",
+                            tanggal:
+                                String(
+                                    row.tanggal ||
+                                    createdAt
+                                ).substring(
+                                    0,
+                                    10
+                                ),
+                            waktu:
+                                createdAt.substring(
+                                    11,
+                                    16
+                                ) || "",
+                            nominal,
+                            metode:
+                                row.metode === "TF"
+                                    ? "Transfer"
+                                    : "Tunai"
+                        };
+
+                    });
+
+        } catch (error) {
+
+            console.warn(
+                "Gagal memuat transaksi dari server:",
+                error
+            );
+
+            DATA_TRANSAKSI = [];
+
+            showToast(
+                "Gagal memuat data transaksi dari server.",
+                "error"
+            );
+
         }
 
-    ];
+    }
 
 
     /* =========================================================
@@ -313,6 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     const btnCetak = $("#btnCetak");
+    const btnUnduhPdf = $("#btnUnduhPdf");
     const btnEkspor = $("#btnEkspor");
 
 
@@ -795,11 +747,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         hasilFilter =
             DATA_TRANSAKSI
-                .filter(
-                    (item) =>
-                        item.kelas ===
-                        KELAS_BENDAHARA
-                )
                 .filter((item) => {
 
                     if (
@@ -1740,8 +1687,165 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     /* =========================================================
-       PRINT
+       CETAK & UNDUH PDF
     ========================================================= */
+
+    function bangunQueryLaporan() {
+
+        const bagian = [];
+
+
+        const tambah = (kunci, nilai) => {
+
+            bagian.push(
+                `${kunci}=${encodeURIComponent(nilai)}`
+            );
+
+        };
+
+
+        const mulai =
+            filterMulai ? filterMulai.value : "";
+
+        const selesai =
+            filterSelesai ? filterSelesai.value : "";
+
+
+        if (
+            mulai &&
+            selesai
+        ) {
+
+            tambah("dari", mulai);
+            tambah("sampai", selesai);
+
+        } else if (mulai) {
+
+            tambah("dari", mulai);
+
+        } else if (selesai) {
+
+            tambah("sampai", selesai);
+
+        } else {
+
+            const bulan =
+                filterBulan ? filterBulan.value : "";
+
+            const tahun =
+                filterTahun ? filterTahun.value : "";
+
+
+            if (
+                bulan &&
+                tahun
+            ) {
+
+                const tanggalAwal =
+                    new Date(
+                        Number(tahun),
+                        Number(bulan) - 1,
+                        1
+                    );
+
+                const tanggalAkhir =
+                    new Date(
+                        Number(tahun),
+                        Number(bulan),
+                        0
+                    );
+
+                tambah(
+                    "dari",
+                    `${tanggalAwal.getFullYear()}-${String(
+                        tanggalAwal.getMonth() + 1
+                    ).padStart(2, "0")}-${String(
+                        tanggalAwal.getDate()
+                    ).padStart(2, "0")}`
+                );
+
+                tambah(
+                    "sampai",
+                    `${tanggalAkhir.getFullYear()}-${String(
+                        tanggalAkhir.getMonth() + 1
+                    ).padStart(2, "0")}-${String(
+                        tanggalAkhir.getDate()
+                    ).padStart(2, "0")}`
+                );
+
+            } else if (tahun) {
+
+                tambah(
+                    "dari",
+                    `${tahun}-01-01`
+                );
+
+                tambah(
+                    "sampai",
+                    `${tahun}-12-31`
+                );
+
+            } else if (bulan) {
+
+                const tahunAktif =
+                    new Date().getFullYear();
+
+                const tanggalAkhir =
+                    new Date(
+                        tahunAktif,
+                        Number(bulan),
+                        0
+                    );
+
+                tambah(
+                    "dari",
+                    `${tahunAktif}-${String(
+                        bulan
+                    ).padStart(2, "0")}-01`
+                );
+
+                tambah(
+                    "sampai",
+                    `${tahunAktif}-${String(
+                        tanggalAkhir.getMonth() + 1
+                    ).padStart(2, "0")}-${String(
+                        tanggalAkhir.getDate()
+                    ).padStart(2, "0")}`
+                );
+
+            }
+
+        }
+
+
+        return bagian.length
+            ? `?${bagian.join("&")}`
+            : "";
+
+    }
+
+
+    function bukaLaporan(
+        url,
+        pesanKosong
+    ) {
+
+        if (!hasilFilter.length) {
+
+            showToast(
+                pesanKosong,
+                "error"
+            );
+
+            return;
+
+        }
+
+        window.location.href =
+            url + bangunQueryLaporan();
+
+    }
+
 
     if (btnCetak) {
 
@@ -1749,19 +1853,27 @@ document.addEventListener("DOMContentLoaded", () => {
             "click",
             () => {
 
-                if (!hasilFilter.length) {
+                bukaLaporan(
+                    "/laporan-kas/cetak",
+                    "Tidak ada data untuk dicetak."
+                );
 
-                    showToast(
-                        "Tidak ada data untuk dicetak.",
-                        "error"
-                    );
+            }
+        );
 
-                    return;
-
-                }
+    }
 
 
-                window.print();
+    if (btnUnduhPdf) {
+
+        btnUnduhPdf.addEventListener(
+            "click",
+            () => {
+
+                bukaLaporan(
+                    "/laporan-kas/pdf",
+                    "Tidak ada data untuk diunduh."
+                );
 
             }
         );
@@ -1895,10 +2007,16 @@ document.addEventListener("DOMContentLoaded", () => {
        INIT
     ========================================================= */
 
-    populateTanggalFilter();
+    (async () => {
 
-    populateKategoriFilter();
+        await muatDataDariServer();
 
-    applyFilter();
+        populateTanggalFilter();
+
+        await populateKategoriFilter();
+
+        applyFilter();
+
+    })();
 
 });

@@ -399,7 +399,7 @@
                 <div class="student-pagination">
 
                     <div class="pagination-info" id="paginationInfo">
-                        Menampilkan 0 siswa
+                        Menampilkan 0-0 dari 0 siswa • Halaman 1 dari 1
                     </div>
 
                     <div class="pagination">

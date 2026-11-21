@@ -20,6 +20,13 @@ class IuranController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        /*
+         * Filter kelas hanya milik Admin. Endpoint ini juga dipakai
+         * Bendahara/Viewer lewat /data/iuran; parameter id_kelas dari
+         * mereka tidak boleh mengubah scope data mereka.
+         */
+        $this->validasiFilterKelasAdmin($request);
+
         $query = DB::table('iuran')->orderByDesc('id_iuran');
 
         $idKelas = $this->kelasDibatasi($request);
@@ -27,6 +34,11 @@ class IuranController extends Controller
         if ($idKelas !== null) {
             $query->where('id_kelas', $idKelas);
         }
+
+        // Admin: "Semua Kelas" tidak mengirim id_kelas; kelas tertentu
+        // mempersempit query. Non-admin: diabaikan, pembatasan tetap
+        // memakai id_kelas pengguna.
+        $this->terapkanFilterKelasAdmin($request, $query);
 
         $iuran = $query->get()
             ->map(function ($item) use ($idKelas) {
@@ -109,6 +121,10 @@ class IuranController extends Controller
 
         return response()->json([
             'data' => $iuran,
+            'id_kelas_filter' => $request->user()?->aksesSemuaKelas()
+                && !$this->tanpaFilterKelas($request)
+                    ? (int) $request->input('id_kelas')
+                    : null,
         ]);
     }
 

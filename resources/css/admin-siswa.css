@@ -1142,6 +1142,81 @@ svg {
 
 
 /* =========================================================
+   PAGINATION
+   ========================================================= */
+
+.student-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.pagination-info {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    line-height: 1.7;
+}
+
+.pagination,
+.pagination__numbers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text-soft);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.page-btn .material-symbols-outlined {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.page-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+}
+
+.page-btn.is-active,
+.page-btn.active {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: #fff;
+}
+
+.page-btn:disabled {
+    cursor: not-allowed;
+    opacity: .4;
+}
+
+.page-btn:focus-visible {
+    outline: 2px solid var(--primary-dark);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
    MODAL
    ========================================================= */
 
@@ -1628,6 +1703,17 @@ b.wajib {
     .sum-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .student-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 12px 15px;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
 }
 
 /* HP / Mobile <= 768px */
@@ -1736,6 +1822,19 @@ b.wajib {
     }
 
     .modal {
+        max-width: 100%;
+    }
+
+    .student-pagination {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+        padding: 12px 15px;
+    }
+
+    .pagination,
+    .pagination__numbers {
+        flex-wrap: wrap;
         max-width: 100%;
     }
 }

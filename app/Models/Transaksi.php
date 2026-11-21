@@ -14,6 +14,11 @@ class Transaksi extends Model
 
     public $timestamps = true;
 
+    // Tabel transaksi di database nyata tidak memiliki kolom created_at.
+    // Eloquent tidak boleh menuliskannya saat INSERT, tetapi kolom tanggal
+    // tetap dipakai sebagai waktu transaksi (lihat getWaktuAttribute()).
+    const CREATED_AT = null;
+
     const UPDATED_AT = null;
 
     protected $fillable = [
@@ -64,21 +69,22 @@ class Transaksi extends Model
     public const ZONA_WIB = 'Asia/Jakarta';
 
     /**
-     * Jam transaksi (WIB) dalam format HH:MM, diambil dari created_at.
+     * Jam transaksi (WIB) dalam format HH:MM. Database lama tidak punya
+     * kolom created_at, jadi fallback ke kolom tanggal bila perlu.
      *
-     * Database menyimpan waktu dalam UTC, sehingga dikonversi dulu
-     * ke WIB agar jam yang tampil sesuai waktu pengguna.
+     * Waktu disimpan dalam UTC, lalu dikonversi ke WIB untuk tampilan.
      */
     public function getWaktuAttribute(): string
     {
-        if (!$this->created_at) {
-            return '';
+        if ($this->created_at) {
+            return $this->created_at
+                ->copy()
+                ->setTimezone(self::ZONA_WIB)
+                ->format('H:i');
         }
 
-        return $this->created_at
-            ->copy()
-            ->setTimezone(self::ZONA_WIB)
-            ->format('H:i');
+        // `tanggal` sudah dalam waktu setempat, jadi tidak dikonversi lagi.
+        return $this->tanggal ? $this->tanggal->format('H:i') : '';
     }
 
     /**

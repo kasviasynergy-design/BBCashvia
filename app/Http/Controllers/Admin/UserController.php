@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Concerns\MembatasiKelas;
 use App\Http\Controllers\Controller;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
+use App\Support\BerkasAkun;
+use App\Support\KataSandiAwal;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -15,7 +19,10 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
-    use \App\Http\Controllers\Concerns\MengunciIdempotensi;
+    use MembatasiKelas;
+    use \App\Http\Controllers\Concerns\MengunciIdempotensi {
+        simpanTanggapanIdempotensi as protected simpanTanggapanIdempotensiMentah;
+    }
 
     /**
      * Mengambil data pengguna dari database.
@@ -25,19 +32,80 @@ class UserController extends Controller
      * serta daftar siswa untuk menautkan identitas Bendahara /
      * Viewer Siswa.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with(['kelas', 'siswa.kelas'])
-            ->orderBy('id_users')
-            ->get();
+        // Endpoint ini memang khusus Admin, tetap memakai pembantu yang
+        // sama dengan endpoint baca lain agar aturannya seragam.
+        $this->validasiFilterKelasAdmin($request);
 
-        $tertaut = $users->pluck('id_siswa')
+        $idKelasFilter = $request->user()?->aksesSemuaKelas()
+            && !$this->tanpaFilterKelas($request)
+                ? (int) $request->input('id_kelas')
+                : null;
+
+        $query = User::with(['kelas', 'siswa.kelas']);
+
+        $this->terapkanFilterKelasAdmin($request, $query);
+
+        $users = $query->orderBy('id_users')->get();
+
+        // Daftar siswa sengaja TIDAK dikirim di sini. Form memuat siswa
+        // melalui endpoint per-kelas, bukan seluruh siswa sekaligus.
+        return response()->json([
+            'success' => true,
+            'data' => $users->map(function ($user) {
+                return $this->formatUser($user);
+            }),
+            'kelas' => Kelas::orderBy('nama_kelas')
+                ->get(['id_kelas', 'nama_kelas']),
+
+            'id_kelas_filter' => $idKelasFilter,
+        ]);
+    }
+
+    /**
+     * Daftar siswa pada satu kelas untuk form akun (Admin saja).
+     *
+     * Endpoint ini sengaja mewajibkan id_kelas supaya Admin tidak pernah
+     * menerima seluruh siswa dari semua kelas sekaligus. Penanda tertaut
+     * dihitung dari akun lain (akun yang sedang diedit dikecualikan).
+     */
+    public function siswaTersedia(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'id_kelas' => ['required', 'integer', 'exists:kelas,id_kelas'],
+            'q' => ['nullable', 'string', 'max:100'],
+            'id_users' => ['nullable', 'integer'],
+        ], [
+            'id_kelas.required' => 'Kelas wajib dipilih.',
+            'id_kelas.exists' => 'Kelas yang dipilih tidak ditemukan.',
+        ]);
+
+        $idKelas = (int) $validated['id_kelas'];
+        $idUsers = isset($validated['id_users']) ? (int) $validated['id_users'] : null;
+        $kata = trim((string) ($validated['q'] ?? ''));
+
+        $tertaut = User::query()
+            ->when($idUsers, fn ($q) => $q->where('id_users', '!=', $idUsers))
+            ->pluck('id_siswa')
             ->filter()
             ->map(fn ($id) => (int) $id)
             ->all();
 
-        $siswa = Siswa::with('kelas')
-            ->orderBy('nama_siswa')
+        $query = Siswa::with('kelas')->where('id_kelas', $idKelas);
+        $totalKelas = (clone $query)->count();
+
+        if ($kata !== '') {
+            $query->where(function ($q) use ($kata) {
+                $q->where('nis', 'like', '%' . $kata . '%')
+                    ->orWhere('nama_siswa', 'like', '%' . $kata . '%');
+            });
+        }
+
+        $totalTampil = (clone $query)->count();
+
+        $siswa = $query->orderBy('nama_siswa')
+            ->limit(100)
             ->get()
             ->map(function (Siswa $item) use ($tertaut) {
                 return [
@@ -54,12 +122,10 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $users->map(function ($user) {
-                return $this->formatUser($user);
-            }),
-            'kelas' => Kelas::orderBy('nama_kelas')
-                ->get(['id_kelas', 'nama_kelas']),
-            'siswa' => $siswa,
+            'data' => $siswa,
+            'total_kelas' => $totalKelas,
+            'total_tampil' => $totalTampil,
+            'nama_kelas' => (string) (Kelas::where('id_kelas', $idKelas)->value('nama_kelas') ?? ''),
         ]);
     }
 
@@ -128,16 +194,38 @@ class UserController extends Controller
             $validated['id_kelas'] ?? null
         );
 
-        $user->password = Hash::make($validated['password']);
+        // Password boleh dikosongkan: server yang membuat password awal
+        // yang memenuhi seluruh aturan aplikasi. Plaintext hanya dikirim
+        // sekali pada respons ini dan tidak pernah disimpan ke database.
+        $passwordAwal = !empty($validated['password'])
+            ? (string) $validated['password']
+            : KataSandiAwal::buat();
+
+        $user->password = Hash::make($passwordAwal);
         $user->must_change_password = true;
         $user->save();
 
         $user->load(['kelas', 'siswa.kelas']);
 
+        $dataUser = $this->formatUser($user);
+
+        $akun = [[
+            'nama' => $user->name,
+            'email' => $user->email,
+            'kelas' => $dataUser['kelas'] ?? 'Semua Kelas',
+            'peran' => ucfirst((string) $user->role),
+            'password' => $passwordAwal,
+        ]];
+
         $respons = response()->json([
             'success' => true,
             'message' => 'Pengguna berhasil ditambahkan.',
-            'data' => $this->formatUser($user),
+            'data' => $dataUser,
+            'password_awal' => $passwordAwal,
+            'akun' => $akun,
+            'file_xlsx' => base64_encode(BerkasAkun::akun($akun)),
+            'nama_file' => 'akun-pengguna-bbcashvia-' . date('Y-m-d-His') . '.xlsx',
+            'peringatan' => BerkasAkun::PERINGATAN,
         ], 201);
 
         // S3-07: catat tanggapan untuk permintaan identik berikutnya.
@@ -287,7 +375,8 @@ class UserController extends Controller
             'id_siswa' => ['nullable', 'integer', 'exists:siswa,id_siswa'],
             'id_kelas' => ['nullable', 'integer', 'exists:kelas,id_kelas'],
             'password' => [
-                $user ? 'nullable' : 'required',
+                // Kosong diizinkan saat tambah: password awal dibuat server.
+                'nullable',
                 'string',
                 'min:8',
                 'regex:/[A-Z]/',
@@ -432,6 +521,32 @@ class UserController extends Controller
                 || (strtolower((string) $user->role) === 'admin'
                     && (int) User::whereRaw('LOWER(role) = ?', ['admin'])->count() === 1),
         ];
+    }
+
+    /**
+     * Tanggapan idempotensi TIDAK boleh menyimpan password plaintext.
+     *
+     * Respons sukses memang perlu mengembalikan password awal sekali,
+     * tetapi cache idempotensi dapat dibaca ulang oleh permintaan dengan
+     * kunci yang sama. Field sensitif dibuang sebelum tanggapan
+     * dicatat, sehingga password hanya ada di respons pertama.
+     */
+    protected function simpanTanggapanIdempotensi(
+        Request $request,
+        JsonResponse $respons
+    ): void {
+        $konten = $respons->getData(true);
+
+        unset(
+            $konten['password_awal'],
+            $konten['akun'],
+            $konten['file_xlsx']
+        );
+
+        $this->simpanTanggapanIdempotensiMentah(
+            $request,
+            response()->json($konten, $respons->status())
+        );
     }
 
     /**

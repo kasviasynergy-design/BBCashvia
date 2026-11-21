@@ -247,6 +247,21 @@
                     </p>
                 </div>
 
+                <div class="page-head__actions">
+                    <button type="button" class="btn btn--secondary" id="btnEkspor">
+                        <span class="material-symbols-outlined" aria-hidden="true">file_download</span>
+                        Ekspor CSV
+                    </button>
+                    <button type="button" class="btn btn--secondary" id="btnUnduhPdf">
+                        <span class="material-symbols-outlined" aria-hidden="true">picture_as_pdf</span>
+                        Unduh PDF
+                    </button>
+                    <button type="button" class="btn btn--primary" id="btnCetak">
+                        <span class="material-symbols-outlined" aria-hidden="true">print</span>
+                        Cetak Laporan
+                    </button>
+                </div>
+
             </section>
 
 
@@ -322,6 +337,13 @@
                     <label class="field-select field-select--tanggal">
                         <span class="field-select__label">Sampai Tanggal</span>
                         <input type="date" id="filterSelesai">
+                    </label>
+
+                    <label class="field-select">
+                        <span class="field-select__label">Kelas</span>
+                        <select id="filterKelas">
+                            <option value="semua">Semua Kelas</option>
+                        </select>
                     </label>
 
                     <label class="field-select">

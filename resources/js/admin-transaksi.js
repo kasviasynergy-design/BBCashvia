@@ -9,6 +9,11 @@ import {
     beriKunciIdempoten,
     kunciTombolSimpan,
 } from "./simpan-guard.js";
+import {
+    isiDropdownFilterKelas,
+    nilaiFilterKelas,
+    simpanFilterKelasKeUrl,
+} from "./admin-filter-kelas.js";
 
 (function () {
     "use strict";
@@ -127,8 +132,13 @@ import {
             const hasil = await permintaanAPI("/admin/api/kelas");
             DAFTAR_KELAS = Array.isArray(hasil.data) ? hasil.data : [];
             isiPilihanKelas();
+            isiDropdownFilterKelas(
+                $("filterKelasTransaksi"),
+                DAFTAR_KELAS
+            );
         } catch {
             DAFTAR_KELAS = [];
+            isiDropdownFilterKelas($("filterKelasTransaksi"), []);
         }
     };
 
@@ -490,7 +500,17 @@ import {
             await muatKelas();
             await muatPilihanPembayaran();
 
-            const hasil = await permintaanAPI(API_URL);
+            // Filter kelas diproses server-side. Pencarian, jenis,
+            // kategori, dan bulan tetap bekerja di atas hasil tersebut.
+            const filterKelas = $("filterKelasTransaksi");
+            const idKelas = nilaiFilterKelas(filterKelas);
+            const url = idKelas
+                ? `${API_URL}?id_kelas=${encodeURIComponent(idKelas)}`
+                : API_URL;
+
+            const hasil = await permintaanAPI(url);
+
+            simpanFilterKelasKeUrl(filterKelas?.value);
 
             const data = Array.isArray(hasil.data) ? hasil.data : [];
 
@@ -745,14 +765,21 @@ import {
         renderRingkasan(hasil);
     };
 
-    const resetFilter = () => {
+    const resetFilter = async () => {
         if ($("cariTransaksi")) $("cariTransaksi").value = "";
         if ($("filterJenis")) $("filterJenis").value = "semua";
         isiPilihanKategori();
-        isiPilihanBulan();
         if ($("filterKategori")) $("filterKategori").value = "semua";
+        isiPilihanBulan();
         if ($("filterBulan")) $("filterBulan").value = "semua";
+        if ($("filterKelasTransaksi")) {
+            $("filterKelasTransaksi").value = "semua";
+        }
+
         terapkanFilter();
+
+        // Kembalikan juga data server ke "Semua Kelas".
+        await muatData();
     };
 
     /* ============================================================
@@ -1510,6 +1537,8 @@ import {
         $("filterJenis")?.addEventListener("change", () => { isiPilihanKategori(); terapkanFilter(); });
         $("filterKategori")?.addEventListener("change", terapkanFilter);
         $("filterBulan")?.addEventListener("change", terapkanFilter);
+        // Kelas mengubah data yang diambil dari database.
+        $("filterKelasTransaksi")?.addEventListener("change", muatData);
 
         $("btnResetFilter")?.addEventListener("click", resetFilter);
         $("btnKosongkanFilter")?.addEventListener("click", resetFilter);
