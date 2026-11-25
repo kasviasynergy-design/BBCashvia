@@ -7,8 +7,8 @@
 FROM php:8.2-apache AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl git unzip libzip-dev libonig-dev libxml2-dev libicu-dev \
-    && docker-php-ext-install pdo_mysql mbstring xml dom zip intl bcmath opcache \
+        curl git unzip libzip-dev libonig-dev libxml2-dev libicu-dev libpng-dev \
+    && docker-php-ext-install pdo_mysql mbstring xml dom zip gd intl bcmath opcache \
     && docker-php-ext-enable opcache \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
